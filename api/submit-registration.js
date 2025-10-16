@@ -20,7 +20,8 @@ module.exports = async (req, res) => {
     }
     
     if (!databaseId) {
-        return res.status(500).json({ message: "Registrations Database ID not configured." });
+        console.error("Registrations Database ID not configured in environment variables.");
+        return res.status(500).json({ message: "伺服器設定錯誤：找不到報名資料庫 ID。" });
     }
 
     try {
@@ -30,12 +31,10 @@ module.exports = async (req, res) => {
             return res.status(400).json({ message: '缺少必要欄位：姓名、電話、活動名稱' });
         }
 
-        // 產生一個較短的唯一報名編號
         const registrationId = uuidv4().split('-')[0].toUpperCase(); 
         const now = new Date();
 
-        // ** UPDATED PART **
-        // 將 phoneNumber 屬性修改為 rich_text 以匹配 Notion 中 Text 類型的欄位
+        // 確保送出的資料結構與 Notion Text 類型匹配
         await notion.pages.create({
             parent: { database_id: databaseId },
             properties: {
@@ -43,7 +42,8 @@ module.exports = async (req, res) => {
                     title: [{ text: { content: registrantName } }],
                 },
                 'PhoneNumber': {
-                    rich_text: [{ text: { content: phoneNumber } }], // <<-- 這行已修改
+                    // 使用 rich_text 來寫入 Text 類型的欄位
+                    rich_text: [{ text: { content: phoneNumber } }],
                 },
                 'EventName': {
                     rich_text: [{ text: { content: eventName } }],
@@ -63,9 +63,9 @@ module.exports = async (req, res) => {
         res.status(200).json({ success: true, registrationId: registrationId });
 
     } catch (error) {
-        console.error('Error submitting registration to Notion:', error);
-        res.status(500).json({ message: '報名資料送出失敗。', details: error.body });
+        // 提供更詳細的錯誤日誌給開發者看
+        console.error('向 Notion API 送出資料時發生錯誤:', error.body || error);
+        // 回傳給使用者的錯誤訊息
+        res.status(500).json({ message: '報名資料送出失敗，請聯絡管理員。', details: error.message });
     }
 };
-
-
