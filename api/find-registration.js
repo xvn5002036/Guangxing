@@ -100,4 +100,3 @@ export default async function handler(req, res) {
         res.status(500).json({ message: '查詢報名時發生內部錯誤，請稍後再試。', details: error.message });
     }
 }
-
