@@ -10,7 +10,7 @@ h1, h2, h3 {
 
 /* 主視覺背景 */
 .hero-bg {
-    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x567.jpg?auto=compress&cs=tinysrgb&w=1920');
+    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x576.jpg?auto=compress&cs=tinysrgb&w=1920');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -49,6 +49,16 @@ h1, h2, h3 {
     width: 100%;
 }
 
+/* 卡片 hover 效果 */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
 /* 輪播 (Swiper) 樣式 */
 .news-carousel {
     position: relative;
@@ -65,44 +75,40 @@ h1, h2, h3 {
     background-color: #f59e0b; /* amber-500 */
 }
 
-/* --- NEW STYLES --- */
-
-/* 瀑布流排版 (Waterfall/Masonry Layout) */
-#registrable-events-list {
-    column-count: 1;
-    column-gap: 1.5rem; /* 欄間距 */
-}
-
-@media (min-width: 768px) {
-    #registrable-events-list {
-        column-count: 2;
-    }
-}
-
-@media (min-width: 1024px) {
-    #registrable-events-list {
-        column-count: 3;
-    }
-}
-
-.event-card {
-    display: inline-block;
+/* 瀑布流 (Masonry) 樣式 */
+.masonry-grid {
     width: 100%;
+}
+.grid-item {
+    width: calc(33.333% - 1.5rem); /* For 3 columns, adjust as needed */
     margin-bottom: 1.5rem;
-    break-inside: avoid; /* 防止卡片被切斷 */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+/* Responsive adjustments for Masonry */
+@media (max-width: 1024px) {
+    .grid-item {
+        width: calc(50% - 1rem);
+    }
+}
+@media (max-width: 768px) {
+    .grid-item {
+        width: 100%;
+    }
 }
 
-.event-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
 
-/* 報名彈出視窗 (Modal) */
-#close-modal-btn {
-    font-size: 2.5rem;
-    line-height: 1;
-    font-weight: 300;
+/* Modal Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
-
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+}
 
