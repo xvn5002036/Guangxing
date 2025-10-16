@@ -10,7 +10,7 @@ h1, h2, h3 {
 
 /* 主視覺背景 */
 .hero-bg {
-    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://images.pexels.com/photos/1614263/pexels-photo-1614263.jpeg?auto=compress&cs=tinysrgb&w=1920');
+    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x576.jpg?auto=compress&cs=tinysrgb&w=1920');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
