@@ -15,16 +15,15 @@
 </head>
 <body class="text-slate-700">
 
-    <!-- Header & Navigation -->
+    <!-- Header & Navigation (加入活動報名連結) -->
     <header id="header" class="bg-gray-900 bg-opacity-80 backdrop-blur-lg text-white shadow-lg sticky top-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-xl md:text-2xl font-bold text-amber-400 tracking-wider">新莊武壇廣行宮</a>
             <nav class="hidden md:flex space-x-8 text-sm tracking-wider">
                 <a href="#about" class="nav-link">本宮介紹</a>
-                <a href="#deity" class="nav-link">主祀神明</a>
                 <a href="#news" class="nav-link">最新消息</a>
+                <a href="#registration" class="nav-link">活動報名</a>
                 <a href="#events" class="nav-link">活動紀實</a>
-                <a href="#services" class="nav-link">服務項目</a>
                 <a href="#info" class="nav-link">參拜資訊</a>
             </nav>
             <button id="mobile-menu-button" class="md:hidden focus:outline-none">
@@ -33,16 +32,15 @@
         </div>
         <div id="mobile-menu" class="hidden md:hidden bg-gray-800">
             <a href="#about" class="block py-3 px-6 hover:bg-gray-700">本宮介紹</a>
-            <a href="#deity" class="block py-3 px-6 hover:bg-gray-700">主祀神明</a>
             <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a>
+            <a href="#registration" class="block py-3 px-6 hover:bg-gray-700">活動報名</a>
             <a href="#events" class="block py-3 px-6 hover:bg-gray-700">活動紀實</a>
-            <a href="#services" class="block py-3 px-6 hover:bg-gray-700">服務項目</a>
             <a href="#info" class="block py-3 px-6 hover:bg-gray-700">參拜資訊</a>
         </div>
     </header>
 
     <main>
-        <!-- Hero Section - 照片背景 -->
+        <!-- Hero Section -->
         <section class="hero-bg relative min-h-screen flex items-center justify-center text-white pt-16">
             <div class="text-center p-6 z-10">
                 <h1 class="text-4xl md:text-6xl font-bold tracking-wider leading-tight">代天巡狩 池府王爺</h1>
@@ -50,7 +48,7 @@
             </div>
         </section>
         
-        <!-- 本宮介紹 -->
+        <!-- About Section -->
         <section id="about" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">本宮介紹</h2>
@@ -63,28 +61,9 @@
                 </div>
             </div>
         </section>
-
-        <!-- 主祀神明 -->
-        <section id="deity" class="py-24 bg-slate-50">
-            <div class="container mx-auto px-6">
-                <h2 class="text-4xl font-bold text-center section-title">主祀神明</h2>
-                <div class="mt-16 max-w-5xl mx-auto grid md:grid-cols-5 gap-8 items-center">
-                    <div class="md:col-span-2">
-                        <img src="https://placehold.co/600x800/f59e0b/1e293b?text=池府王爺金身" alt="池府王爺金身" class="rounded-lg shadow-2xl w-full h-auto">
-                    </div>
-                    <div class="md:col-span-3 text-slate-600 space-y-6">
-                        <h3 class="text-3xl font-bold text-slate-800">代天巡狩 池府千歲</h3>
-                        <p class="border-l-4 border-amber-500 pl-4">聖誕千秋：農曆六月十八日</p>
-                        <p>池府王爺，諱逢春，為唐代儒將。最廣為人知的聖蹟為「吞藥濟世」，為解救百姓免於瘟疫，智取瘟神藥粉並捨身吞食，感動玉帝敕封為神，職司代天巡狩，護佑萬民。</p>
-                        <h4 class="text-xl font-semibold pt-4 text-slate-800">信仰傳承</h4>
-                        <p>本宮香火源自池府王爺信仰發源地，有「總爐」之稱的福建「廈門馬巷元威殿」，一脈相承，神威顯赫。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
         
-        <!-- 最新消息 -->
-        <section id="news" class="py-24 bg-white">
+        <!-- News Section -->
+        <section id="news" class="py-24 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">最新消息</h2>
                 <div class="mt-16 max-w-4xl mx-auto bg-slate-100 rounded-lg shadow-lg p-8 news-carousel">
@@ -93,59 +72,43 @@
                         <div class="swiper-pagination"></div>
                     </div>
                     <div id="news-loading" class="text-center text-slate-500">
-                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                         <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <p class="mt-2">消息載入中...</p>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- NEW: Event Registration Section -->
+        <section id="registration" class="py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center section-title">活動報名</h2>
+                <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">以下是本宮近期開放報名的活動，歡迎十方善信踴躍參與。</p>
+                <div id="registrable-events-list" class="mt-16">
+                    <!-- Waterfall layout will be generated here -->
+                     <div id="reg-events-loading" class="text-center text-slate-500">
+                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <p class="mt-2">可報名活動載入中...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
         
-        <!-- 活動紀實 -->
+        <!-- Past Events Section -->
         <section id="events" class="py-24 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">活動紀實</h2>
-                <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">此處將自動載入來自 Notion 資料庫的最新宮廟活動與公告，敬請關注。</p>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">回顧本宮歷年來的精彩活動與慶典。</p>
                 <div id="events-list" class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div id="events-loading" class="col-span-full text-center text-slate-500">
-                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <p class="mt-2">活動載入中...</p>
                     </div>
                 </div>
             </div>
         </section>
         
-        <!-- 服務項目 -->
-        <section id="services" class="py-24 bg-white">
-            <div class="container mx-auto px-6">
-                <h2 class="text-4xl font-bold text-center section-title">服務項目</h2>
-                <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div class="card-hover bg-slate-50 p-8 rounded-lg shadow-lg text-center border-t-4 border-amber-500">
-                        <h3 class="font-bold text-xl mb-3 text-slate-800">例行濟世</h3>
-                        <p class="text-slate-600">提供問事、祭解、補運等服務，為信眾解惑消災。</p>
-                    </div>
-                    <div class="card-hover bg-slate-50 p-8 rounded-lg shadow-lg text-center border-t-4 border-amber-500">
-                        <h3 class="font-bold text-xl mb-3 text-slate-800">年度法會</h3>
-                        <p class="text-slate-600">定期舉辦王爺聖誕慶典、中元普渡等大型法會。</p>
-                    </div>
-                    <div class="card-hover bg-slate-50 p-8 rounded-lg shadow-lg text-center border-t-4 border-amber-500">
-                        <h3 class="font-bold text-xl mb-3 text-slate-800">安太歲點燈</h3>
-                        <p class="text-slate-600">提供安太歲、點光明燈、財神燈服務，祈求全年順遂。</p>
-                    </div>
-                    <div class="card-hover bg-slate-50 p-8 rounded-lg shadow-lg text-center border-t-4 border-amber-500">
-                        <h3 class="font-bold text-xl mb-3 text-slate-800">其他服務</h3>
-                        <p class="text-slate-600">收驚、安神位、婚喪喜慶擇日等，滿足信眾需求。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- 參拜資訊 -->
+        <!-- Visitor Information Section -->
         <section id="info" class="py-24 bg-gray-800 text-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title text-white">參拜資訊</h2>
@@ -179,10 +142,48 @@
         </div>
     </footer>
 
-    <!-- 外部功能庫 -->
+    <!-- NEW: Registration Modal -->
+    <div id="registration-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-md transform transition-all opacity-0 -translate-y-10">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 border-b">
+                <h3 id="modal-title" class="text-2xl font-bold text-slate-800">活動報名</h3>
+                <button id="close-modal-btn" class="text-slate-500 hover:text-slate-800">&times;</button>
+            </div>
+            <!-- Modal Body -->
+            <div id="modal-body" class="p-6">
+                <!-- Form View -->
+                <form id="registration-form">
+                    <input type="hidden" id="event-name-input" name="eventName">
+                    <div class="mb-4">
+                        <label for="registrant-name" class="block text-slate-700 text-sm font-bold mb-2">您的姓名</label>
+                        <input type="text" id="registrant-name" name="registrantName" class="shadow appearance-none border rounded w-full py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="phone-number" class="block text-slate-700 text-sm font-bold mb-2">聯絡電話</label>
+                        <input type="tel" id="phone-number" name="phoneNumber" class="shadow appearance-none border rounded w-full py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="flex items-center justify-end">
+                        <button id="submit-btn" type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            確認送出
+                        </button>
+                    </div>
+                </form>
+                <!-- Success/Error View -->
+                <div id="modal-result" class="hidden text-center">
+                    <div id="result-icon" class="w-16 h-16 mx-auto mb-4"></div>
+                    <h4 id="result-title" class="text-xl font-bold mb-2"></h4>
+                    <p id="result-message" class="text-slate-600"></p>
+                    <button id="result-ok-btn" class="mt-6 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded w-full">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-    <!-- 自己的功能腳本，使用 defer 屬性優化載入 -->
     <script src="script.js" defer></script>
 </body>
 </html>
-
