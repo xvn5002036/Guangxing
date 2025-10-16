@@ -5,10 +5,12 @@ const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.NOTION_REGISTRATIONS_DATABASE_ID;
 
 module.exports = async (req, res) => {
+    // 設置 CORS 標頭，允許任何來源的請求
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+    // 處理瀏覽器的 preflight request (OPTIONS)
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
     }
@@ -25,12 +27,15 @@ module.exports = async (req, res) => {
         const { registrantName, phoneNumber, eventName } = req.body;
 
         if (!registrantName || !phoneNumber || !eventName) {
-            return res.status(400).json({ message: 'Missing required fields: registrantName, phoneNumber, eventName' });
+            return res.status(400).json({ message: '缺少必要欄位：姓名、電話、活動名稱' });
         }
 
-        const registrationId = uuidv4().split('-')[0].toUpperCase(); // e.g., 5D7B97C8
+        // 產生一個較短的唯一報名編號
+        const registrationId = uuidv4().split('-')[0].toUpperCase(); 
         const now = new Date();
 
+        // ** UPDATED PART **
+        // 將 phoneNumber 屬性修改為 rich_text 以匹配 Notion 中 Text 類型的欄位
         await notion.pages.create({
             parent: { database_id: databaseId },
             properties: {
@@ -38,7 +43,7 @@ module.exports = async (req, res) => {
                     title: [{ text: { content: registrantName } }],
                 },
                 'PhoneNumber': {
-                    phone_number: phoneNumber,
+                    rich_text: [{ text: { content: phoneNumber } }], // <<-- 這行已修改
                 },
                 'EventName': {
                     rich_text: [{ text: { content: eventName } }],
@@ -59,7 +64,8 @@ module.exports = async (req, res) => {
 
     } catch (error) {
         console.error('Error submitting registration to Notion:', error);
-        res.status(500).json({ message: 'Failed to submit registration.', details: error.body });
+        res.status(500).json({ message: '報名資料送出失敗。', details: error.body });
     }
 };
+
 
