@@ -4,76 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新莊武壇廣行宮 - 代天巡狩 池府王爺</title>
+    <!-- 外部連結 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
-    <!-- Swiper.js CSS for carousel -->
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
-    <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f8fafc; /* slate-50 */
-        }
-        h1, h2, h3 {
-            font-family: 'Noto Serif TC', serif;
-        }
-        
-        .hero-bg {
-             /* 網址替換掉就是背景 */
-            background-image: linear-gradient(rgba(17, 24, 39, 0.7), rgba(17, 24, 39, 0.7)), url('https://placehold.co/1920x1080/111827/FBBF24?text=宮廟莊嚴主視覺');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 3px;
-            background-color: #f59e0b; /* amber-500 */
-            margin: 1rem auto 0;
-            border-radius: 2px;
-        }
-        .nav-link {
-            position: relative;
-            transition: color 0.3s;
-        }
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -4px;
-            left: 50%;
-            background-color: #fbbf24; /* amber-400 */
-            transition: all 0.3s ease-in-out;
-            transform: translateX(-50%);
-        }
-        .nav-link:hover::after {
-            width: 100%;
-        }
-        .card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-        /* Custom styles for Swiper carousel */
-        .news-carousel {
-            position: relative;
-        }
-        .swiper-slide {
-            padding: 2.5rem;
-            text-align: center;
-            background: #f8fafc; /* slate-50 */
-            border-radius: 0.5rem;
-        }
-        .swiper-pagination-bullet-active {
-            background-color: #f59e0b; /* amber-500 */
-        }
-    </style>
+    <!-- 自己的樣式表 -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="text-slate-700">
 
@@ -81,7 +19,6 @@
     <header id="header" class="bg-gray-900 bg-opacity-80 backdrop-blur-lg text-white shadow-lg sticky top-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-xl md:text-2xl font-bold text-amber-400 tracking-wider">新莊武壇廣行宮</a>
-            
             <nav class="hidden md:flex space-x-8 text-sm tracking-wider">
                 <a href="#about" class="nav-link">本宮介紹</a>
                 <a href="#deity" class="nav-link">主祀神明</a>
@@ -90,7 +27,6 @@
                 <a href="#services" class="nav-link">服務項目</a>
                 <a href="#info" class="nav-link">參拜資訊</a>
             </nav>
-
             <button id="mobile-menu-button" class="md:hidden focus:outline-none">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
@@ -106,15 +42,15 @@
     </header>
 
     <main>
-        <!-- Hero Section -->
-        <section class="hero-bg min-h-screen flex items-center justify-center text-white pt-16">
-            <div class="text-center p-6">
+        <!-- Hero Section - 照片背景 -->
+        <section class="hero-bg relative min-h-screen flex items-center justify-center text-white pt-16">
+            <div class="text-center p-6 z-10">
                 <h1 class="text-4xl md:text-6xl font-bold tracking-wider leading-tight">代天巡狩 池府王爺</h1>
                 <p class="mt-4 text-lg md:text-xl text-slate-200 max-w-2xl mx-auto">承福建廈門馬巷元威殿香火，為在地信眾提供心靈慰藉與寄託。闡揚王爺忠勇慈悲精神，歡迎十方善信蒞臨參拜。</p>
             </div>
         </section>
-
-        <!-- About, Deity sections are unchanged... -->
+        
+        <!-- 本宮介紹 -->
         <section id="about" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">本宮介紹</h2>
@@ -127,6 +63,8 @@
                 </div>
             </div>
         </section>
+
+        <!-- 主祀神明 -->
         <section id="deity" class="py-24 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">主祀神明</h2>
@@ -144,23 +82,16 @@
                 </div>
             </div>
         </section>
-
-        <!-- News Section - UPDATED TO CAROUSEL -->
+        
+        <!-- 最新消息 -->
         <section id="news" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">最新消息</h2>
                 <div class="mt-16 max-w-4xl mx-auto bg-slate-100 rounded-lg shadow-lg p-8 news-carousel">
-                    <!-- Swiper -->
                     <div class="swiper newsSwiper">
-                        <div class="swiper-wrapper" id="news-swiper-wrapper">
-                            <!-- Loading state will be shown here first -->
-                        </div>
-                        <!-- Add Pagination -->
+                        <div class="swiper-wrapper" id="news-swiper-wrapper"></div>
                         <div class="swiper-pagination"></div>
-                        <!-- REMOVED: Navigation Arrows -->
                     </div>
-
-                    <!-- Loading spinner for news -->
                     <div id="news-loading" class="text-center text-slate-500">
                         <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -171,8 +102,8 @@
                 </div>
             </div>
         </section>
-
-        <!-- Events Section is unchanged... -->
+        
+        <!-- 活動紀實 -->
         <section id="events" class="py-24 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">活動紀實</h2>
@@ -189,7 +120,7 @@
             </div>
         </section>
         
-        <!-- Services Section is unchanged... -->
+        <!-- 服務項目 -->
         <section id="services" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">服務項目</h2>
@@ -213,8 +144,8 @@
                 </div>
             </div>
         </section>
-
-        <!-- Visitor Information Section is unchanged... -->
+        
+        <!-- 參拜資訊 -->
         <section id="info" class="py-24 bg-gray-800 text-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title text-white">參拜資訊</h2>
@@ -248,126 +179,10 @@
         </div>
     </footer>
 
-    <!-- Swiper.js script -->
+    <!-- 外部功能庫 -->
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-
-    <script>
-        // --- Mobile Menu Toggle ---
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-        document.querySelectorAll('#mobile-menu a').forEach(link => {
-            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
-        });
-
-        // --- Header background on scroll ---
-        const header = document.getElementById('header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('py-2');
-                header.classList.remove('py-4');
-            } else {
-                header.classList.add('py-4');
-                header.classList.remove('py-2');
-            }
-        });
-
-        // --- Run fetch functions when the page loads ---
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchEventsData();
-            fetchNewsData(); 
-        });
-
-        // --- Fetch data for Events (Unchanged) ---
-        async function fetchEventsData() {
-            const eventsList = document.getElementById('events-list');
-            const loadingIndicator = document.getElementById('events-loading');
-            try {
-                const response = await fetch('/api/get-events');
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const events = await response.json();
-                loadingIndicator.style.display = 'none';
-                eventsList.innerHTML = ''; 
-                if (events.length === 0) {
-                    eventsList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有新的活動公告。</p>';
-                    return;
-                }
-                events.forEach(event => {
-                    const eventCard = `
-                        <div class="card-hover bg-white p-6 rounded-lg shadow-lg overflow-hidden flex flex-col">
-                            <img src="${event.coverImage || 'https://placehold.co/600x400/e2e8f0/64748b?text=無圖片'}" alt="${event.title}" class="w-full h-40 object-cover rounded-md mb-4">
-                            <div class="flex-grow">
-                                <p class="text-sm text-amber-600 mb-1">${event.date}</p>
-                                <h3 class="text-xl font-bold text-slate-800 mb-2">${event.title}</h3>
-                                <p class="text-slate-600 text-sm">${event.summary}</p>
-                            </div>
-                        </div>`;
-                    eventsList.innerHTML += eventCard;
-                });
-            } catch (error) {
-                console.error("Failed to fetch events data:", error);
-                loadingIndicator.style.display = 'none';
-                eventsList.innerHTML = '<p class="col-span-full text-center text-red-500">無法載入活動資訊，請稍後再試。</p>';
-            }
-        }
-
-        // --- Fetch data for News - UPDATED FOR CAROUSEL ---
-        async function fetchNewsData() {
-            const swiperWrapper = document.getElementById('news-swiper-wrapper');
-            const loadingIndicator = document.getElementById('news-loading');
-            
-            try {
-                const response = await fetch('/api/get-news');
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const newsItems = await response.json();
-
-                loadingIndicator.style.display = 'none';
-                swiperWrapper.innerHTML = ''; // Clear wrapper
-
-                if (newsItems.length === 0) {
-                    swiperWrapper.innerHTML = `
-                        <div class="swiper-slide">
-                            <p class="text-slate-500">目前沒有最新消息。</p>
-                        </div>`;
-                } else {
-                     newsItems.forEach(item => {
-                        const newsSlideHTML = `
-                            <div class="swiper-slide">
-                                <p class="text-sm text-amber-600 mb-1">${item.date}</p>
-                                <h3 class="text-xl font-bold text-slate-800 mb-2">${item.title}</h3>
-                                <p class="text-slate-600 max-w-xl mx-auto">${item.content}</p>
-                            </div>
-                        `;
-                        swiperWrapper.innerHTML += newsSlideHTML;
-                    });
-                }
-               
-                // Initialize Swiper AFTER the slides have been added to the DOM
-                const newsSwiper = new Swiper('.newsSwiper', {
-                    loop: newsItems.length > 1, // Loop only if there's more than one item
-                    autoplay: {
-                        delay: 5000,
-                        disableOnInteraction: false,
-                    },
-                    pagination: {
-                        el: '.swiper-pagination',
-                        clickable: true,
-                    },
-                    // REMOVED: Navigation option for arrows
-                });
-
-            } catch (error) {
-                console.error("Failed to fetch news data:", error);
-                loadingIndicator.style.display = 'none';
-                swiperWrapper.innerHTML = `
-                    <div class="swiper-slide">
-                        <p class="text-red-500">無法載入最新消息，請稍後再試。</p>
-                    </div>`;
-            }
-        }
-    </script>
+    <!-- 自己的功能腳本，使用 defer 屬性優化載入 -->
+    <script src="script.js" defer></script>
 </body>
 </html>
 
