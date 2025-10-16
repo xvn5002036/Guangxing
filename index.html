@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新莊武壇廣行宮</title>
+    <meta name="description" content="新莊武壇廣行宮，主祀池府王爺。提供信眾參拜、問事、安太歲、點光明燈等服務。">
+    <meta name="keywords" content="新莊武壇廣行宮, 池府王爺, 新莊, 宮廟, 宗教, 信仰">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Noto Sans TC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/lucide-react.js"></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+    <style>
+        /* 自定義樣式 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8f6f1; /* 柔和的米色背景 */
+        }
+        .text-gold {
+            color: #b8860b;
+        }
+        .bg-dark-red {
+            background-color: #8B0000;
+        }
+        .border-gold {
+            border-color: #b8860b;
+        }
+        .lantern {
+            position: relative;
+            display: inline-block;
+            margin: 0 10px;
+        }
+        .lantern:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 10px;
+            background: #a855f7;
+            border-radius: 2px 2px 0 0;
+        }
+         .lantern:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 15px;
+            background: linear-gradient(to bottom, #fde047, #f59e0b);
+            border-radius: 0 0 5px 5px;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-md">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-dark-red">新莊武壇廣行宮</a>
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="#about" class="hover:text-gold transition-colors duration-300">關於本宮</a>
+                <a href="#deity" class="hover:text-gold transition-colors duration-300">主祀神明</a>
+                <a href="#news" class="hover:text-gold transition-colors duration-300">最新消息</a>
+                <a href="#contact" class="bg-dark-red text-white py-2 px-4 rounded-lg hover:bg-opacity-80 transition-all duration-300">聯絡我們</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 space-y-2">
+            <a href="#about" class="block hover:text-gold transition-colors duration-300">關於本宮</a>
+            <a href="#deity" class="block hover:text-gold transition-colors duration-300">主祀神明</a>
+            <a href="#news" class="block hover:text-gold transition-colors duration-300">最新消息</a>
+            <a href="#contact" class="block bg-dark-red text-white text-center mt-2 py-2 px-4 rounded-lg hover:bg-opacity-80 transition-all duration-300">聯絡我們</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="relative h-[60vh] bg-cover bg-center flex items-center justify-center text-white" style="background-image: url('https://placehold.co/1920x1080/8B0000/FFFFFF?text=%E8%81%96%E5%BE%B7%E9%A1%AF%E8%B5%AB');">
+            <div class="absolute inset-0 bg-black/50"></div>
+            <div class="relative z-10 text-center space-y-4">
+                <h1 class="text-4xl md:text-6xl font-bold tracking-wider">新莊武壇廣行宮</h1>
+                <p class="text-xl md:text-2xl font-medium">主祀 池府王爺</p>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-dark-red">關於本宮</h2>
+                    <div class="w-24 h-1 bg-gold mx-auto mt-2"></div>
+                </div>
+                <div class="flex flex-col md:flex-row items-center gap-12">
+                    <div class="md:w-1/2">
+                        <img src="https://placehold.co/600x400/f8f6f1/8B0000?text=%E5%AE%AE%E5%BB%9F%E5%A4%96%E8%A7%80" alt="宮廟外觀" class="rounded-lg shadow-xl w-full">
+                    </div>
+                    <div class="md:w-1/2 space-y-4 text-lg text-gray-600">
+                        <p>新莊武壇廣行宮，座落於新北市新莊區，為地方重要之信仰中心。本宮歷史悠久，香火鼎盛，主祀池府王爺，神威顯赫，護佑鄉里，深得十方善信敬仰。</p>
+                        <p>自建宮以來，我們秉持神明慈悲濟世之精神，致力於發揚傳統宗教文化，並積極參與社會公益，期能安定人心，教化良善，為社會注入祥和之氣。宮內建築莊嚴典雅，木石雕刻皆出自名匠之手，展現了傳統工藝之美，亦是信眾沉澱心靈、尋求慰藉之清靜地。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Deity Section -->
+        <section id="deity" class="py-20">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl font-bold text-dark-red">主祀神明</h2>
+                <div class="w-24 h-1 bg-gold mx-auto mt-2"></div>
+                <div class="mt-12 max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-lg shadow-lg">
+                    <div class="md:w-1/3">
+                         <img src="https://placehold.co/400x600/b8860b/FFFFFF?text=%E6%B1%A0%E5%BA%9C%E7%8E%8B%E7%88%BA%20%E8%81%96%E5%83%8F" alt="池府王爺聖像" class="rounded-lg shadow-md w-full">
+                    </div>
+                    <div class="md:w-2/3 text-left space-y-4 text-gray-600">
+                        <h3 class="text-2xl font-bold text-gold">池府王爺</h3>
+                        <p>池府王爺，諱夢彪，為唐代開國名將。王爺生前忠君愛國，智勇雙全，為民除害，深受百姓愛戴。昇化後，玉帝敕封為代天巡狩，司掌賞善罰惡，護國佑民之職責。</p>
+                        <p>本宮池府王爺神威顯赫，對於祈求事業順利、出入平安、身體健康、家庭和睦等，皆有求必應。數百年來，王爺聖蹟廣傳，是無數信眾心中最堅實的依靠。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- News Section -->
+        <section id="news" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-dark-red">最新消息</h2>
+                    <p class="text-gray-500 mt-2">查看本宮近期活動與公告</p>
+                    <div class="w-24 h-1 bg-gold mx-auto mt-2"></div>
+                </div>
+                <!-- 此處的最新消息應從 Notion API 動態載入 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- News Item 1 -->
+                    <div class="bg-gray-50 rounded-lg shadow-md overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
+                        <img src="https://placehold.co/600x400/8B0000/FFFFFF?text=%E6%B3%95%E6%9C%83%E6%B4%BB%E5%8B%95" alt="活動圖片" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <p class="text-sm text-gray-500 mb-2">2025年10月15日</p>
+                            <h3 class="text-xl font-bold mb-2">池府王爺聖誕千秋慶典</h3>
+                            <p class="text-gray-600 mb-4">本宮將於國曆11月10日（農曆十月十八）舉辦池府王爺聖誕千秋慶典，備有平安餐，歡迎十方善信蒞臨參拜，同霑神恩。</p>
+                            <a href="#" class="text-gold font-semibold hover:underline">閱讀更多 &rarr;</a>
+                        </div>
+                    </div>
+                    <!-- News Item 2 -->
+                    <div class="bg-gray-50 rounded-lg shadow-md overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
+                        <img src="https://placehold.co/600x400/b8860b/FFFFFF?text=%E5%AE%89%E5%A4%AA%E6%AD%B2" alt="活動圖片" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <p class="text-sm text-gray-500 mb-2">2025年09月28日</p>
+                            <h3 class="text-xl font-bold mb-2">甲辰年安太歲、點光明燈開始受理</h3>
+                            <p class="text-gray-600 mb-4">新的一年即將到來，為求來年順遂，本宮即日起開始受理甲辰年安太歲、點光明燈服務，詳情請洽本宮服務台。</p>
+                            <a href="#" class="text-gold font-semibold hover:underline">閱讀更多 &rarr;</a>
+                        </div>
+                    </div>
+                    <!-- News Item 3 -->
+                    <div class="bg-gray-50 rounded-lg shadow-md overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
+                        <img src="https://placehold.co/600x400/4a5568/FFFFFF?text=%E7%A4%BE%E5%8D%80%E6%B4%BB%E5%8B%95" alt="活動圖片" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <p class="text-sm text-gray-500 mb-2">2025年09月15日</p>
+                            <h3 class="text-xl font-bold mb-2">冬季愛心物資募集活動</h3>
+                            <p class="text-gray-600 mb-4">本宮將舉辦冬季送暖活動，募集白米、禦寒衣物等物資，以幫助社區中的弱勢家庭。誠摯邀請您共襄盛舉，廣植福田。</p>
+                            <a href="#" class="text-gold font-semibold hover:underline">閱讀更多 &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-dark-red">聯絡我們</h2>
+                    <div class="w-24 h-1 bg-gold mx-auto mt-2"></div>
+                </div>
+                <div class="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-lg shadow-lg">
+                    <div class="lg:w-1/2 space-y-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-gold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                宮廟地址
+                            </h3>
+                            <p class="text-gray-600 mt-2 text-lg">242新北市新莊區福營路500號</p>
+                        </div>
+                         <div>
+                            <h3 class="text-xl font-bold text-gold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                開放時間
+                            </h3>
+                            <p class="text-gray-600 mt-2 text-lg">每日上午 6:00 至 晚上 9:00</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                聯絡電話
+                            </h3>
+                            <p class="text-gray-600 mt-2 text-lg">(02) 1234-5678 (此為範例號碼)</p>
+                        </div>
+                    </div>
+                    <div class="lg:w-1/2 h-80 md:h-96 rounded-lg overflow-hidden shadow-md">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3615.143249058692!2d121.4309349759368!3d25.029232377820128!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442a7da931e9ba5%3A0x629533d7b3ab584e!2zMjQy5paw5YyX5biC5paw6I6K5Y2A56aP55S16LevNTAw6Jmf!5e0!3m2!1szh-TW!2stw!4v1729088654877!5m2!1szh-TW!2stw" 
+                            width="100%" 
+                            height="100%" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark-red text-white">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>&copy; 2025 新莊武壇廣行宮. All Rights Reserved.</p>
+            <p class="text-sm text-gray-300 mt-2">版面設計與程式碼由 Gemini 生成</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                // Close mobile menu on click
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
