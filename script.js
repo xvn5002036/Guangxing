@@ -164,26 +164,28 @@ async function handleCancelRegistration(event) {
     const button = event.currentTarget;
     button.disabled = true;
     button.textContent = '取消中...';
-
     const pageId = button.dataset.pageId;
     
-    // **DEBUGGING LOG**: 確認 pageId 是否正確被讀取
-    console.log("準備取消報名，Page ID:", pageId);
+    // **最終修正**: 確保 pageId 是有效字串
+    if (!pageId || typeof pageId !== 'string' || pageId.trim() === '') {
+        showResultModal(false, '取消失敗', '無法讀取報名紀錄 ID，請重新整理頁面後再試。');
+        button.disabled = false;
+        button.textContent = '確定要取消此筆報名';
+        return;
+    }
 
     try {
         const response = await fetch('/api/cancel-registration', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pageId: pageId }), // **確保這裡有正確傳送 pageId**
+            body: JSON.stringify({ pageId: pageId }),
         });
         const result = await response.json();
         if (!response.ok) {
-             // **DEBUGGING LOG**: 顯示後端回傳的錯誤
-            console.error("後端取消失敗:", result);
             throw new Error(result.message || '後端回傳未知錯誤');
         }
         
-        // 使用 dispatchEvent 來觸發查詢表單的 submit 事件，以刷新結果
+        // 模擬觸發表單提交以刷新結果
         findRegistrationForm.dispatchEvent(new Event('submit', { cancelable: true }));
 
         showResultModal(true, '取消成功', '您的報名紀錄已成功更新為「已取消」。');
