@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
-    <!-- NEW: Swiper.js CSS for carousel -->
+    <!-- Swiper.js CSS for carousel -->
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <style>
         body {
@@ -58,7 +58,7 @@
             transform: translateY(-8px);
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
-        /* NEW: Custom styles for Swiper carousel */
+        /* Custom styles for Swiper carousel */
         .news-carousel {
             position: relative;
         }
@@ -67,11 +67,6 @@
             text-align: center;
             background: #f8fafc; /* slate-50 */
             border-radius: 0.5rem;
-        }
-        .swiper-button-next,
-        .swiper-button-prev {
-            color: #f59e0b; /* amber-500 */
-            transform: scale(0.8);
         }
         .swiper-pagination-bullet-active {
             background-color: #f59e0b; /* amber-500 */
@@ -160,9 +155,7 @@
                         </div>
                         <!-- Add Pagination -->
                         <div class="swiper-pagination"></div>
-                        <!-- Add Navigation -->
-                        <div class="swiper-button-prev"></div>
-                        <div class="swiper-button-next"></div>
+                        <!-- REMOVED: Navigation Arrows -->
                     </div>
 
                     <!-- Loading spinner for news -->
@@ -253,7 +246,7 @@
         </div>
     </footer>
 
-    <!-- NEW: Swiper.js script -->
+    <!-- Swiper.js script -->
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 
     <script>
@@ -360,10 +353,7 @@
                         el: '.swiper-pagination',
                         clickable: true,
                     },
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
+                    // REMOVED: Navigation option for arrows
                 });
 
             } catch (error) {
