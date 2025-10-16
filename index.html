@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+    <!-- NEW: Swiper.js CSS for carousel -->
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -56,8 +58,23 @@
             transform: translateY(-8px);
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
-        .news-item:not(:last-child) {
-            border-bottom: 1px solid #e2e8f0; /* slate-200 */
+        /* NEW: Custom styles for Swiper carousel */
+        .news-carousel {
+            position: relative;
+        }
+        .swiper-slide {
+            padding: 2.5rem;
+            text-align: center;
+            background: #f8fafc; /* slate-50 */
+            border-radius: 0.5rem;
+        }
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: #f59e0b; /* amber-500 */
+            transform: scale(0.8);
+        }
+        .swiper-pagination-bullet-active {
+            background-color: #f59e0b; /* amber-500 */
         }
     </style>
 </head>
@@ -71,7 +88,7 @@
             <nav class="hidden md:flex space-x-8 text-sm tracking-wider">
                 <a href="#about" class="nav-link">本宮介紹</a>
                 <a href="#deity" class="nav-link">主祀神明</a>
-                <a href="#news" class="nav-link">最新消息</a> <!-- NEW LINK -->
+                <a href="#news" class="nav-link">最新消息</a>
                 <a href="#events" class="nav-link">活動紀實</a>
                 <a href="#services" class="nav-link">服務項目</a>
                 <a href="#info" class="nav-link">參拜資訊</a>
@@ -84,7 +101,7 @@
         <div id="mobile-menu" class="hidden md:hidden bg-gray-800">
             <a href="#about" class="block py-3 px-6 hover:bg-gray-700">本宮介紹</a>
             <a href="#deity" class="block py-3 px-6 hover:bg-gray-700">主祀神明</a>
-            <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a> <!-- NEW LINK -->
+            <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a>
             <a href="#events" class="block py-3 px-6 hover:bg-gray-700">活動紀實</a>
             <a href="#services" class="block py-3 px-6 hover:bg-gray-700">服務項目</a>
             <a href="#info" class="block py-3 px-6 hover:bg-gray-700">參拜資訊</a>
@@ -100,7 +117,7 @@
             </div>
         </section>
 
-        <!-- About Section -->
+        <!-- About, Deity sections are unchanged... -->
         <section id="about" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">本宮介紹</h2>
@@ -113,8 +130,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- Deity Section -->
         <section id="deity" class="py-24 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">主祀神明</h2>
@@ -133,33 +148,41 @@
             </div>
         </section>
 
-        <!-- News Section -->
+        <!-- News Section - UPDATED TO CAROUSEL -->
         <section id="news" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">最新消息</h2>
-                <div class="mt-16 max-w-3xl mx-auto bg-slate-50 rounded-lg shadow-lg p-8">
-                    <div id="news-list">
-                        <!-- Loading spinner for news -->
-                        <div id="news-loading" class="text-center text-slate-500">
-                            <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <p class="mt-2">消息載入中...</p>
+                <div class="mt-16 max-w-4xl mx-auto bg-slate-100 rounded-lg shadow-lg p-8 news-carousel">
+                    <!-- Swiper -->
+                    <div class="swiper newsSwiper">
+                        <div class="swiper-wrapper" id="news-swiper-wrapper">
+                            <!-- Loading state will be shown here first -->
                         </div>
-                        <!-- Notion data for news will be injected here -->
+                        <!-- Add Pagination -->
+                        <div class="swiper-pagination"></div>
+                        <!-- Add Navigation -->
+                        <div class="swiper-button-prev"></div>
+                        <div class="swiper-button-next"></div>
+                    </div>
+
+                    <!-- Loading spinner for news -->
+                    <div id="news-loading" class="text-center text-slate-500">
+                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-2">消息載入中...</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Events Section -->
+        <!-- Events Section is unchanged... -->
         <section id="events" class="py-24 bg-slate-50">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">活動紀實</h2>
                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">此處將自動載入來自 Notion 資料庫的最新宮廟活動與公告，敬請關注。</p>
                 <div id="events-list" class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Loading spinner for events -->
                     <div id="events-loading" class="col-span-full text-center text-slate-500">
                         <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -167,12 +190,11 @@
                         </svg>
                         <p class="mt-2">活動載入中...</p>
                     </div>
-                    <!-- Notion data for events will be injected here -->
                 </div>
             </div>
         </section>
-
-        <!-- Services Section -->
+        
+        <!-- Services Section is unchanged... -->
         <section id="services" class="py-24 bg-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">服務項目</h2>
@@ -197,7 +219,7 @@
             </div>
         </section>
 
-        <!-- Visitor Information Section -->
+        <!-- Visitor Information Section is unchanged... -->
         <section id="info" class="py-24 bg-gray-800 text-white">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title text-white">參拜資訊</h2>
@@ -231,6 +253,9 @@
         </div>
     </footer>
 
+    <!-- NEW: Swiper.js script -->
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
     <script>
         // --- Mobile Menu Toggle ---
         const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -257,28 +282,23 @@
         // --- Run fetch functions when the page loads ---
         document.addEventListener('DOMContentLoaded', () => {
             fetchEventsData();
-            fetchNewsData(); // NEW: Fetch news data
+            fetchNewsData(); 
         });
 
-        // --- Fetch data for Events ---
+        // --- Fetch data for Events (Unchanged) ---
         async function fetchEventsData() {
             const eventsList = document.getElementById('events-list');
             const loadingIndicator = document.getElementById('events-loading');
-            
             try {
-                const response = await fetch('/api/get-events'); // This API is for events
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const response = await fetch('/api/get-events');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const events = await response.json();
-
                 loadingIndicator.style.display = 'none';
-
+                eventsList.innerHTML = ''; 
                 if (events.length === 0) {
                     eventsList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有新的活動公告。</p>';
                     return;
                 }
-
                 events.forEach(event => {
                     const eventCard = `
                         <div class="card-hover bg-white p-6 rounded-lg shadow-lg overflow-hidden flex flex-col">
@@ -288,11 +308,9 @@
                                 <h3 class="text-xl font-bold text-slate-800 mb-2">${event.title}</h3>
                                 <p class="text-slate-600 text-sm">${event.summary}</p>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     eventsList.innerHTML += eventCard;
                 });
-
             } catch (error) {
                 console.error("Failed to fetch events data:", error);
                 loadingIndicator.style.display = 'none';
@@ -300,41 +318,61 @@
             }
         }
 
-        // --- Fetch data for News ---
+        // --- Fetch data for News - UPDATED FOR CAROUSEL ---
         async function fetchNewsData() {
-            const newsList = document.getElementById('news-list');
+            const swiperWrapper = document.getElementById('news-swiper-wrapper');
             const loadingIndicator = document.getElementById('news-loading');
             
             try {
-                const response = await fetch('/api/get-news'); // NEW API for news
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const response = await fetch('/api/get-news');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const newsItems = await response.json();
 
                 loadingIndicator.style.display = 'none';
-                newsList.innerHTML = ''; // Clear loading spinner
+                swiperWrapper.innerHTML = ''; // Clear wrapper
 
                 if (newsItems.length === 0) {
-                    newsList.innerHTML = '<p class="text-center text-slate-500">目前沒有最新消息。</p>';
-                    return;
+                    swiperWrapper.innerHTML = `
+                        <div class="swiper-slide">
+                            <p class="text-slate-500">目前沒有最新消息。</p>
+                        </div>`;
+                } else {
+                     newsItems.forEach(item => {
+                        const newsSlideHTML = `
+                            <div class="swiper-slide">
+                                <p class="text-sm text-amber-600 mb-1">${item.date}</p>
+                                <h3 class="text-xl font-bold text-slate-800 mb-2">${item.title}</h3>
+                                <p class="text-slate-600 max-w-xl mx-auto">${item.content}</p>
+                            </div>
+                        `;
+                        swiperWrapper.innerHTML += newsSlideHTML;
+                    });
                 }
-
-                newsItems.forEach(item => {
-                    const newsItemHTML = `
-                        <div class="news-item py-4">
-                            <p class="text-sm text-amber-600 mb-1">${item.date}</p>
-                            <h3 class="text-xl font-bold text-slate-800 mb-2">${item.title}</h3>
-                            <p class="text-slate-600">${item.content}</p>
-                        </div>
-                    `;
-                    newsList.innerHTML += newsItemHTML;
+               
+                // Initialize Swiper AFTER the slides have been added to the DOM
+                const newsSwiper = new Swiper('.newsSwiper', {
+                    loop: newsItems.length > 1, // Loop only if there's more than one item
+                    autoplay: {
+                        delay: 5000,
+                        disableOnInteraction: false,
+                    },
+                    pagination: {
+                        el: '.swiper-pagination',
+                        clickable: true,
+                    },
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
                 });
 
             } catch (error) {
                 console.error("Failed to fetch news data:", error);
                 loadingIndicator.style.display = 'none';
-                newsList.innerHTML = '<p class="text-center text-red-500">無法載入最新消息，請稍後再試。</p>';
+                swiperWrapper.innerHTML = `
+                    <div class="swiper-slide">
+                        <p class="text-red-500">無法載入最新消息，請稍後再試。</p>
+                    </div>`;
             }
         }
     </script>
