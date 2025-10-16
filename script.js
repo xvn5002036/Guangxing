@@ -53,7 +53,7 @@ function fetchAllData() {
     fetchEventsData();
 }
 
-// --- UI 控制 ---
+// --- UI 控制 (省略) ---
 function toggleMobileMenu() { mobileMenu.classList.toggle('hidden'); }
 function handleHeaderScroll() {
     header.classList.toggle('py-2', window.scrollY > 50);
@@ -135,28 +135,10 @@ async function handleFindRegistration(event) {
     setSubmitButtonLoading(true, findBtn, findBtnText, findBtnSpinner);
     cancellationResultArea.innerHTML = '';
     cancellationResultArea.classList.add('hidden');
-
     const name = document.getElementById('searchName').value;
     const phoneNumber = document.getElementById('searchPhoneNumber').value;
-
-    // --- DEBUGGING LOG ---
-    console.log("--- 開始查詢報名 ---");
-    console.log("從輸入框讀取到的 姓名:", name);
-    console.log("從輸入框讀取到的 電話:", phoneNumber);
-    // --- END DEBUGGING LOG ---
-
-    const dataToSend = { name, phoneNumber };
-
-    // --- DEBUGGING LOG ---
-    console.log("準備要送到後端的資料:", JSON.stringify(dataToSend));
-    // --- END DEBUGGING LOG ---
-
     try {
-        const response = await fetch('/api/find-registration', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToSend),
-        });
+        const response = await fetch('/api/find-registration', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phoneNumber }), });
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
         displayCancellationCards(result);
@@ -172,21 +154,45 @@ function displayCancellationCards(dataArray) {
     const cardsHTML = dataArray.map(data => { const isCancellable = data.status === 'Confirmed'; const statusClass = data.status === 'Cancelled' ? 'status-cancelled' : 'status-confirmed'; return `<div class="border border-slate-200 rounded-lg p-6 mb-4"><div class="flex justify-between items-start"><div><p class="text-sm text-slate-500">報名活動</p><h4 class="text-xl font-bold text-slate-800">${data.eventName}</h4></div><span class="status-tag ${statusClass}">${data.status === 'Confirmed' ? '已確認' : '已取消'}</span></div><p class="text-sm text-slate-500 mt-2">報名大名：${data.registrantName}</p><p class="text-sm text-slate-500 mt-1">報名編號：${data.registrationId}</p>${isCancellable ? `<div class="mt-6 border-t pt-4"><p class="text-sm text-slate-600 mb-3">若您確定要取消此筆報名，請點擊下方按鈕。此操作無法復原。</p><button class="confirm-cancel-btn w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition-colors" data-page-id="${data.pageId}">確定要取消此筆報名</button></div>` : ''}</div>`; }).join('');
     cancellationResultArea.innerHTML = cardsHTML;
     cancellationResultArea.classList.remove('hidden');
-    document.querySelectorAll('.confirm-cancel-btn').forEach(button => button.addEventListener('click', handleCancelRegistration));
+    document.querySelectorAll('.confirm-cancel-btn').forEach(button => {
+        button.addEventListener('click', handleCancelRegistration);
+    });
 }
 function displayCancellationError(message) { cancellationResultArea.innerHTML = `<div class="bg-red-100 border border-red-200 text-red-800 text-sm rounded-lg p-4">${message}</div>`; cancellationResultArea.classList.remove('hidden'); }
+
 async function handleCancelRegistration(event) {
     const button = event.currentTarget;
     button.disabled = true;
     button.textContent = '取消中...';
+
     const pageId = button.dataset.pageId;
+    
+    // **DEBUGGING LOG**: 確認 pageId 是否正確被讀取
+    console.log("準備取消報名，Page ID:", pageId);
+
     try {
-        const response = await fetch('/api/cancel-registration', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId }), });
+        const response = await fetch('/api/cancel-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pageId: pageId }), // **確保這裡有正確傳送 pageId**
+        });
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message);
+        if (!response.ok) {
+             // **DEBUGGING LOG**: 顯示後端回傳的錯誤
+            console.error("後端取消失敗:", result);
+            throw new Error(result.message || '後端回傳未知錯誤');
+        }
+        
+        // 使用 dispatchEvent 來觸發查詢表單的 submit 事件，以刷新結果
         findRegistrationForm.dispatchEvent(new Event('submit', { cancelable: true }));
+
         showResultModal(true, '取消成功', '您的報名紀錄已成功更新為「已取消」。');
-    } catch (error) { showResultModal(false, '取消失敗', `無法取消您的報名，請稍後再試。錯誤詳情：${error.message}`); button.disabled = false; button.textContent = '確定要取消此筆報名'; }
+
+    } catch (error) {
+        showResultModal(false, '取消失敗', `無法取消您的報名，請稍後再試。<br><small>錯誤詳情：${error.message}</small>`);
+        button.disabled = false;
+        button.textContent = '確定要取消此筆報名';
+    }
 }
 
 // --- 通用輔助函數 ---
