@@ -334,4 +334,3 @@ function showResultModal(isSuccess, title, message) {
 function closeResultModal() {
     resultModal.classList.add('hidden');
 }
-
