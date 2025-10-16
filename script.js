@@ -3,7 +3,7 @@ const mobileMenuButton = document.getElementById('mobile-menu-button');
 const mobileMenu = document.getElementById('mobile-menu');
 const header = document.getElementById('header');
 
-// Registration Modal
+// 報名 Modal
 const registrationModal = document.getElementById('registration-modal');
 const closeModalBtn = document.getElementById('close-modal-btn');
 const registrationForm = document.getElementById('registration-form');
@@ -13,7 +13,7 @@ const submitRegBtn = document.getElementById('submit-registration-btn');
 const submitBtnText = document.getElementById('submit-btn-text');
 const submitBtnSpinner = document.getElementById('submit-btn-spinner');
 
-// Dynamic Registration Fields
+// 動態報名欄位
 const idNumberGroup = document.getElementById('idNumber-group');
 const birthdayGroup = document.getElementById('birthday-group');
 const addressGroup = document.getElementById('address-group');
@@ -21,14 +21,14 @@ const idNumberInput = document.getElementById('idNumber');
 const birthdayInput = document.getElementById('birthday');
 const addressInput = document.getElementById('address');
 
-// Result Modal
+// 結果訊息 Modal
 const resultModal = document.getElementById('result-modal');
 const closeResultModalBtn = document.getElementById('close-result-modal-btn');
 const resultIconContainer = document.getElementById('result-icon-container');
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
 
-// Cancellation Form & Result Area
+// 報名查詢/取消表單與結果區塊
 const findRegistrationForm = document.getElementById('find-registration-form');
 const findBtn = document.getElementById('find-registration-btn');
 const findBtnText = document.getElementById('find-btn-text');
@@ -43,16 +43,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
+    // 手機版選單
     mobileMenuButton.addEventListener('click', toggleMobileMenu);
     document.querySelectorAll('#mobile-menu a').forEach(link => {
         link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
     });
+
+    // 頂部導覽列滾動效果
     window.addEventListener('scroll', handleHeaderScroll);
+
+    // 報名表單 Modal
     closeModalBtn.addEventListener('click', closeRegistrationModal);
     registrationModal.addEventListener('click', (e) => { if (e.target === registrationModal) closeRegistrationModal(); });
     registrationForm.addEventListener('submit', handleRegistrationSubmit);
+    
+    // 結果訊息 Modal
     closeResultModalBtn.addEventListener('click', closeResultModal);
     resultModal.addEventListener('click', (e) => { if (e.target === resultModal) closeResultModal(); });
+
+    // 報名查詢表單
     findRegistrationForm.addEventListener('submit', handleFindRegistration);
 }
 
@@ -69,7 +78,8 @@ function handleHeaderScroll() {
     header.classList.toggle('py-4', window.scrollY <= 50);
 }
 
-// --- 資料獲取與渲染 (省略未變更的函式) ---
+// --- 資料獲取與渲染 ---
+
 async function fetchNewsData() {
     const swiperWrapper = document.getElementById('news-swiper-wrapper');
     const loadingIndicator = document.getElementById('news-loading');
@@ -163,7 +173,7 @@ async function fetchEventsData() {
 }
 
 
-// --- 報名 Modal (省略未變更的函式) ---
+// --- 報名 Modal ---
 function openRegistrationModal(event) {
     const button = event.currentTarget;
     const title = button.dataset.eventTitle;
@@ -198,7 +208,7 @@ async function handleRegistrationSubmit(event) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || '發生未知錯誤');
         closeRegistrationModal();
-        showResultModal(true, `報名成功！`, `您對「${data.eventName}」的報名已成功送出。`);
+        showResultModal(true, `報名成功！`, `您對「${data.eventName}」的報名已成功送出。您的報名編號為：<strong>${result.registrationId}</strong>。`);
     } catch (error) {
         console.error('報名失敗:', error);
         closeRegistrationModal();
@@ -209,19 +219,18 @@ async function handleRegistrationSubmit(event) {
 }
 
 
-// --- 報名查詢/取消 - UPDATED ---
+// --- 報名查詢/取消 ---
 async function handleFindRegistration(event) {
     event.preventDefault();
     setSubmitButtonLoading(true, findBtn, findBtnText, findBtnSpinner);
     cancellationResultArea.innerHTML = '';
     cancellationResultArea.classList.add('hidden');
 
-    // **UPDATED**: Get name instead of registrationId
+    // **修正**: 確保從正確的 ID 讀取輸入框的值
     const name = document.getElementById('searchName').value;
     const phoneNumber = document.getElementById('searchPhoneNumber').value;
 
     try {
-        // **UPDATED**: Send name and phoneNumber
         const response = await fetch('/api/find-registration', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -230,7 +239,7 @@ async function handleFindRegistration(event) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
         
-        displayCancellationCards(result); // **UPDATED**: Handle multiple results
+        displayCancellationCards(result);
 
     } catch (error) {
         displayCancellationError(error.message);
@@ -239,13 +248,11 @@ async function handleFindRegistration(event) {
     }
 }
 
-// **UPDATED**: Function to display one or more result cards
 function displayCancellationCards(dataArray) {
     if (!Array.isArray(dataArray) || dataArray.length === 0) {
         displayCancellationError('找不到符合的報名紀錄。請確認您輸入的資料是否正確。');
         return;
     }
-
     const cardsHTML = dataArray.map(data => {
         const isCancellable = data.status === 'Confirmed';
         const statusClass = data.status === 'Cancelled' ? 'status-cancelled' : 'status-confirmed';
@@ -271,15 +278,12 @@ function displayCancellationCards(dataArray) {
             </div>
         `;
     }).join('');
-
     cancellationResultArea.innerHTML = cardsHTML;
     cancellationResultArea.classList.remove('hidden');
-
     document.querySelectorAll('.confirm-cancel-btn').forEach(button => {
         button.addEventListener('click', handleCancelRegistration);
     });
 }
-
 
 function displayCancellationError(message) {
     cancellationResultArea.innerHTML = `<div class="bg-red-100 border border-red-200 text-red-800 text-sm rounded-lg p-4">${message}</div>`;
@@ -300,8 +304,9 @@ async function handleCancelRegistration(event) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
         
-        // Refresh the search result to show the "Cancelled" status
-        findRegistrationForm.requestSubmit(); 
+        // 使用 dispatchEvent 來觸發查詢表單的 submit 事件，以刷新結果
+        findRegistrationForm.dispatchEvent(new Event('submit', { cancelable: true }));
+
         showResultModal(true, '取消成功', '您的報名紀錄已成功更新為「已取消」。');
 
     } catch (error) {
