@@ -1,0 +1,76 @@
+/* 基本設定 */
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background-color: #f8fafc; /* slate-50 */
+}
+
+h1, h2, h3 {
+    font-family: 'Noto Serif TC', serif;
+}
+
+/* 主視覺背景 */
+.hero-bg {
+    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://images.pexels.com/photos/1614263/pexels-photo-1614263.jpeg?auto=compress&cs=tinysrgb&w=1920');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* 區塊標題底線 */
+.section-title::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: #f59e0b; /* amber-500 */
+    margin: 1rem auto 0;
+    border-radius: 2px;
+}
+
+/* 導覽列連結 hover 效果 */
+.nav-link {
+    position: relative;
+    transition: color 0.3s;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 50%;
+    background-color: #fbbf24; /* amber-400 */
+    transition: all 0.3s ease-in-out;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* 卡片 hover 效果 */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* 輪播 (Swiper) 樣式 */
+.news-carousel {
+    position: relative;
+}
+
+.swiper-slide {
+    padding: 2.5rem;
+    text-align: center;
+    background: #f8fafc; /* slate-50 */
+    border-radius: 0.5rem;
+}
+
+.swiper-pagination-bullet-active {
+    background-color: #f59e0b; /* amber-500 */
+}
