@@ -10,14 +10,10 @@ h1, h2, h3 {
 
 /* 主視覺背景 */
 .hero-bg {
-    /* **最終修正**: 
-       1. 使用您自己的 Cloudinary 優化圖片，確保各裝置載入效能。
-       2. 完全移除 background-attachment: fixed; 以解決手機瀏覽器相容性問題。
-       請將下方的 URL 換成您自己在 Cloudinary 上傳的背景圖網址。
-    */
-    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x576.jpg?auto=compress&cs=tinysrgb&w=1920')
+    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x576.jpg?auto=compress&cs=tinysrgb&w=1920');
     background-size: cover;
     background-position: center;
+    background-attachment: fixed;
 }
 
 /* 區塊標題底線 */
