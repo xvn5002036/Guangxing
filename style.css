@@ -15,7 +15,7 @@ h1, h2, h3 {
        2. 完全移除 background-attachment: fixed; 以解決手機瀏覽器相容性問題。
        請將下方的 URL 換成您自己在 Cloudinary 上傳的背景圖網址。
     */
-    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://my-mit.com/wp-content/uploads/2016/06/%E9%8E%AE%E6%AE%BF%E6%B1%A0%E7%8E%8B.jpg');
+    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x576.jpg?auto=compress&cs=tinysrgb&w=1920')
     background-size: cover;
     background-position: center;
 }
