@@ -8,19 +8,10 @@ h1, h2, h3 {
     font-family: 'Noto Serif TC', serif;
 }
 
-/* 主視覺背景 */
+/* 主視覺背景 - **ULTIMATE FIX** */
 .hero-bg {
-    background-image: linear-gradient(rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.6)), url('https://media.nownews.com/nn_media/thumbnail/2020/10/16422750_1451487574875806_8904478910551999137_o-768x576.jpg?auto=compress&cs=tinysrgb&w=1920');
-    background-size: cover;
-    background-position: center;
-    /* 預設在手機上，背景跟隨頁面滾動 */
-}
-
-/* **新增**: 媒體查詢，只在螢幕寬度大於 768px (平板/電腦) 時，才啟用背景固定效果 */
-@media (min-width: 768px) {
-    .hero-bg {
-        background-attachment: fixed;
-    }
+    /* 移除所有 background-image 相關的屬性 */
+    /* 我們現在直接在 HTML 中控制背景 */
 }
 
 
