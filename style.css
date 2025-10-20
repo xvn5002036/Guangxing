@@ -21,11 +21,14 @@ main > section:not(.hero-bg) {
 }
 /* 為交錯的灰色區塊也加上設定 */
 main > section#news, 
-main > section#cancellation {
+main > section#cancellation,
+main > section#events {
     background-color: #f8fafc; /* slate-50 */
 }
+
+/* 參拜資訊區塊的專屬樣式 */
 #info {
-    background-color: #5466F7; /* gray-900 */
+    background-color: #111827; /* gray-900, 最深的顏色 */
     color: #d1d5db; /* slate-300 */
 }
 #info h2 {
@@ -35,10 +38,11 @@ main > section#cancellation {
     color: #fbbf24; /* amber-400 */
 }
 
-/* **新增**: 為頁腳也設定定位與層級，確保它能蓋在背景圖上 */
+/* **修正**: 為頁腳設定一個稍亮的深灰色，並確保層級 */
 footer {
     position: relative;
     z-index: 10;
+    background-color: #1f2937; /* gray-800, 比參拜資訊區塊亮一點 */
 }
 
 
