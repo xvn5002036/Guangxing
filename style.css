@@ -19,25 +19,26 @@ main > section:not(.hero-bg) {
     z-index: 10;
     background-color: white; /* 預設白色背景 */
 }
-
 /* 為交錯的灰色區塊也加上設定 */
 main > section#news, 
-main > section#cancellation,
-main > section#events {
+main > section#cancellation {
     background-color: #f8fafc; /* slate-50 */
 }
-
-
-/* **新增**: 參拜資訊區塊的專屬樣式 */
 #info {
-    background-color: #111827; /* 比 gray-800 更深的 gray-900 */
-    color: #d1d5db; /* slate-300, 作為預設文字顏色 */
+    background-color: #111827; /* gray-900 */
+    color: #d1d5db; /* slate-300 */
 }
-#info h2 { /* 區塊主標題 */
+#info h2 {
     color: white;
 }
-#info h3 { /* 地址、電話等小標題 */
+#info h3 {
     color: #fbbf24; /* amber-400 */
+}
+
+/* **新增**: 為頁腳也設定定位與層級，確保它能蓋在背景圖上 */
+footer {
+    position: relative;
+    z-index: 10;
 }
 
 
