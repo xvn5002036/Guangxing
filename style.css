@@ -21,8 +21,7 @@ main > section:not(.hero-bg) {
 }
 /* 為交錯的灰色區塊也加上設定 */
 main > section#news, 
-main > section#cancellation,
-main > section#events {
+main > section#cancellation {
     background-color: #f8fafc; /* slate-50 */
 }
 
