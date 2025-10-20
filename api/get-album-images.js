@@ -1,6 +1,6 @@
 const cloudinary = require('cloudinary').v2;
 
-// 設定 Cloudinary 憑證 (會從 Vercel 環境變數讀取)
+// 設定 Cloudinary 憑證
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
   api_key: process.env.CLOUDINARY_API_KEY, 
@@ -17,34 +17,50 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // 從前端請求的 URL 中獲取 folder 參數
     const { folder } = req.query;
 
+    // --- 偵錯日誌 #1 ---
+    console.log(`[DEBUG] 收到請求，準備查詢 Cloudinary 資料夾: "${folder}"`);
+
     if (!folder) {
+        console.error("[DEBUG] 錯誤：請求中缺少 folder 參數。");
         return res.status(400).json({ message: '缺少資料夾名稱。' });
     }
 
     try {
-        // 使用 Cloudinary 的 search API 來安全地獲取指定資料夾中的所有圖片
+        const expression = `folder=${folder}`;
+        
+        // --- 偵錯日誌 #2 ---
+        console.log(`[DEBUG] 準備向 Cloudinary 發送搜尋指令: "${expression}"`);
+
         const searchResult = await cloudinary.search
-            .expression(`folder=${folder}`)
+            .expression(expression)
             .sort_by('public_id', 'desc')
-            .max_results(100) // 最多顯示 100 張照片
+            .max_results(100)
             .execute();
         
-        // 將結果整理成前端需要的格式
-        const images = searchResult.resources.map(img => {
-            return {
-                version: img.version,
-                public_id: img.public_id,
-                format: img.format,
-            };
+        // --- 偵錯日誌 #3 ---
+        // 這一行會印出 Cloudinary 回傳的「所有」原始資料，是我們破案的關鍵！
+        console.log('[DEBUG] 收到來自 Cloudinary 的完整回覆:', JSON.stringify(searchResult, null, 2));
+
+        const images = searchResult.resources.map(img => ({
+            version: img.version,
+            public_id: img.public_id,
+            format: img.format,
+        }));
+        
+        // --- 偵錯日誌 #4 ---
+        console.log(`[DEBUG] 處理完成，找到 ${images.length} 張圖片。`);
+
+        res.status(200).json({
+            images: images,
+            cloudName: process.env.CLOUDINARY_CLOUD_NAME
         });
 
-        res.status(200).json(images);
-
     } catch (error) {
-        console.error('從 Cloudinary 獲取圖片列表時發生錯誤:', error);
+        // --- 偵錯日誌 #5 ---
+        console.error('[DEBUG] 在與 Cloudinary 溝通時發生嚴重錯誤:', error);
         res.status(500).json({ message: '無法獲取相簿圖片。', details: error.message });
     }
 }
+
