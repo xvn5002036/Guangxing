@@ -56,89 +56,34 @@
         <section id="cancellation" class="py-24 bg-slate-50"><div class="container mx-auto px-6"><h2 class="text-4xl font-bold text-center section-title">報名查詢／取消</h2><p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">請輸入您報名時填寫的「姓名」與「聯絡電話」，以查詢或取消您的報名紀錄。</p><div class="mt-12 max-w-xl mx-auto bg-white p-8 rounded-lg shadow-lg"><form id="find-registration-form" class="space-y-4"><div><label for="searchName" class="block text-sm font-medium text-slate-700">您的姓名</label><input type="text" id="searchName" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500" placeholder="請輸入您報名時使用的大名"></div><div><label for="searchPhoneNumber" class="block text-sm font-medium text-slate-700">聯絡電話</label><input type="tel" id="searchPhoneNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500" placeholder="請輸入您報名時使用的電話號碼"></div><button type="submit" id="find-registration-btn" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors flex items-center justify-center"><span id="find-btn-text">查詢報名</span><svg id="find-btn-spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></button></form><div id="cancellation-result-area" class="mt-6 hidden"></div></div></div></section>
         <section id="events" class="py-24 bg-white"><div class="container mx-auto px-6"><h2 class="text-4xl font-bold text-center section-title">活動紀實</h2><p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">回顧本宮歷年來的精彩活動與慶典相簿。</p><div id="events-album-list" class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8"><div id="events-loading" class="col-span-full text-center text-slate-500"><svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">相簿載入中...</p></div></div></div></section>
         
-        <!-- Visitor Information Section - **UPDATED** -->
+        <!-- Visitor Information Section -->
         <section id="info" class="py-24">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">參拜資訊</h2>
                 <div class="mt-16 grid lg:grid-cols-2 gap-12 items-start">
                     <!-- Left Column: Detailed Info -->
                     <div class="space-y-8">
-                        <!-- Contact Info -->
-                        <div class="info-card">
-                            <h3 class="info-card-title">聯絡資訊</h3>
-                            <div class="info-card-content">
-                                <div class="info-item">
-                                    <span class="info-icon">📍</span>
-                                    <div>
-                                        <p class="font-semibold">地址</p>
-                                        <p>242新北市新莊區福營路500號</p>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-icon">📞</span>
-                                    <div>
-                                        <p class="font-semibold">電話</p>
-                                        <p>(02) 1234-5678 (此為範例)</p>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-icon">🕒</span>
-                                    <div>
-                                        <p class="font-semibold">開放時間</p>
-                                        <p>每日 07:00 - 21:00</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Transportation Info -->
-                        <div class="info-card">
-                            <h3 class="info-card-title">交通指南</h3>
-                            <div class="info-card-content">
-                                <div class="info-item">
-                                    <span class="info-icon">🚆</span>
-                                    <div>
-                                        <p class="font-semibold">搭乘捷運</p>
-                                        <p>搭乘中和新蘆線 (橘線) 至「輔大站」，由 1 號出口步行約 10 分鐘即可抵達。</p>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-icon">🚌</span>
-                                    <div>
-                                        <p class="font-semibold">搭乘公車</p>
-                                        <p>搭乘 299、639、810 等路線公車，於「輔大」站下車後步行約 10 分鐘。</p>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-icon">🚗</span>
-                                    <div>
-                                        <p class="font-semibold">自行開車</p>
-                                        <p>可停放於本宮附近之公有停車格或輔仁大學周邊停車場。</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                         <!-- Etiquette Info -->
-                        <div class="info-card">
-                            <h3 class="info-card-title">參拜須知</h3>
-                             <div class="info-card-content">
-                                <div class="info-item">
-                                    <span class="info-icon">🙏</span>
-                                    <div>
-                                        <p class="font-semibold">入廟須知</p>
-                                        <p>衣著整潔，輕聲細語，勿觸摸神像金身，共同維護莊嚴清靜之地。</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="info-card"><h3 class="info-card-title">聯絡資訊</h3><div class="info-card-content"><div class="info-item"><span class="info-icon">📍</span><div><p class="font-semibold">地址</p><p>242新北市新莊區福營路500號</p></div></div><div class="info-item"><span class="info-icon">📞</span><div><p class="font-semibold">電話</p><p>(02) 1234-5678 (此為範例)</p></div></div><div class="info-item"><span class="info-icon">🕒</span><div><p class="font-semibold">開放時間</p><p>每日 07:00 - 21:00</p></div></div></div></div>
+                        <div class="info-card"><h3 class="info-card-title">交通指南</h3><div class="info-card-content"><div class="info-item"><span class="info-icon">🚆</span><div><p class="font-semibold">搭乘捷運</p><p>搭乘中和新蘆線 (橘線) 至「輔大站」，由 1 號出口步行約 10 分鐘即可抵達。</p></div></div><div class="info-item"><span class="info-icon">🚌</span><div><p class="font-semibold">搭乘公車</p><p>搭乘 299、639、810 等路線公車，於「輔大」站下車後步行約 10 分鐘。</p></div></div><div class="info-item"><span class="info-icon">🚗</span><div><p class="font-semibold">自行開車</p><p>可停放於本宮附近之公有停車格或輔仁大學周邊停車場。</p></div></div></div></div>
+                        <div class="info-card"><h3 class="info-card-title">參拜須知</h3><div class="info-card-content"><div class="info-item"><span class="info-icon">🙏</span><div><p class="font-semibold">入廟須知</p><p>衣著整潔，輕聲細語，勿觸摸神像金身，共同維護莊嚴清靜之地。</p></div></div></div></div>
                     </div>
-                    <!-- Right Column: Map -->
+                    <!-- Right Column: Map - **ULTIMATE UPGRADE** -->
                     <div class="sticky top-28">
                         <div class="rounded-lg overflow-hidden shadow-2xl h-96 lg:h-[60vh]">
-                            <iframe src="https://www.google.com/maps/place/242%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E8%8E%8A%E5%8D%80%E7%A6%8F%E7%87%9F%E8%B7%AF500%E8%99%9F/@25.0235371,121.4169606,17z/data=!3m1!4b1!4m6!3m5!1s0x3442a75aadeeb6e5:0x1422dba0d2ca5c74!8m2!3d25.0235323!4d121.4195355!16s%2Fg%2F11kj0vlqzm?authuser=0&entry=ttu&g_ep=EgoyMDI1MTAxNC4wIKXMDSoASAFQAw%3D%3D" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            <!-- **UPDATED**: New Google Maps embed code for a clear marker -->
+                            <iframe src="https://maps.google.com/maps?q=%E6%96%B0%E8%8E%8A%E6%AD%A6%E5%A3%87%E5%BB%A3%E8%A1%8C%E5%AE%AE&t=&z=17&ie=UTF8&iwloc=B&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                         </div>
-                        <a href="https://www.google.com/maps/place/242%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E8%8E%8A%E5%8D%80%E7%A6%8F%E7%87%9F%E8%B7%AF500%E8%99%9F/@25.0235371,121.4169606,17z/data=!3m1!4b1!4m6!3m5!1s0x3442a75aadeeb6e5:0x1422dba0d2ca5c74!8m2!3d25.0235323!4d121.4195355!16s%2Fg%2F11kj0vlqzm?authuser=0&entry=ttu&g_ep=EgoyMDI1MTAxNC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="block w-full text-center mt-4 bg-amber-500 text-white font-bold py-3 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
-                            在 Google 地圖中開啟
-                        </a>
+                        <!-- **UPDATED**: Added a flex container for two buttons -->
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <a href="https://www.google.com/maps/search/?api=1&query=新莊武壇廣行宮" target="_blank" rel="noopener noreferrer" class="map-button bg-blue-500 hover:bg-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 1.586l-4 4v2.828l-4 4v2.828l10 5.657 10-5.657v-2.828l-4-4v-2.828l-4-4zM8 12.414l-2-2V8.586l2 2v1.828zm4 0l-2-2V8.586l2 2v1.828zm4-4.828L12 5.172V3.586l4 4v1.828zM4.414 12L10 15.586 15.586 12H4.414z" clip-rule="evenodd" /></svg>
+                                Google 地圖導航
+                            </a>
+                            <a href="http://maps.apple.com/?q=新莊武壇廣行宮" target="_blank" rel="noopener noreferrer" class="map-button bg-gray-800 hover:bg-gray-900">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+                                Apple 地圖導航
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
