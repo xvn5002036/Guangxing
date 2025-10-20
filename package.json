@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@notionhq/client": "^2.2.15",
     "uuid": "^9.0.1",
