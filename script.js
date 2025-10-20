@@ -60,7 +60,7 @@ function handleHeaderScroll() {
     header.classList.toggle('py-4', window.scrollY <= 50);
 }
 
-// --- 資料獲取與渲染 ---
+// --- 資料獲取與渲染 (News, Registration sections are unchanged) ---
 async function fetchNewsData() {
     const swiperWrapper = document.getElementById('news-swiper-wrapper');
     const loadingIndicator = document.getElementById('news-loading');
@@ -88,44 +88,104 @@ async function fetchRegistrableEventsData() {
         document.querySelectorAll('.register-btn').forEach(button => button.addEventListener('click', openRegistrationModal));
     } catch (error) { console.error("無法獲取可報名活動:", error); loadingIndicator.style.display = 'none'; grid.innerHTML = '<p class="col-span-full text-center text-red-500">無法載入可報名活動，請稍後再試。</p>'; }
 }
+
+
+// --- 活動紀實 (相簿功能) - v2 版本 ---
 async function fetchEventsDataForAlbums() {
-    const albumList = document.getElementById('events-album-list');
+    const albumList = document.getElementById('events-album-list'); // **確認 ID 正確**
     const loadingIndicator = document.getElementById('events-loading');
+
     try {
         const response = await fetch('/api/get-events');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const events = await response.json();
+        
         loadingIndicator.style.display = 'none';
         albumList.innerHTML = ''; 
-        if (events.length === 0) { albumList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有活動紀實相簿。</p>'; return; }
+        
+        if (events.length === 0) {
+            albumList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有活動紀實相簿。</p>';
+            return;
+        }
+
         events.forEach(event => {
             if (!event.albumFolder) return;
-            const albumCard = `<div class="album-card card-hover bg-slate-800 rounded-lg shadow-lg overflow-hidden aspect-w-1 aspect-h-1 group" data-album-folder="${event.albumFolder}" data-album-title="${event.title}"><img src="${event.coverImage || 'https://placehold.co/600x600/e2e8f0/64748b?text=無封面'}" alt="${event.title}" class="w-full h-full object-cover"><div class="album-overlay flex flex-col justify-end p-6"><p class="text-sm text-amber-400 mb-1">${event.date}</p><h3 class="text-xl font-bold text-white">${event.title}</h3></div></div>`;
+            const albumCard = `
+                <div class="album-card card-hover bg-slate-800 rounded-lg shadow-lg overflow-hidden aspect-w-1 aspect-h-1 group" 
+                     data-album-folder="${event.albumFolder}" 
+                     data-album-title="${event.title}">
+                    <img src="${event.coverImage || 'https://placehold.co/600x600/e2e8f0/64748b?text=無封面'}" 
+                         alt="${event.title}" class="w-full h-full object-cover">
+                    <div class="album-overlay flex flex-col justify-end p-6">
+                        <p class="text-sm text-amber-400 mb-1">${event.date}</p>
+                        <h3 class="text-xl font-bold text-white">${event.title}</h3>
+                    </div>
+                </div>`;
             albumList.innerHTML += albumCard;
         });
-        document.querySelectorAll('.album-card').forEach(card => card.addEventListener('click', openAlbumGallery));
-    } catch (error) { console.error("無法獲取活動紀實:", error); loadingIndicator.style.display = 'none'; albumList.innerHTML = '<p class="col-span-full text-center text-red-500">無法載入相簿，請稍後再試。</p>'; }
+
+        document.querySelectorAll('.album-card').forEach(card => {
+            card.addEventListener('click', openAlbumGallery);
+        });
+
+    } catch (error) {
+        console.error("無法獲取活動紀實:", error);
+        loadingIndicator.style.display = 'none';
+        albumList.innerHTML = '<p class="col-span-full text-center text-red-500">無法載入相簿，請稍後再試。</p>';
+    }
 }
+
+// v2 版本: 開啟相簿燈箱
 async function openAlbumGallery(event) {
     const card = event.currentTarget;
     const folder = card.dataset.albumFolder;
     const title = card.dataset.albumTitle;
-    if (!folder) { showResultModal(false, '錯誤', '找不到相簿資料夾設定。'); return; }
+
+    if (!folder) {
+        showResultModal(false, '錯誤', '找不到相簿資料夾設定。');
+        return;
+    }
+
     showResultModal('loading', '載入中...', `正在讀取「${title}」相簿的照片，請稍候...`);
+
     try {
         const response = await fetch(`/api/get-album-images?folder=${folder}`);
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || '無法從伺服器獲取圖片列表。');
+        
         const images = result.images;
         const cloudName = result.cloudName;
-        if (!images || images.length === 0) { showResultModal(false, '相簿為空', `「${title}」相簿中目前沒有照片。`); return; }
-        const dynamicEl = images.map(img => { const highQualityUrl = `https://res.cloudinary.com/${cloudName}/image/upload/q_auto,f_auto/v${img.version}/${img.public_id}.${img.format}`; const thumbUrl = `https://res.cloudinary.com/${cloudName}/image/upload/w_200,h_200,c_fill,q_auto,f_auto/v${img.version}/${img.public_id}.${img.format}`; return { src: highQualityUrl, thumb: thumbUrl, subHtml: `<h4>${title}</h4>` }; });
+
+        if (!images || images.length === 0) {
+            showResultModal(false, '相簿為空', `「${title}」相簿中目前沒有照片。`);
+            return;
+        }
+
+        const dynamicEl = images.map(img => {
+            const highQualityUrl = `https://res.cloudinary.com/${cloudName}/image/upload/q_auto,f_auto/v${img.version}/${img.public_id}.${img.format}`;
+            const thumbUrl = `https://res.cloudinary.com/${cloudName}/image/upload/w_200,h_200,c_fill,q_auto,f_auto/v${img.version}/${img.public_id}.${img.format}`;
+            return { src: highQualityUrl, thumb: thumbUrl, subHtml: `<h4>${title}</h4>` };
+        });
+        
         closeResultModal();
+
         const galleryContainer = document.createElement('div');
-        const lg = lightGallery(galleryContainer, { dynamic: true, dynamicEl: dynamicEl, plugins: [lgThumbnail], licenseKey: '0000-0000-000-0000' });
+        const lg = lightGallery(galleryContainer, {
+            dynamic: true,
+            dynamicEl: dynamicEl,
+            plugins: [lgThumbnail],
+            licenseKey: '0000-0000-000-0000',
+        });
         lg.openGallery();
-    } catch (error) { console.error('開啟相簿失敗:', error); showResultModal(false, '開啟相簿失敗', '無法載入照片，請確認 Cloudinary 設定或稍後再試。'); }
+
+    } catch (error) {
+        console.error('開啟相簿失敗:', error);
+        showResultModal(false, '開啟相簿失敗', '無法載入照片，請確認 Cloudinary 設定或稍後再試。');
+    }
 }
+
+
+// --- 報名 Modal & 查詢/取消 (省略) ---
 function openRegistrationModal(event) {
     const button = event.currentTarget;
     const title = button.dataset.eventTitle;
@@ -204,6 +264,8 @@ async function handleCancelRegistration(event) {
         button.textContent = '確定要取消此筆報名';
     }
 }
+
+// --- 通用輔助函數 ---
 function setSubmitButtonLoading(isLoading, button, textEl, spinnerEl) {
     if (isLoading) { textEl.classList.add('hidden'); spinnerEl.classList.remove('hidden'); button.disabled = true; } 
     else { textEl.classList.remove('hidden'); spinnerEl.classList.add('hidden'); button.disabled = false; }
