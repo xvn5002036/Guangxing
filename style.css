@@ -8,119 +8,170 @@ h1, h2, h3 {
     font-family: 'Noto Serif TC', serif;
 }
 
-/* 主視覺背景 */
-.hero-bg {}
 
-/* 為所有主要內容區塊設定背景與定位 */
-main > section:not(.hero-bg) {
-    position: relative;
-    z-index: 10;
-    background-color: white; 
-}
-main > section#news, 
-main > section#cancellation {
-    background-color: #f8fafc; /* slate-50 */
-}
-#info {
-    background-color: #111827;
-    color: #d1d5db;
-}
-#info h2 { color: white; }
-#info h3 { color: #fbbf24; }
+/* --- 主視覺與頁面背景最終修正 --- */
 
-/* 頁腳 */
-footer {
-    position: relative;
-    z-index: 10;
-    background-color: #1f2937; /* gray-800 */
+/* 1. 主視覺區塊本身只是一個容器 */
+.hero-bg {
+    /* 此處不需要任何背景屬性，由 HTML 中的 <img> 標籤處理 */
 }
 
-/* 媒體查詢 */
+/* 2. 媒體查詢: 只在電腦版(螢幕 > 768px)啟用視差滾動 */
 @media (min-width: 768px) {
+    /* 將背景圖片固定在視窗上 */
     .hero-bg > img {
         position: fixed;
     }
 }
 
+/* 3. 確保其他所有區塊和頁腳都有自己的背景，並且層級(z-index)更高，能蓋住固定的背景圖 */
+main > section:not(.hero-bg),
+footer {
+    position: relative; /* 建立新的堆疊環境 */
+    z-index: 10;      /* 設定比背景圖(z-0)更高的層級 */
+}
+
+/* 4. 為各區塊指定明確的背景色 */
+main > section#about,
+main > section#registration {
+    background-color: white;
+}
+main > section#news,
+main > section#cancellation,
+main > section#events {
+    background-color: #f8fafc; /* slate-50 */
+}
+#info {
+    background-color: #111827; /* gray-900 */
+    color: #d1d5db; /* slate-300 */
+}
+footer {
+    background-color: #1f2937; /* gray-800 */
+}
+#info h2 { color: white; }
+#info h3 { color: #fbbf24; /* amber-400 */ }
+
+
+/* --- 其他所有樣式 --- */
+
 /* 區塊標題底線 */
 .section-title::after {
-    content: ''; display: block; width: 50px; height: 3px;
-    background-color: #f59e0b; margin: 1rem auto 0; border-radius: 2px;
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: #f59e0b; /* amber-500 */
+    margin: 1rem auto 0;
+    border-radius: 2px;
 }
 
-/* 導覽列 */
-.nav-link { position: relative; transition: color 0.3s; }
+/* 導覽列連結 hover 效果 */
+.nav-link {
+    position: relative;
+    transition: color 0.3s;
+}
+
 .nav-link::after {
-    content: ''; position: absolute; width: 0; height: 2px; bottom: -4px;
-    left: 50%; background-color: #fbbf24; transition: all 0.3s ease-in-out;
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 50%;
+    background-color: #fbbf24; /* amber-400 */
+    transition: all 0.3s ease-in-out;
     transform: translateX(-50%);
 }
-.nav-link:hover::after { width: 100%; }
 
-/* 卡片 */
-.card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-.card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+.nav-link:hover::after {
+    width: 100%;
+}
 
-/* 輪播 */
-.news-carousel { position: relative; }
-.swiper-slide { padding: 2.5rem; text-align: center; background: #f8fafc; border-radius: 0.5rem; }
-.swiper-pagination-bullet-active { background-color: #f59e0b; }
+/* 卡片 hover 效果 */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-/* 瀑布流 */
-.masonry-grid { width: 100%; }
-.grid-item { width: calc(33.333% - 1.5rem); margin-bottom: 1.5rem; }
-@media (max-width: 1024px) { .grid-item { width: calc(50% - 1rem); } }
-@media (max-width: 768px) { .grid-item { width: 100%; } }
+.card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
 
-/* Modal 動畫 */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+/* 輪播 (Swiper) 樣式 */
+.news-carousel {
+    position: relative;
+}
+
+.swiper-slide {
+    padding: 2.5rem;
+    text-align: center;
+    background: #f8fafc; /* slate-50 */
+    border-radius: 0.5rem;
+}
+
+.swiper-pagination-bullet-active {
+    background-color: #f59e0b; /* amber-500 */
+}
+
+/* 瀑布流 (Masonry) 樣式 */
+.masonry-grid {
+    width: 100%;
+}
+.grid-item {
+    width: calc(33.333% - 1.5rem);
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 1024px) {
+    .grid-item {
+        width: calc(50% - 1rem);
+    }
+}
+@media (max-width: 768px) {
+    .grid-item {
+        width: 100%;
+    }
+}
+
+/* Modal Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
 
-/* 查詢結果 */
+/* 查詢結果卡片樣式 */
 .status-tag { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
 .status-confirmed { background-color: #dcfce7; color: #166534; }
 .status-cancelled { background-color: #f1f5f9; color: #475569; }
 
-/* 相簿卡片 */
-.album-card { position: relative; overflow: hidden; cursor: pointer; }
-.album-card .album-overlay { position: absolute; inset: 0; background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%); transition: background-color 0.3s ease; }
-.album-card:hover .album-overlay { background-color: rgba(0,0,0,0.2); }
-.album-card img { transition: transform 0.4s ease; }
-.album-card:hover img { transform: scale(1.05); }
-
-/* 參拜資訊區塊卡片化樣式 */
-.info-card {
-    background-color: #1f2937;
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    border-left: 4px solid #f59e0b;
+/* 相簿卡片樣式 */
+.album-card {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
 }
-.info-card-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 1rem;
+.album-card .album-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%);
+    transition: background-color 0.3s ease;
 }
-.info-card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.album-card:hover .album-overlay {
+    background-color: rgba(0,0,0,0.2);
 }
-.info-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    color: #d1d5db;
+.album-card img {
+    transition: transform 0.4s ease;
 }
-.info-icon {
-    font-size: 1.25rem;
-    margin-top: 0.125rem;
-    flex-shrink: 0;
+.album-card:hover img {
+    transform: scale(1.05);
 }
 
-/* **新增**: 地圖導航按鈕的統一格式 */
+/* 地圖導航按鈕 */
 .map-button {
     display: inline-flex;
     align-items: center;
