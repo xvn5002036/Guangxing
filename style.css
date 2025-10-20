@@ -10,8 +10,19 @@ h1, h2, h3 {
 
 /* 主視覺背景 - **ULTIMATE FIX** */
 .hero-bg {
-    /* 移除所有 background-image 相關的屬性 */
-    /* 我們現在直接在 HTML 中控制背景 */
+    /* 這個 class 僅作為容器標示，不再控制背景圖片 */
+}
+
+/* 媒體查詢：只在螢幕寬度大於 768px (通常是平板或電腦) 時，才啟用背景固定效果 */
+@media (min-width: 768px) {
+    /* 讓背景圖片固定在視窗上，不隨頁面滾動。
+       因為父層 <section> 設有 overflow:hidden，
+       所以這個固定效果只會在這個區塊內可見，
+       創造出漂亮的視差滾動效果。
+    */
+    .hero-bg > img {
+        position: fixed;
+    }
 }
 
 
@@ -130,12 +141,5 @@ h1, h2, h3 {
 }
 .album-card:hover img {
     transform: scale(1.05);
-}
-
-/* **新增**: 媒體查詢，只在螢幕寬度大於 768px (平板/電腦) 時，才啟用背景固定效果 */
-@media (min-width: 768px) {
-    .hero-bg > img {
-        position: fixed;
-    }
 }
 
