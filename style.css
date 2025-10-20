@@ -33,12 +33,12 @@ footer {
 
 /* 4. 為各區塊指定明確的背景色 */
 main > section#about,
-main > section#registration {
+main > section#registration,
+main > section#events {
     background-color: white;
 }
 main > section#news,
-main > section#cancellation,
-main > section#events {
+main > section#cancellation {
     background-color: #f8fafc; /* slate-50 */
 }
 #info {
