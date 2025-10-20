@@ -90,9 +90,9 @@ async function fetchRegistrableEventsData() {
 }
 
 
-// --- 活動紀實 (相簿功能) - v2 UPDATED ---
+// --- 活動紀實 (相簿功能) - v2 版本 ---
 async function fetchEventsDataForAlbums() {
-    const albumList = document.getElementById('events-album-list');
+    const albumList = document.getElementById('events-album-list'); // **確認 ID 正確**
     const loadingIndicator = document.getElementById('events-loading');
 
     try {
@@ -135,7 +135,7 @@ async function fetchEventsDataForAlbums() {
     }
 }
 
-// v2 UPDATED: 開啟相簿燈箱，呼叫新的後端 API
+// v2 版本: 開啟相簿燈箱
 async function openAlbumGallery(event) {
     const card = event.currentTarget;
     const folder = card.dataset.albumFolder;
@@ -149,7 +149,6 @@ async function openAlbumGallery(event) {
     showResultModal('loading', '載入中...', `正在讀取「${title}」相簿的照片，請稍候...`);
 
     try {
-        // 呼叫我們新的後端 API
         const response = await fetch(`/api/get-album-images?folder=${folder}`);
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || '無法從伺服器獲取圖片列表。');
@@ -186,7 +185,7 @@ async function openAlbumGallery(event) {
 }
 
 
-// --- 報名 Modal & 查詢/取消 (與上一版相同) ---
+// --- 報名 Modal & 查詢/取消 (省略) ---
 function openRegistrationModal(event) {
     const button = event.currentTarget;
     const title = button.dataset.eventTitle;
@@ -265,6 +264,8 @@ async function handleCancelRegistration(event) {
         button.textContent = '確定要取消此筆報名';
     }
 }
+
+// --- 通用輔助函數 ---
 function setSubmitButtonLoading(isLoading, button, textEl, spinnerEl) {
     if (isLoading) { textEl.classList.add('hidden'); spinnerEl.classList.remove('hidden'); button.disabled = true; } 
     else { textEl.classList.remove('hidden'); spinnerEl.classList.add('hidden'); button.disabled = false; }
