@@ -8,18 +8,26 @@ h1, h2, h3 {
     font-family: 'Noto Serif TC', serif;
 }
 
-/* 主視覺背景 - **ULTIMATE FIX** */
+/* 主視覺背景 */
 .hero-bg {
-    /* 這個 class 僅作為容器標示，不再控制背景圖片 */
+    /* 這個 class 僅作為容器標示 */
 }
 
-/* 媒體查詢：只在螢幕寬度大於 768px (通常是平板或電腦) 時，才啟用背景固定效果 */
+/* **新增**: 為所有主要內容區塊設定背景與定位，以蓋過固定的背景圖 */
+main > section:not(.hero-bg) {
+    position: relative;
+    z-index: 10; /* 確保層級高於背景圖的 z-0 */
+    background-color: white; /* 預設白色背景 */
+}
+/* 為交錯的灰色區塊也加上設定 */
+main > section#news, 
+main > section#cancellation {
+    background-color: #f8fafc; /* slate-50 */
+}
+
+
+/* 媒體查詢：只在電腦版啟用視差滾動效果 */
 @media (min-width: 768px) {
-    /* 讓背景圖片固定在視窗上，不隨頁面滾動。
-       因為父層 <section> 設有 overflow:hidden，
-       所以這個固定效果只會在這個區塊內可見，
-       創造出漂亮的視差滾動效果。
-    */
     .hero-bg > img {
         position: fixed;
     }
@@ -142,3 +150,4 @@ h1, h2, h3 {
 .album-card:hover img {
     transform: scale(1.05);
 }
+
