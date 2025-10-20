@@ -13,16 +13,31 @@ h1, h2, h3 {
     /* 這個 class 僅作為容器標示 */
 }
 
-/* **新增**: 為所有主要內容區塊設定背景與定位，以蓋過固定的背景圖 */
+/* 為所有主要內容區塊設定背景與定位 */
 main > section:not(.hero-bg) {
     position: relative;
-    z-index: 10; /* 確保層級高於背景圖的 z-0 */
+    z-index: 10;
     background-color: white; /* 預設白色背景 */
 }
+
 /* 為交錯的灰色區塊也加上設定 */
 main > section#news, 
-main > section#cancellation {
+main > section#cancellation,
+main > section#events {
     background-color: #f8fafc; /* slate-50 */
+}
+
+
+/* **新增**: 參拜資訊區塊的專屬樣式 */
+#info {
+    background-color: #111827; /* 比 gray-800 更深的 gray-900 */
+    color: #d1d5db; /* slate-300, 作為預設文字顏色 */
+}
+#info h2 { /* 區塊主標題 */
+    color: white;
+}
+#info h3 { /* 地址、電話等小標題 */
+    color: #fbbf24; /* amber-400 */
 }
 
 
