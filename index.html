@@ -68,19 +68,36 @@
             </div>
         </section>
 
-        <!-- Events & Info Sections... -->
-        <section id="events" class="py-24 bg-white"><div class="container mx-auto px-6"><h2 class="text-4xl font-bold text-center section-title">活動紀實</h2><p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">回顧本宮歷年來的精彩活動與慶典。</p><div id="events-list" class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8"><div id="events-loading" class="col-span-full text-center text-slate-500"><svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">活動載入中...</p></div></div></div></section>
+        <!-- Events Section - **ALBUM VERSION** -->
+        <section id="events" class="py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center section-title">活動紀實</h2>
+                <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">回顧本宮歷年來的精彩活動與慶典相簿。</p>
+                <!-- **UPDATED ID**: from events-list to events-album-list -->
+                <div id="events-album-list" class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Loading State -->
+                    <div id="events-loading" class="col-span-full text-center text-slate-500">
+                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <p class="mt-2">相簿載入中...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="info" class="py-24 bg-gray-800 text-white"><div class="container mx-auto px-6"><h2 class="text-4xl font-bold text-center section-title text-white">參拜資訊</h2><div class="mt-16 grid md:grid-cols-2 gap-12 max-w-5xl mx-auto"><div class="space-y-6 text-slate-300"><div><h3 class="text-xl font-bold text-amber-400 mb-2">地址</h3><p>242新北市新莊區福營路500號</p></div><div><h3 class="text-xl font-bold text-amber-400 mb-2">電話</h3><p>(02) 1234-5678 (此為範例)</p></div><div><h3 class="text-xl font-bold text-amber-400 mb-2">開放時間</h3><p>每日 07:00 - 21:00</p></div></div><div class="rounded-lg overflow-hidden shadow-2xl h-80"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3615.143241088481!2d121.42472287537632!3d25.02921507782012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442a78650f38c7d%3A0x6d2d480e15640306!2zMjQy5paw5YyX5biC5paw6I6K5Y2A56aP55ac6LevNTAw6Jmf!5e0!3m2!1szh-TW!2stw!4v1729109724037!5m2!1szh-TW!2stw" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div></div></div></section>
     </main>
     
+    <!-- Modals and Footer -->
     <footer class="bg-gray-900 text-slate-400 py-8"><div class="container mx-auto px-6 text-center text-sm"><p>&copy; 2025 新莊武壇廣行宮. All Rights Reserved.</p></div></footer>
-
-    <!-- MODALS (Registration, Result, Confirmation) -->
     <div id="registration-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50"><div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md relative animate-fade-in-up"><button id="close-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold text-slate-800 mb-2">報名：<span id="modal-event-title"></span></h3><p class="text-slate-500 mb-6">請填寫以下報名資訊</p><form id="registration-form" class="space-y-4"><div><label for="registrantName" class="block text-sm font-medium text-slate-700">您的姓名</label><input type="text" id="registrantName" name="registrantName" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div><div><label for="phoneNumber" class="block text-sm font-medium text-slate-700">聯絡電話</label><input type="tel" id="phoneNumber" name="phoneNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div><div id="idNumber-group" class="hidden"><label for="idNumber" class="block text-sm font-medium text-slate-700">身分證字號</label><input type="text" id="idNumber" name="idNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div><div id="birthday-group" class="hidden"><label for="birthday" class="block text-sm font-medium text-slate-700">出生年月日 (國曆)</label><input type="date" id="birthday" name="birthday" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div><div id="address-group" class="hidden"><label for="address" class="block text-sm font-medium text-slate-700">聯絡地址</label><input type="text" id="address" name="address" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div><input type="hidden" id="eventName" name="eventName"><button type="submit" id="submit-registration-btn" class="w-full bg-amber-500 text-white font-bold py-3 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors flex items-center justify-center"><span id="submit-btn-text">確認送出</span><svg id="submit-btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></button></form></div></div>
     <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50"><div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm text-center animate-fade-in-up"><div id="result-icon-container" class="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"></div><h3 id="result-title" class="text-2xl font-bold text-slate-800 mb-2"></h3><p id="result-message" class="text-slate-600 mb-6"></p><button id="close-result-modal-btn" class="w-full bg-amber-500 text-white font-bold py-2 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">關閉</button></div></div>
-
+    
+    <!-- Scripts -->
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
+
 
