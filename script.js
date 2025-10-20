@@ -2,8 +2,6 @@
 const mobileMenuButton = document.getElementById('mobile-menu-button');
 const mobileMenu = document.getElementById('mobile-menu');
 const header = document.getElementById('header');
-
-// 報名 Modal
 const registrationModal = document.getElementById('registration-modal');
 const closeModalBtn = document.getElementById('close-modal-btn');
 const registrationForm = document.getElementById('registration-form');
@@ -12,29 +10,22 @@ const eventNameInput = document.getElementById('eventName');
 const submitRegBtn = document.getElementById('submit-registration-btn');
 const submitBtnText = document.getElementById('submit-btn-text');
 const submitBtnSpinner = document.getElementById('submit-btn-spinner');
-
-// 動態報名欄位
 const idNumberGroup = document.getElementById('idNumber-group');
 const birthdayGroup = document.getElementById('birthday-group');
 const addressGroup = document.getElementById('address-group');
 const idNumberInput = document.getElementById('idNumber');
 const birthdayInput = document.getElementById('birthday');
 const addressInput = document.getElementById('address');
-
-// 結果訊息 Modal
 const resultModal = document.getElementById('result-modal');
 const closeResultModalBtn = document.getElementById('close-result-modal-btn');
 const resultIconContainer = document.getElementById('result-icon-container');
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
-
-// 報名查詢/取消表單與結果區塊
 const findRegistrationForm = document.getElementById('find-registration-form');
 const findBtn = document.getElementById('find-registration-btn');
 const findBtnText = document.getElementById('find-btn-text');
 const findBtnSpinner = document.getElementById('find-btn-spinner');
 const cancellationResultArea = document.getElementById('cancellation-result-area');
-
 
 // --- 初始載入和事件監聽 ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,25 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
-    // 手機版選單
     mobileMenuButton.addEventListener('click', toggleMobileMenu);
     document.querySelectorAll('#mobile-menu a').forEach(link => {
         link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
     });
-
-    // 頂部導覽列滾動效果
     window.addEventListener('scroll', handleHeaderScroll);
-
-    // 報名表單 Modal
     closeModalBtn.addEventListener('click', closeRegistrationModal);
     registrationModal.addEventListener('click', (e) => { if (e.target === registrationModal) closeRegistrationModal(); });
     registrationForm.addEventListener('submit', handleRegistrationSubmit);
-    
-    // 結果訊息 Modal
     closeResultModalBtn.addEventListener('click', closeResultModal);
     resultModal.addEventListener('click', (e) => { if (e.target === resultModal) closeResultModal(); });
-
-    // 報名查詢表單
     findRegistrationForm.addEventListener('submit', handleFindRegistration);
 }
 
@@ -71,16 +53,14 @@ function fetchAllData() {
     fetchEventsDataForAlbums(); 
 }
 
-// --- UI 控制 ---
+// --- UI 控制 (與上一版相同) ---
 function toggleMobileMenu() { mobileMenu.classList.toggle('hidden'); }
 function handleHeaderScroll() {
     header.classList.toggle('py-2', window.scrollY > 50);
     header.classList.toggle('py-4', window.scrollY <= 50);
 }
 
-// --- 資料獲取與渲染 ---
-
-// 獲取最新消息 (輪播)
+// --- 資料獲取與渲染 (News, Registration sections are unchanged) ---
 async function fetchNewsData() {
     const swiperWrapper = document.getElementById('news-swiper-wrapper');
     const loadingIndicator = document.getElementById('news-loading');
@@ -93,8 +73,6 @@ async function fetchNewsData() {
         new Swiper('.newsSwiper', { loop: newsItems.length > 1, autoplay: { delay: 5000, disableOnInteraction: false }, pagination: { el: '.swiper-pagination', clickable: true }, });
     } catch (error) { console.error("無法獲取最新消息:", error); loadingIndicator.style.display = 'none'; if (swiperWrapper) swiperWrapper.innerHTML = `<div class="swiper-slide"><p class="text-red-500">無法載入最新消息，請稍後再試。</p></div>`; }
 }
-
-// 獲取可報名活動 (瀑布流)
 async function fetchRegistrableEventsData() {
     const grid = document.getElementById('registrable-events-grid');
     const loadingIndicator = document.getElementById('registrable-events-loading');
@@ -112,7 +90,7 @@ async function fetchRegistrableEventsData() {
 }
 
 
-// 活動紀實 (相簿功能) - v2 版本
+// --- 活動紀實 (相簿功能) - v2 UPDATED ---
 async function fetchEventsDataForAlbums() {
     const albumList = document.getElementById('events-album-list');
     const loadingIndicator = document.getElementById('events-loading');
@@ -157,7 +135,7 @@ async function fetchEventsDataForAlbums() {
     }
 }
 
-// v2 版本: 開啟相簿燈箱，呼叫新的後端 API
+// v2 UPDATED: 開啟相簿燈箱，呼叫新的後端 API
 async function openAlbumGallery(event) {
     const card = event.currentTarget;
     const folder = card.dataset.albumFolder;
@@ -208,7 +186,7 @@ async function openAlbumGallery(event) {
 }
 
 
-// --- 報名 Modal & 查詢/取消 ---
+// --- 報名 Modal & 查詢/取消 (與上一版相同) ---
 function openRegistrationModal(event) {
     const button = event.currentTarget;
     const title = button.dataset.eventTitle;
