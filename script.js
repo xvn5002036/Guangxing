@@ -161,7 +161,7 @@ async function fetchDeitiesData() {
                     <p>${deity.description || ''}</p>
                 </div>
             </div>`).join('');
-    } catch (error) {
+    } catch (error) { 
         console.error("無法獲取神明資料:", error);
         loadingIndicator.style.display = 'none';
         grid.innerHTML = `<p class="col-span-full text-center text-red-500">無法載入神明資料，請稍後再試。</p>`;
@@ -181,7 +181,7 @@ async function fetchNewsData() {
         if (!newsItems || newsItems.length === 0) { swiperWrapper.innerHTML = `<div class="swiper-slide"><p class="text-slate-500">目前沒有最新消息。</p></div>`; return; }
         swiperWrapper.innerHTML = newsItems.map(item => `<div class="swiper-slide"><p class="text-sm text-amber-600 mb-1">${item.date || ''}</p><h3 class="text-xl font-bold text-slate-800 mb-2">${item.title || '無標題'}</h3><p class="text-slate-600 max-w-xl mx-auto">${item.content || ''}</p></div>`).join('');
         if (typeof Swiper !== 'undefined') { new Swiper('.newsSwiper', { loop: newsItems.length > 1, autoplay: { delay: 5000, disableOnInteraction: false }, pagination: { el: '.swiper-pagination', clickable: true }, }); }
-    } catch (error) {
+    } catch (error) { 
         console.error("無法獲取最新消息:", error);
         loadingIndicator.style.display = 'none';
         swiperWrapper.innerHTML = `<div class="swiper-slide"><p class="text-red-500">無法載入最新消息，請稍後再試。</p></div>`;
@@ -211,25 +211,17 @@ async function fetchRegistrableEventsData() {
                     </div>
                 </div>
             </div>`).join('');
-        // Initialize Masonry after adding items
         if (typeof Masonry !== 'undefined' && typeof imagesLoaded !== 'undefined') {
-            imagesLoaded(grid, function() {
-              const msnry = new Masonry(grid, {
-                itemSelector: '.grid-item',
-                columnWidth: '.grid-item',
-                percentPosition: true,
-                gutter: 24 // 確保與 style.css 一致
-              });
-            });
+            const msnry = new Masonry(grid, { itemSelector: '.grid-item', columnWidth: '.grid-item', percentPosition: true, gutter: 24 });
+            imagesLoaded(grid).on('progress', () => msnry.layout());
         }
         document.querySelectorAll('.register-btn').forEach(button => button.addEventListener('click', openRegistrationModal));
-    } catch (error) {
+    } catch (error) { 
         console.error("無法獲取可報名活動:", error);
         loadingIndicator.style.display = 'none';
         grid.innerHTML = `<p class="col-span-full text-center text-red-500">無法載入活動，請稍後再試。</p>`;
     }
 }
-
 
 // 活動紀實 (相簿功能)
 async function fetchEventsDataForAlbums() {
@@ -243,38 +235,26 @@ async function fetchEventsDataForAlbums() {
         loadingIndicator.style.display = 'none';
         albumList.innerHTML = '';
         if (!events || events.length === 0) { albumList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有活動紀實相簿。</p>'; return; }
-        let hasContent = false; // Flag to check if any albums were added
         events.forEach(event => {
-            // Only add card if there is an album folder or a video link
-            if (event.albumFolder || event.videoLink) {
-                hasContent = true;
-                const albumCard = `
-                    <div class="album-card card-hover bg-slate-800 rounded-lg shadow-lg overflow-hidden aspect-w-1 aspect-h-1 group"
-                         data-album-folder="${event.albumFolder || ''}" data-album-title="${event.title || ''}" data-video-link="${event.videoLink || ''}">
-                        <img loading="lazy" src="${event.coverImage || 'https://placehold.co/600x600/e2e8f0/64748b?text=無封面'}" alt="${event.title || ''}" class="w-full h-full object-cover">
-                        <div class="album-overlay flex flex-col justify-end p-6">
-                            <p class="text-sm text-amber-400 mb-1">${event.date || ''}</p>
-                            <h3 class="text-xl font-bold text-white">${event.title || '無標題'}</h3>
-                        </div>
-                    </div>`;
-                albumList.innerHTML += albumCard;
-            }
+            if (!event.albumFolder && !event.videoLink) return;
+            const albumCard = `
+                <div class="album-card card-hover bg-slate-800 rounded-lg shadow-lg overflow-hidden aspect-w-1 aspect-h-1 group"
+                     data-album-folder="${event.albumFolder || ''}" data-album-title="${event.title || ''}" data-video-link="${event.videoLink || ''}">
+                    <img loading="lazy" src="${event.coverImage || 'https://placehold.co/600x600/e2e8f0/64748b?text=無封面'}" alt="${event.title || ''}" class="w-full h-full object-cover">
+                    <div class="album-overlay flex flex-col justify-end p-6">
+                        <p class="text-sm text-amber-400 mb-1">${event.date || ''}</p>
+                        <h3 class="text-xl font-bold text-white">${event.title || '無標題'}</h3>
+                    </div>
+                </div>`;
+            albumList.innerHTML += albumCard;
         });
-
-        // If no albums with content were found, display the message
-        if (!hasContent) {
-             albumList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有活動紀實相簿。</p>';
-        } else {
-             document.querySelectorAll('.album-card').forEach(card => card.addEventListener('click', openAlbumGallery));
-        }
-
-    } catch (error) {
+        document.querySelectorAll('.album-card').forEach(card => card.addEventListener('click', openAlbumGallery));
+    } catch (error) { 
         console.error("無法獲取相簿資料:", error);
         loadingIndicator.style.display = 'none';
         albumList.innerHTML = `<p class="col-span-full text-center text-red-500">無法載入相簿，請稍後再試。</p>`;
     }
 }
-
 
 // [!! 已補全 !!] 開啟相簿燈箱 (支援影片)
 async function openAlbumGallery(event) {
@@ -282,7 +262,7 @@ async function openAlbumGallery(event) {
     const folder = card.dataset.albumFolder;
     const title = card.dataset.albumTitle;
     const videoLink = card.dataset.videoLink;
-
+    
     if (typeof lightGallery === 'undefined') {
         alert('相簿功能載入失敗。');
         return;
@@ -297,7 +277,7 @@ async function openAlbumGallery(event) {
                 'subHtml': `<h4>${title}</h4>`
             }],
             plugins: [lgVideo],
-            licenseKey: '0000-0000-000-0000', // Replace with your actual license key if you have one
+            licenseKey: '0000-0000-000-0000',
             download: false
         });
         videoGallery.openGallery(0);
@@ -307,22 +287,12 @@ async function openAlbumGallery(event) {
     // 2. 如果是相簿資料夾，抓取圖片
     if (folder) {
         try {
-            // Show a simple loading indicator (optional)
-            card.style.cursor = 'wait';
-
-            const response = await fetch(`/api/get-album-images?folder=${encodeURIComponent(folder)}`);
-            if (!response.ok) {
-                 const errorData = await response.json();
-                 throw new Error(errorData.message || '無法讀取相簿內容');
-            }
-
+            const response = await fetch(`/api/get-album-images?folder=${folder}`);
+            if (!response.ok) throw new Error('無法讀取相簿內容');
+            
             const data = await response.json();
             const cloudName = data.cloudName;
             const images = data.images;
-
-            if (!cloudName) {
-                throw new Error('Cloudinary cloud name not configured.');
-            }
 
             if (!images || images.length === 0) {
                 alert('此相簿目前沒有照片。');
@@ -332,8 +302,8 @@ async function openAlbumGallery(event) {
             const dynamicEl = images.map(img => {
                 const imageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/v${img.version}/${img.public_id}.${img.format}`;
                 return {
-                    'src': imageUrl, // Use original image for main view
-                    'thumb': `https://res.cloudinary.com/${cloudName}/image/upload/w_200,h_200,c_fill,q_auto/v${img.version}/${img.public_id}.${img.format}`, // Smaller thumbnail
+                    'src': `${imageUrl}?w=1200`, // 大圖
+                    'thumb': `${imageUrl}?w=200&h=200&c=fill`, // 縮圖
                     'subHtml': `<h4>${title}</h4>`
                 };
             });
@@ -342,7 +312,7 @@ async function openAlbumGallery(event) {
                 dynamic: true,
                 dynamicEl: dynamicEl,
                 plugins: [lgThumbnail],
-                licenseKey: '0000-0000-000-0000', // Replace with your actual license key
+                licenseKey: '0000-0000-000-0000',
                 thumbnail: true,
                 download: false
             });
@@ -350,9 +320,7 @@ async function openAlbumGallery(event) {
 
         } catch (error) {
             console.error('開啟相簿失敗:', error);
-            alert(`開啟相簿失敗：${error.message}`);
-        } finally {
-            card.style.cursor = 'pointer'; // Reset cursor
+            alert('開啟相簿失敗，請稍後再試。');
         }
     }
 }
@@ -360,14 +328,14 @@ async function openAlbumGallery(event) {
 
 // [!! 已補全 !!] 線上求籤
 async function handleFortuneShake(event) {
-    if (!shakeButton || shakeButton.classList.contains('is-shaking')) return; // 防止重複點擊 or element not found
+    if (shakeButton.classList.contains('is-shaking')) return; // 防止重複點擊
 
     shakeButton.classList.add('is-shaking');
     if (shakeLoadingText) shakeLoadingText.textContent = '王爺賜籤中，請稍候...';
 
     try {
-        // 延遲 1.5 秒模擬抽籤過程
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // 延遲 2 秒模擬抽籤過程
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         const response = await fetch('/api/get-fortune-slip'); // 呼叫 API
         if (!response.ok) {
@@ -377,7 +345,7 @@ async function handleFortuneShake(event) {
 
         const slip = await response.json();
 
-        // 填充 Modal 內容 (增加檢查元素是否存在)
+        // 填充 Modal 內容
         const titleEl = document.getElementById('fortune-title');
         const typeEl = document.getElementById('fortune-type');
         const poemEl = document.getElementById('fortune-poem');
@@ -397,16 +365,12 @@ async function handleFortuneShake(event) {
                 case '下':
                     typeEl.classList.add('bg-slate-200', 'text-slate-700');
                     break;
-                default: // 中吉, 中, 中平 etc.
+                default:
                     typeEl.classList.add('bg-amber-100', 'text-amber-800');
             }
         }
         if (poemEl) poemEl.textContent = slip.poem || '';
-        // 將 \n 替換為 <br> 以保留換行
-        if (interpretationEl) {
-             interpretationEl.innerHTML = (slip.interpretation || '').replace(/\n/g, '<br>');
-        }
-
+        if (interpretationEl) interpretationEl.textContent = slip.interpretation || '';
 
         openFortuneModal(); // 打開 Modal
 
@@ -416,7 +380,7 @@ async function handleFortuneShake(event) {
         // 顯示一個錯誤的 Result Modal
         showResultModal(false, "求籤失敗", "無法連接至王爺的籤筒，請稍後再試。");
     } finally {
-        if (shakeButton) shakeButton.classList.remove('is-shaking');
+        shakeButton.classList.remove('is-shaking');
         // 5秒後清除提示文字
         setTimeout(() => {
             if (shakeLoadingText) shakeLoadingText.textContent = '';
@@ -442,7 +406,7 @@ function closeFortuneModal() {
 function openRegistrationModal(event) {
     const button = event.currentTarget;
     const title = button.dataset.eventTitle;
-
+    
     // 根據 data-require-* 屬性決定是否顯示選填欄位
     const requireId = button.dataset.requireId === 'true';
     const requireBirthday = button.dataset.requireBirthday === 'true';
@@ -451,23 +415,20 @@ function openRegistrationModal(event) {
     if (modalEventTitle) modalEventTitle.textContent = title;
     if (eventNameInput) eventNameInput.value = title;
 
-    // Toggle visibility and requirement based on data attributes
     if (idNumberGroup) idNumberGroup.style.display = requireId ? 'block' : 'none';
     if (idNumberInput) idNumberInput.required = requireId;
 
     if (birthdayGroup) birthdayGroup.style.display = requireBirthday ? 'block' : 'none';
     if (birthdayInput) birthdayInput.required = requireBirthday;
-
+    
     if (addressGroup) addressGroup.style.display = requireAddress ? 'block' : 'none';
     if (addressInput) addressInput.required = requireAddress;
-
 
     if (registrationModal) {
         registrationModal.classList.remove('hidden');
         registrationModal.classList.add('flex');
     }
 }
-
 
 function closeRegistrationModal() {
     if (registrationModal) {
@@ -483,12 +444,6 @@ async function handleRegistrationSubmit(event) {
 
     const formData = new FormData(registrationForm);
     const data = Object.fromEntries(formData.entries());
-
-    // Filter out optional fields if they were hidden and not required
-    if (idNumberGroup && idNumberGroup.style.display === 'none') delete data.idNumber;
-    if (birthdayGroup && birthdayGroup.style.display === 'none') delete data.birthday;
-    if (addressGroup && addressGroup.style.display === 'none') delete data.address;
-
 
     try {
         const response = await fetch('/api/submit-registration', {
@@ -507,8 +462,6 @@ async function handleRegistrationSubmit(event) {
 
     } catch (error) {
         console.error('報名提交失敗:', error);
-        // Don't close modal on error, show error inside or below form?
-        // For now, closing and showing error modal
         closeRegistrationModal();
         showResultModal(false, "報名失敗", `送出資料時發生錯誤，請稍後再試或聯絡本宮。(${error.message})`);
     } finally {
@@ -519,21 +472,11 @@ async function handleRegistrationSubmit(event) {
 // [!! 已補全 !!] 查詢/取消
 async function handleFindRegistration(event) {
     event.preventDefault();
-    if (!findBtn || !findBtnText || !findBtnSpinner) return; // Add checks
     setSubmitButtonLoading(true, findBtn, findBtnText, findBtnSpinner);
     if (cancellationResultArea) cancellationResultArea.innerHTML = ''; // 清空舊結果
 
-    const nameInput = document.getElementById('searchName');
-    const phoneInput = document.getElementById('searchPhoneNumber');
-
-    if (!nameInput || !phoneInput) {
-         displayCancellationError('找不到查詢欄位。');
-         setSubmitButtonLoading(false, findBtn, findBtnText, findBtnSpinner);
-         return;
-    }
-
-    const name = nameInput.value;
-    const phoneNumber = phoneInput.value;
+    const name = document.getElementById('searchName').value;
+    const phoneNumber = document.getElementById('searchPhoneNumber').value;
 
     try {
         const response = await fetch('/api/find-registration', {
@@ -544,10 +487,6 @@ async function handleFindRegistration(event) {
 
         const result = await response.json();
         if (!response.ok) {
-            // Handle 404 specifically
-            if (response.status === 404) {
-                 throw new Error('找不到符合的報名紀錄。請確認您輸入的資料是否正確。');
-            }
             throw new Error(result.message || '查詢失敗');
         }
 
@@ -563,48 +502,38 @@ async function handleFindRegistration(event) {
 
 function displayCancellationCards(dataArray) {
     if (!cancellationResultArea) return;
-    if (!Array.isArray(dataArray)) { // Check if dataArray is actually an array
-        displayCancellationError('查詢結果格式錯誤。');
-        return;
-    }
     if (dataArray.length === 0) {
         displayCancellationError('找不到符合的報名紀錄。');
         return;
     }
 
-    const cardsHtml = dataArray.map(record => {
-        // Basic validation of record structure
-        if (!record || !record.eventName || !record.registrationId || !record.status) {
-            console.warn('Skipping invalid record:', record);
-            return ''; // Skip rendering this card
-        }
-        const isConfirmed = record.status === 'Confirmed';
-        return `
+    const cardsHtml = dataArray.map(record => `
         <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
-            <div class="flex justify-between items-start flex-wrap gap-2"> <div>
+            <div class="flex justify-between items-start">
+                <div>
                     <h4 class="font-bold text-slate-800">${record.eventName}</h4>
                     <p class="text-sm text-slate-500">報名編號: ${record.registrationId}</p>
                 </div>
-                <span class="status-tag ${isConfirmed ? 'status-confirmed' : 'status-cancelled'}">
-                    ${isConfirmed ? '報名成功' : '已取消'}
+                <span class="status-tag ${record.status === 'Confirmed' ? 'status-confirmed' : 'status-cancelled'}">
+                    ${record.status === 'Confirmed' ? '報名成功' : '已取消'}
                 </span>
             </div>
-            ${isConfirmed ? `
+            ${record.status === 'Confirmed' ? `
             <div class="mt-4 pt-4 border-t border-slate-100">
-                <button
-                    class="confirm-cancel-btn w-full text-sm bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                <button 
+                    class="confirm-cancel-btn w-full text-sm bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
                     data-page-id="${record.pageId}"
                     data-event-name="${record.eventName}">
                     確定要取消「${record.eventName}」?
                 </button>
             </div>` : ''}
         </div>
-    `}).join('');
-
+    `).join('');
+    
     cancellationResultArea.innerHTML = cardsHtml;
     cancellationResultArea.classList.remove('hidden');
 
-    // Add event listeners to cancel buttons
+    // 幫所有取消按鈕加上監聽
     document.querySelectorAll('.confirm-cancel-btn').forEach(button => {
         button.addEventListener('click', handleCancelRegistration);
     });
@@ -621,12 +550,6 @@ async function handleCancelRegistration(event) {
     const button = event.currentTarget;
     const pageId = button.dataset.pageId;
     const eventName = button.dataset.eventName;
-
-    if (!pageId) {
-         showResultModal(false, "取消失敗", "找不到報名紀錄 ID。");
-         return;
-    }
-
 
     if (!confirm(`您確定要取消報名「${eventName}」嗎？此動作無法復原。`)) {
         return;
@@ -648,17 +571,13 @@ async function handleCancelRegistration(event) {
         }
 
         showResultModal(true, "取消成功", `您已成功取消「${eventName}」的報名。`);
-        // Refresh the search results to show the updated status
-        if (findRegistrationForm) {
-            // Manually trigger the submit event on the form
-             const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-             findRegistrationForm.dispatchEvent(submitEvent);
-        }
+        // 重新查詢以刷新狀態
+        if (findRegistrationForm) findRegistrationForm.dispatchEvent(new Event('submit'));
 
     } catch (error) {
         console.error('取消失敗:', error);
         showResultModal(false, "取消失敗", `取消報名時發生錯誤：${error.message}`);
-        button.disabled = false; // Re-enable button on error
+        button.disabled = false;
         button.textContent = `確定要取消「${eventName}」?`;
     }
 }
@@ -681,7 +600,7 @@ function setSubmitButtonLoading(isLoading, button, textEl, spinnerEl) {
 function showResultModal(isSuccess, title, message) {
     if (!resultModal || !resultIconContainer || !resultTitle || !resultMessage) return;
 
-    // Clear previous icons and background
+    // 清除舊的 icon
     resultIconContainer.innerHTML = '';
     resultIconContainer.classList.remove('bg-green-100', 'bg-red-100');
 
@@ -694,14 +613,11 @@ function showResultModal(isSuccess, title, message) {
     }
 
     resultTitle.textContent = title;
-    // Replace newline characters with <br> for HTML display
-    resultMessage.innerHTML = message.replace(/\n/g, '<br>');
-
+    resultMessage.textContent = message;
 
     resultModal.classList.remove('hidden');
     resultModal.classList.add('flex');
 }
-
 
 function closeResultModal() {
     if (resultModal) {
@@ -716,34 +632,20 @@ async function initializeCalendar() {
     const loadingEl = document.getElementById('calendar-loading');
     const errorEl = document.getElementById('calendar-error');
 
-    // Make sure elements exist before proceeding
     if (!calendarEl || !loadingEl || !errorEl) {
-        console.error("Calendar elements not found. Cannot initialize calendar.");
-        // Optionally display an error message to the user in a designated area
+        console.error("Calendar elements not found.");
         return;
     }
-
 
     try {
         const response = await fetch('/api/get-calendar-events'); // 呼叫新的 API
         if (!response.ok) {
-            // Try to parse error message from API response
-            let errorMessage = 'Unknown error';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || JSON.stringify(errorData);
-            } catch (parseError) {
-                // If parsing fails, use the status text
-                errorMessage = response.statusText;
-            }
-             throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${(await response.json()).message || 'Unknown error'}`);
         }
         const events = await response.json();
 
         loadingEl.style.display = 'none';
         calendarEl.style.display = 'block';
-        errorEl.style.display = 'none'; // Hide error message on success
-
 
         // --- 初始化 FullCalendar ---
         const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -763,7 +665,7 @@ async function initializeCalendar() {
             events: events, // 將從 API 取得的事件放入
             eventDidMount: function(info) {
                 // [新增] 滑鼠移入事件，顯示 Tooltip
-                if (info.event.extendedProps && info.event.extendedProps.description) {
+                if (info.event.extendedProps.description) {
                     info.el.addEventListener('mouseenter', (e) => showTooltip(e, info.event.extendedProps.description));
                     info.el.addEventListener('mouseleave', hideTooltip);
                 }
@@ -779,8 +681,6 @@ async function initializeCalendar() {
     } catch (error) {
         console.error("無法初始化行事曆:", error);
         loadingEl.style.display = 'none';
-        calendarEl.style.display = 'none'; // Hide calendar on error
-        errorEl.textContent = `無法載入行事曆資料：${error.message}`; // Display specific error
         errorEl.style.display = 'block'; // 顯示錯誤訊息
     }
 }
@@ -807,43 +707,29 @@ function hideTooltip(mouseEvent) {
         tooltipElement.style.display = 'none';
     }
      // 移除移動監聽
-    if (mouseEvent && mouseEvent.target) { // Add check for target existence
-      mouseEvent.target.removeEventListener('mousemove', positionTooltip);
-    }
+    mouseEvent.target.removeEventListener('mousemove', positionTooltip);
 }
 
-
 function positionTooltip(mouseEvent) {
-     if (!tooltipElement || !mouseEvent) return; // Add check for mouseEvent
+     if (!tooltipElement) return;
      // 簡單定位在滑鼠右下方，可再優化邊界判斷
      const x = mouseEvent.clientX + 10;
      const y = mouseEvent.clientY + 10;
-
-     // Ensure tooltip doesn't go off-screen
-     const tooltipRect = tooltipElement.getBoundingClientRect(); // Get dimensions after setting content
+     
+     // 邊界偵測
+     const tooltipRect = tooltipElement.getBoundingClientRect();
      const viewportWidth = window.innerWidth;
      const viewportHeight = window.innerHeight;
 
      let finalX = x;
      let finalY = y;
 
-     // Adjust if too close to the right edge
-     if (x + tooltipRect.width > viewportWidth - 10) { // Add a small buffer
-         finalX = mouseEvent.clientX - tooltipRect.width - 10;
+     if (x + tooltipRect.width > viewportWidth) {
+         finalX = mouseEvent.clientX - tooltipRect.width - 10; // 改到左邊
      }
-     // Adjust if too close to the bottom edge
-     if (y + tooltipRect.height > viewportHeight - 10) { // Add a small buffer
-         finalY = mouseEvent.clientY - tooltipRect.height - 10;
+     if (y + tooltipRect.height > viewportHeight) {
+         finalY = mouseEvent.clientY - tooltipRect.height - 10; // 改到上邊
      }
-     // Adjust if too close to the left edge (after potential right-edge adjustment)
-     if (finalX < 10) {
-         finalX = 10;
-     }
-      // Adjust if too close to the top edge (after potential bottom-edge adjustment)
-     if (finalY < 10) {
-         finalY = 10;
-     }
-
 
      tooltipElement.style.left = `${finalX}px`;
      tooltipElement.style.top = `${finalY}px`;
