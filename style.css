@@ -74,7 +74,7 @@ footer { position: relative; z-index: 10; background-color: #1f2937; }
 /* Masonry */
 .masonry-grid { width: 100%; }
 .grid-item { width: calc(33.333% - 1.5rem); margin-bottom: 1.5rem; }
-@media (max-width: 1024px) { .grid-item { width: calc(50% - 1rem); } }
+@media (max-width: 1024px) { .grid-item { width: calc(50% - 1.5rem); } } /* 修正 gutter 計算 */
 @media (max-width: 768px) { .grid-item { width: 100%; } }
 
 /* Modal Animation */
@@ -158,9 +158,9 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     cursor: pointer; 
     border: none !important; 
     background-color: #fbbf24 !important; 
-    color: #422006 !important; 
+    color: #000000 !important; /* [修改] 改為純黑色，對比最強 */
     padding: 2px 4px; 
-    font-size: 0.85em; 
+    font-size: 0.9em; /* [修改] 字體稍微放大 */
     border-radius: 3px; 
     font-weight: 600; /* [已修改] 讓文字變粗 */
 }
@@ -181,8 +181,9 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
 .fc-list-event-title a,
 .fc-list-event-title a:link,
 .fc-list-event-title a:visited {
-    color: #422006 !important; /* 深褐色 */
+    color: #000000 !important; /* [修改] 改為純黑色 */
     font-weight: 600 !important; /* 加粗 */
+    font-size: 1.05em; /* [修改] 列表的字體也放大 */
     text-decoration: none !important; /* 移除底線 */
 }
 
