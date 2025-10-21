@@ -1,42 +1,49 @@
-// --- 全域變數和 DOM 元素 ---
-const mobileMenuButton = document.getElementById('mobile-menu-button');
-const mobileMenu = document.getElementById('mobile-menu');
-const header = document.getElementById('header');
-// 報名 Modal
-const registrationModal = document.getElementById('registration-modal');
-const closeModalBtn = document.getElementById('close-modal-btn');
-const registrationForm = document.getElementById('registration-form');
-const modalEventTitle = document.getElementById('modal-event-title');
-const eventNameInput = document.getElementById('eventName');
-const submitRegBtn = document.getElementById('submit-registration-btn');
-const submitBtnText = document.getElementById('submit-btn-text');
-const submitBtnSpinner = document.getElementById('submit-btn-spinner');
-const idNumberGroup = document.getElementById('idNumber-group');
-const birthdayGroup = document.getElementById('birthday-group');
-const addressGroup = document.getElementById('address-group');
-const idNumberInput = document.getElementById('idNumber');
-const birthdayInput = document.getElementById('birthday');
-const addressInput = document.getElementById('address');
-// 通用結果 Modal
-const resultModal = document.getElementById('result-modal');
-const closeResultModalBtn = document.getElementById('close-result-modal-btn');
-const resultIconContainer = document.getElementById('result-icon-container');
-const resultTitle = document.getElementById('result-title');
-const resultMessage = document.getElementById('result-message');
-// 報名查詢
-const findRegistrationForm = document.getElementById('find-registration-form');
-const findBtn = document.getElementById('find-registration-btn');
-const findBtnText = document.getElementById('find-btn-text');
-const findBtnSpinner = document.getElementById('find-btn-spinner');
-const cancellationResultArea = document.getElementById('cancellation-result-area');
-// [新增] 線上求籤 Modal
-const fortuneModal = document.getElementById('fortune-modal');
-const closeFortuneModalBtn = document.getElementById('close-fortune-modal-btn');
-const shakeButton = document.getElementById('shake-button');
-const shakeLoadingText = document.getElementById('shake-loading-text');
+// --- [修改] 全域變數：只宣告，不賦值 ---
+let mobileMenuButton, mobileMenu, header, registrationModal, closeModalBtn, registrationForm,
+    modalEventTitle, eventNameInput, submitRegBtn, submitBtnText, submitBtnSpinner,
+    idNumberGroup, birthdayGroup, addressGroup, idNumberInput, birthdayInput, addressInput,
+    resultModal, closeResultModalBtn, resultIconContainer, resultTitle, resultMessage,
+    findRegistrationForm, findBtn, findBtnText, findBtnSpinner, cancellationResultArea,
+    fortuneModal, closeFortuneModalBtn, shakeButton, shakeLoadingText;
 
 // --- 初始載入和事件監聽 ---
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- [新增] DOM 載入後，才抓取所有元素 ---
+    mobileMenuButton = document.getElementById('mobile-menu-button');
+    mobileMenu = document.getElementById('mobile-menu');
+    header = document.getElementById('header');
+    registrationModal = document.getElementById('registration-modal');
+    closeModalBtn = document.getElementById('close-modal-btn');
+    registrationForm = document.getElementById('registration-form');
+    modalEventTitle = document.getElementById('modal-event-title');
+    eventNameInput = document.getElementById('eventName');
+    submitRegBtn = document.getElementById('submit-registration-btn');
+    submitBtnText = document.getElementById('submit-btn-text');
+    submitBtnSpinner = document.getElementById('submit-btn-spinner');
+    idNumberGroup = document.getElementById('idNumber-group');
+    birthdayGroup = document.getElementById('birthday-group');
+    addressGroup = document.getElementById('address-group');
+    idNumberInput = document.getElementById('idNumber');
+    birthdayInput = document.getElementById('birthday');
+    addressInput = document.getElementById('address');
+    resultModal = document.getElementById('result-modal');
+    closeResultModalBtn = document.getElementById('close-result-modal-btn');
+    resultIconContainer = document.getElementById('result-icon-container');
+    resultTitle = document.getElementById('result-title');
+    resultMessage = document.getElementById('result-message');
+    findRegistrationForm = document.getElementById('find-registration-form');
+    findBtn = document.getElementById('find-registration-btn');
+    findBtnText = document.getElementById('find-btn-text');
+    findBtnSpinner = document.getElementById('find-btn-spinner');
+    cancellationResultArea = document.getElementById('cancellation-result-area');
+    fortuneModal = document.getElementById('fortune-modal');
+    closeFortuneModalBtn = document.getElementById('close-fortune-modal-btn');
+    shakeButton = document.getElementById('shake-button');
+    shakeLoadingText = document.getElementById('shake-loading-text');
+
+    // --- 載入資料和設定監聽 ---
+    // (這些函式現在會使用上面剛賦值的變數)
     fetchAllData();
     setupEventListeners();
     setupScrollAnimation(); // [新增] 啟動滾動動畫
