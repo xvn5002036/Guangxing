@@ -8,10 +8,24 @@ h1, h2, h3 {
     font-family: 'Noto Serif TC', serif;
 }
 
-/* 主視覺背景 */
+/* ---------------------------------- */
+/* 豪華升級：Hero 影片背景 */
+/* ---------------------------------- */
 .hero-bg {
-    /* 這個 class 僅作為容器標示 */
+    position: relative;
+    overflow: hidden;
 }
+
+.hero-bg > video {
+    position: absolute;
+    inset: 0;
+    w-full: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+/* ---------------------------------- */
+
 
 /* 為所有主要內容區塊設定背景與定位 */
 main > section:not(.hero-bg) {
@@ -22,7 +36,8 @@ main > section:not(.hero-bg) {
 /* 為交錯的灰色區塊也加上設定 */
 main > section#news, 
 main > section#cancellation,
-main > section#events {
+main > section#events,
+main > section#fortune { /* [新增] 求籤區塊也是灰色 */
     background-color: #f8fafc; /* slate-50 */
 }
 
@@ -48,9 +63,10 @@ footer {
 
 /* 媒體查詢：只在電腦版啟用視差滾動效果 */
 @media (min-width: 768px) {
-    .hero-bg > img {
+    /* [註解] 由於改用 Video，此固定背景效果不再需要 */
+    /* .hero-bg > img {
         position: fixed;
-    }
+    } */
 }
 
 
@@ -171,3 +187,120 @@ footer {
     transform: scale(1.05);
 }
 
+
+/* ---------------------------------- */
+/* 豪華升級：滾動載入動畫 */
+/* ---------------------------------- */
+.scroll-animate {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-animate.scrolled-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ---------------------------------- */
+/* 豪華升級：神明介紹卡片 */
+/* ---------------------------------- */
+.deity-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.deity-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+.deity-card-content {
+    padding: 1.5rem;
+}
+.deity-card-content h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b; /* slate-800 */
+}
+.deity-card-content p {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #475569; /* slate-600 */
+    line-height: 1.6;
+}
+
+/* ---------------------------------- */
+/* 豪華升級：求籤按鈕與 Modal */
+/* ---------------------------------- */
+.shake-button {
+    width: 150px;
+    height: 150px;
+    margin: 2rem auto 0;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+.shake-button:hover {
+    transform: scale(1.05);
+}
+/* 搖動動畫 */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+.shake-button.is-shaking {
+    animation: shake 0.8s ease-in-out infinite;
+}
+
+/* 求籤 Modal */
+#fortune-modal {
+    /* 使用與 result-modal 相同的樣式 */
+}
+#fortune-modal-content {
+    text-align: left;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 1rem; /* for scrollbar */
+}
+#fortune-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    border-bottom: 2px solid #f59e0b;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+#fortune-type {
+    display: inline-block;
+    padding: 0.25rem 1rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    background-color: #fef3c7; /* amber-100 */
+    color: #92400e; /* amber-800 */
+    margin-bottom: 1.5rem;
+}
+#fortune-poem, #fortune-interpretation {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    line-height: 2;
+    color: #334155; /* slate-700 */
+    white-space: pre-wrap; /* 保留換行 */
+    margin-bottom: 1.5rem;
+}
+#fortune-interpretation {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 1rem;
+    line-height: 1.8;
+}
+#fortune-interpretation::before {
+    content: '【解曰】';
+    font-weight: 700;
+    color: #1e293b;
+    display: block;
+    margin-bottom: 0.5rem;
+}
