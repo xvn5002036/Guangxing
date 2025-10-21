@@ -74,6 +74,7 @@ function fetchAllData() {
     fetchEventsDataForAlbums();
     fetchDeitiesData();
     fetchArticlesData(); // [修改] 呼叫載入文章的函數
+	initializeCalendar(); // [新增] 初始化行事曆
 }
 
 // --- UI 相關 ---
@@ -262,3 +263,102 @@ async function handleCancelRegistration(event) { /* ... 邏輯不變 ... */ }
 function setSubmitButtonLoading(isLoading, button, textEl, spinnerEl) { /* ... 邏輯不變 ... */ }
 function showResultModal(isSuccess, title, message) { /* ... 邏輯不變 ... */ }
 function closeResultModal() { /* ... 邏輯不變 ... */ }
+
+// --- [新增] 初始化行事曆 ---
+async function initializeCalendar() {
+    const calendarEl = document.getElementById('calendar-element');
+    const loadingEl = document.getElementById('calendar-loading');
+    const errorEl = document.getElementById('calendar-error');
+
+    if (!calendarEl || !loadingEl || !errorEl) {
+        console.error("Calendar elements not found.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/get-calendar-events'); // 呼叫新的 API
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}, message: ${(await response.json()).message || 'Unknown error'}`);
+        }
+        const events = await response.json();
+
+        loadingEl.style.display = 'none';
+        calendarEl.style.display = 'block';
+
+        // --- 初始化 FullCalendar ---
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth', // 預設月視圖
+            locale: 'zh-tw', // 設定繁體中文
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek' // 提供不同視圖切換
+            },
+            buttonText: { // 中文化按鈕文字
+                today: '今天',
+                month: '月',
+                week: '週',
+                list: '列表'
+            },
+            events: events, // 將從 API 取得的事件放入
+            eventDidMount: function(info) {
+                // [新增] 滑鼠移入事件，顯示 Tooltip
+                if (info.event.extendedProps.description) {
+                    info.el.addEventListener('mouseenter', (e) => showTooltip(e, info.event.extendedProps.description));
+                    info.el.addEventListener('mouseleave', hideTooltip);
+                }
+            },
+            // eventClick: function(info) { // 可選：點擊事件跳出詳細 Modal
+            //     alert('活動: ' + info.event.title + '\n簡介: ' + (info.event.extendedProps.description || '無'));
+            //     info.jsEvent.preventDefault(); // prevent browser navigation
+            // }
+        });
+
+        calendar.render(); // 渲染行事曆
+
+    } catch (error) {
+        console.error("無法初始化行事曆:", error);
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block'; // 顯示錯誤訊息
+    }
+}
+
+// --- [新增] Tooltip 相關函數 ---
+let tooltipElement = null;
+
+function showTooltip(mouseEvent, text) {
+    if (!tooltipElement) {
+        tooltipElement = document.createElement('div');
+        tooltipElement.className = 'event-tooltip';
+        document.body.appendChild(tooltipElement);
+    }
+    tooltipElement.textContent = text;
+    tooltipElement.style.display = 'block';
+    // 計算 Tooltip 位置
+    positionTooltip(mouseEvent);
+    // 持續更新位置以防事件元素移動
+    mouseEvent.target.addEventListener('mousemove', positionTooltip);
+}
+
+function hideTooltip(mouseEvent) {
+    if (tooltipElement) {
+        tooltipElement.style.display = 'none';
+    }
+     // 移除移動監聽
+    mouseEvent.target.removeEventListener('mousemove', positionTooltip);
+}
+
+function positionTooltip(mouseEvent) {
+     if (!tooltipElement) return;
+     // 簡單定位在滑鼠右下方，可再優化邊界判斷
+     const x = mouseEvent.clientX + 10;
+     const y = mouseEvent.clientY + 10;
+     tooltipElement.style.left = `${x}px`;
+     tooltipElement.style.top = `${y}px`;
+}
+
+
+// --- 其他函數 (fetchDeitiesData, fetchNewsData 等...) 保持不變 ---
+// ...
+// ... (所有舊的函數)
+// ...

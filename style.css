@@ -127,3 +127,85 @@ button:hover, a.map-button:hover { transform: translateY(-2px); box-shadow: 0 4p
 #close-result-modal-btn:hover { background-color: #d97706 !important; /* amber-600 */ }
 a.map-button.bg-blue-500:hover { background-color: #2563eb !important; /* blue-600 */ }
 a.map-button.bg-gray-800:hover { background-color: #111827 !important; /* gray-900 */ }
+/* ... 其他所有 CSS ... */
+
+/* ---------------------------------- */
+/* [新增] FullCalendar 樣式調整 */
+/* ---------------------------------- */
+#calendar-container {
+    /* 容器樣式 */
+}
+
+/* FullCalendar 標頭樣式 */
+.fc .fc-toolbar {
+    flex-direction: column; /* 手機上標題和按鈕換行 */
+    gap: 1rem; /* 增加間距 */
+    margin-bottom: 1.5rem !important;
+}
+@media (min-width: 768px) {
+    .fc .fc-toolbar {
+        flex-direction: row; /* 電腦上恢復同行 */
+        justify-content: space-between;
+    }
+}
+.fc .fc-toolbar-title {
+    font-size: 1.5em !important; /* 調整標題大小 */
+    font-family: 'Noto Serif TC', serif;
+}
+.fc .fc-button {
+    background-color: #f59e0b !important; /* amber-500 */
+    border-color: #f59e0b !important;
+    color: white !important;
+    text-transform: none !important; /* 取消大寫 */
+    box-shadow: none !important; /* 移除陰影 */
+    transition: background-color 0.3s ease;
+}
+.fc .fc-button:hover {
+    background-color: #d97706 !important; /* amber-600 */
+    border-color: #d97706 !important;
+}
+.fc .fc-button-primary:disabled {
+     background-color: #fcd34d !important; /* amber-300 */
+     border-color: #fcd34d !important;
+}
+.fc .fc-today-button { /* 今日按鈕特別樣式 (可選) */
+    /* background-color: #4b5563 !important; /* gray-600 */
+    /* border-color: #4b5563 !important; */
+}
+
+/* 行事曆事件樣式 */
+.fc-event {
+    cursor: pointer; /* 提示可點擊 */
+    border: none !important;
+    background-color: #fbbf24 !important; /* amber-400 */
+    color: #422006 !important; /* 深棕色文字 */
+    padding: 2px 4px;
+    font-size: 0.85em;
+    border-radius: 3px;
+}
+.fc-event:hover {
+    background-color: #f59e0b !important; /* amber-500 */
+}
+
+/* 日期格子樣式 */
+.fc .fc-daygrid-day-number {
+    padding: 0.5em; /* 增加日期數字周圍空間 */
+}
+.fc .fc-day-today {
+    background-color: #fef9c3 !important; /* amber-100 標示今天 */
+}
+
+/* [新增] Tooltip 樣式 (用於顯示事件簡介) */
+.event-tooltip {
+   position: absolute;
+   z-index: 1070; /* 確保在最上層 */
+   display: none;
+   padding: 0.5rem 0.75rem;
+   font-size: 0.875rem;
+   color: #fff;
+   background-color: rgba(0, 0, 0, 0.8);
+   border-radius: 0.25rem;
+   white-space: normal; /* 允許換行 */
+   max-width: 250px; /* 限制寬度 */
+   pointer-events: none; /* 讓滑鼠可以穿透 */
+}

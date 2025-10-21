@@ -18,6 +18,7 @@
     <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
     <link rel="stylesheet" href="style.css">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     </head>
 <body class="text-slate-700">
 
@@ -28,7 +29,8 @@
                 <a href="#about" class="nav-link">本宮介紹</a>
                 <a href="#news" class="nav-link">最新消息</a>
                 <a href="#fortune" class="nav-link">線上求籤</a>
-                <a href="#articles" class="nav-link">參拜知識</a> <a href="#registration" class="nav-link">活動報名</a>
+                <a href="#calendar" class="nav-link">年度行事曆</a> <a href="#articles" class="nav-link">參拜知識</a>
+                <a href="#registration" class="nav-link">活動報名</a>
                 <a href="#cancellation" class="nav-link">報名查詢</a>
                 <a href="#events" class="nav-link">活動紀實</a>
                 <a href="#info" class="nav-link">參拜資訊</a>
@@ -39,7 +41,8 @@
              <a href="#about" class="block py-3 px-6 hover:bg-gray-700">本宮介紹</a>
             <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a>
             <a href="#fortune" class="block py-3 px-6 hover:bg-gray-700">線上求籤</a>
-            <a href="#articles" class="block py-3 px-6 hover:bg-gray-700">參拜知識</a> <a href="#registration" class="block py-3 px-6 hover:bg-gray-700">活動報名</a>
+            <a href="#calendar" class="block py-3 px-6 hover:bg-gray-700">年度行事曆</a> <a href="#articles" class="block py-3 px-6 hover:bg-gray-700">參拜知識</a>
+            <a href="#registration" class="block py-3 px-6 hover:bg-gray-700">活動報名</a>
             <a href="#cancellation" class="block py-3 px-6 hover:bg-gray-700">報名查詢</a>
             <a href="#events" class="block py-3 px-6 hover:bg-gray-700">活動紀實</a>
             <a href="#info" class="block py-3 px-6 hover:bg-gray-700">參拜資訊</a>
@@ -111,8 +114,23 @@
             </div>
         </section>
 
-        <section id="articles" class="py-24 bg-white scroll-animate">
+        <section id="calendar" class="py-24 bg-white scroll-animate">
             <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center section-title">年度行事曆</h2>
+                <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">查看本宮年度重要法會、慶典及活動時程。</p>
+                <div id="calendar-container" class="mt-16 max-w-5xl mx-auto bg-white p-4 md:p-8 rounded-lg shadow-lg">
+                    <div id='calendar-loading' class="text-center text-slate-500 py-10">
+                        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <p class="mt-2">行事曆載入中...</p>
+                    </div>
+                    <div id='calendar-element' style="display: none;"></div> <div id="calendar-error" class="text-center text-red-500 py-10" style="display: none;">
+                        無法載入活動行事曆，請稍後再試。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="articles" class="py-24 bg-slate-50 scroll-animate"> <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center section-title">參拜知識</h2>
                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">了解更多道教文化與參拜禮儀。</p>
                 <div id="articles-list" class="mt-16 max-w-4xl mx-auto space-y-8">
@@ -238,11 +256,42 @@
     </footer>
 
     <div id="registration-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md relative animate-fade-in-up">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <h3 class="text-2xl font-bold text-slate-800 mb-2">報名：<span id="modal-event-title"></span></h3>
+            <p class="text-slate-500 mb-6">請填寫以下報名資訊</p>
+            <form id="registration-form" class="space-y-4">
+                <div><label for="registrantName" class="block text-sm font-medium text-slate-700">您的姓名</label><input type="text" id="registrantName" name="registrantName" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div>
+                <div><label for="phoneNumber" class="block text-sm font-medium text-slate-700">聯絡電話</label><input type="tel" id="phoneNumber" name="phoneNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div>
+                <div id="idNumber-group" class="hidden"><label for="idNumber" class="block text-sm font-medium text-slate-700">身分證字號</label><input type="text" id="idNumber" name="idNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div>
+                <div id="birthday-group" class="hidden"><label for="birthday" class="block text-sm font-medium text-slate-700">出生年月日 (國曆)</label><input type="date" id="birthday" name="birthday" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div>
+                <div id="address-group" class="hidden"><label for="address" class="block text-sm font-medium text-slate-700">聯絡地址</label><input type="text" id="address" name="address" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500"></div>
+                <input type="hidden" id="eventName" name="eventName">
+                <button type="submit" id="submit-registration-btn" class="w-full bg-amber-500 text-white font-bold py-3 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors flex items-center justify-center"><span id="submit-btn-text">確認送出</span><svg id="submit-btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></button>
+            </form>
         </div>
+    </div>
     <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm text-center animate-fade-in-up">
+            <div id="result-icon-container" class="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"></div>
+            <h3 id="result-title" class="text-2xl font-bold text-slate-800 mb-2"></h3>
+            <p id="result-message" class="text-slate-600 mb-6"></p>
+            <button id="close-result-modal-btn" class="w-full bg-amber-500 text-white font-bold py-2 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">關閉</button>
         </div>
+    </div>
     <div id="fortune-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md relative animate-fade-in-up">
+            <button id="close-fortune-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div id="fortune-modal-content">
+                <h3 id="fortune-title" class="text-2xl font-bold text-slate-800 mb-2"></h3>
+                <span id="fortune-type" class="text-lg font-bold"></span>
+                <div id="fortune-poem" class="text-lg text-slate-700 mt-4"></div>
+                <div id="fortune-interpretation" class="text-base text-slate-600 mt-6"></div>
+            </div>
         </div>
+    </div>
 
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
