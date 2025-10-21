@@ -66,11 +66,17 @@ export default async function handler(req, res) {
                 date: getProperty(properties, 'Date', 'date'),
                 description: getProperty(properties, 'Description', 'rich_text'),
                 coverImage: getProperty(properties, 'CoverImage', 'files'),
-                // 新增：讀取需要哪些欄位的設定
                 requireID: getProperty(properties, 'RequireID', 'checkbox'),
                 requireBirthday: getProperty(properties, 'RequireBirthday', 'checkbox'),
                 requireAddress: getProperty(properties, 'RequireAddress', 'checkbox'),
-                requireBirthTime: getProperty(properties, 'RequireBirthTime', 'checkbox'), // <-- [已修改] 新增讀取 RequireBirthTime
+                requireBirthTime: getProperty(properties, 'RequireBirthTime', 'checkbox'),
+                
+                // --- [!! 新增 !!] ---
+                // 讀取 "IsInternal" 欄位 (Checkbox)
+                isInternal: getProperty(properties, 'IsInternal', 'checkbox'),
+                // 讀取 "EventPassword" 欄位 (Text)
+                eventPassword: getProperty(properties, 'EventPassword', 'rich_text'),
+                // --- [新增結束] ---
             };
         });
 
