@@ -111,7 +111,7 @@ footer { position: relative; z-index: 10; background-color: #1f2937; }
 .shake-button:hover { transform: scale(1.05); }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); } 20%, 40%, 60%, 80% { transform: translateX(8px); } }
 .shake-button.is-shaking { animation: shake 0.8s ease-in-out infinite; }
-#fortune-modal-content { text-align: left; max-height: 70vh; overflow-y: auto; padding-right: 1rem; }
+#fortune-modal-content { text-align: left; max-height: 70vh; overflow-y: auto; }
 #fortune-title { font-family: 'Noto Serif TC', serif; font-size: 1.75rem; font-weight: 700; color: #1e293b; border-bottom: 2px solid #f59e0b; padding-bottom: 0.5rem; margin-bottom: 1rem; }
 #fortune-type { display: inline-block; padding: 0.25rem 1rem; font-size: 1.25rem; font-weight: 700; border-radius: 9999px; background-color: #fef3c7; color: #92400e; margin-bottom: 1.5rem; }
 #fortune-poem, #fortune-interpretation { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; line-height: 2; color: #334155; white-space: pre-wrap; margin-bottom: 1.5rem; }

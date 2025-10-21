@@ -310,12 +310,16 @@
         </div>
     </div>
     
-    <div id="fortune-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 animate-fade-in">
-        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md relative animate-fade-in-up">
-            <button id="close-fortune-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <div id="fortune-modal-content">
+<div id="fortune-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in-up flex flex-col max-h-[85vh]">
+            
+            <div class="flex-shrink-0 p-4 relative">
+                <button id="close-fortune-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div id="fortune-modal-content" class="overflow-y-auto px-8 pb-8">
                 <h3 id="fortune-title" class="text-2xl font-bold text-slate-800 mb-2"></h3>
                 <span id="fortune-type" class="text-lg font-bold"></span>
                 <div id="fortune-poem" class="text-lg text-slate-700 mt-4"></div>
