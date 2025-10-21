@@ -1,0 +1,96 @@
+/* --- FullCalendar 樣式調整 --- */
+
+#calendar-container .fc { /* [美化] 提高 specificity */
+    font-size: 0.9rem; /* 調整日曆基礎字號 */
+}
+.fc .fc-toolbar { 
+    flex-direction: column; 
+    gap: 1rem; 
+    margin-bottom: 1.5rem !important; 
+}
+@media (min-width: 768px) { 
+    .fc .fc-toolbar { 
+        flex-direction: row; 
+        justify-content: space-between; 
+    } 
+}
+.fc .fc-toolbar-title { 
+    font-size: 1.6em !important; 
+    font-family: 'Noto Serif TC', serif; /* [美化] 標題稍大 */
+}
+.fc .fc-button { 
+    background-color: #f59e0b !important; /* amber-500 */
+    border-color: #f59e0b !important; 
+    color: #422006 !important; /* amber-900 - 深褐色 */
+    text-transform: none !important; 
+    box-shadow: none !important; 
+    transition: background-color 0.3s ease; 
+    font-size: 0.9em !important; 
+    padding: 0.5em 0.8em !important; /* [美化] 調整按鈕大小 */
+}
+.fc .fc-button:hover { 
+    background-color: #d97706 !important; /* amber-600 */
+    border-color: #d97706 !important; 
+}
+.fc .fc-button-primary:disabled { 
+    background-color: #fcd34d !important; /* amber-300 */
+    border-color: #fcd34d !important; 
+}
+
+/* 事件樣式 */
+.fc-event { 
+    cursor: pointer; 
+    border: none !important; 
+    background-color: #fbbf24 !important; /* amber-400 */
+    color: #000000 !important; /* 純黑色 */
+    padding: 3px 5px !important; 
+    font-size: 0.9em !important; 
+    border-radius: 3px !important; 
+    font-weight: 600 !important;
+    line-height: 1.4 !important; /* [美化] 增加事件行高 */
+}
+.fc-event:hover { 
+    background-color: #f59e0b !important; /* amber-500 */
+}
+
+/* 日期格子 */
+.fc .fc-daygrid-day-number { 
+    padding: 0.5em; 
+    color: #475569; /* slate-600 - 日期數字顏色 */
+} 
+.fc .fc-day-today { 
+    background-color: #fef9c3 !important; /* yellow-100 - 今天背景色 */
+} 
+.fc .fc-daygrid-day:hover { 
+    background-color: #f8fafc; /* slate-50 - 日期格子 hover 效果 */
+} 
+
+/* 列表視圖修正 */
+.fc-list-event-title a, 
+.fc-list-event-title a:link, 
+.fc-list-event-title a:visited {
+    color: #000000 !important; /* 純黑色 */
+    font-weight: 600 !important; 
+    font-size: 1.05em; 
+    text-decoration: none !important;
+}
+.fc-list-event-title a:hover { 
+    color: #1e293b !important; /* slate-800 */
+}
+.fc-list-event-time { 
+    color: #475569 !important; /* slate-600 */
+}
+.fc-list-empty-message, .fc-list-empty-msg { 
+    color: #64748b !important; /* slate-500 */
+    font-size: 1.1em !important; 
+    padding: 2em 0 !important; /* [美化] 增加 padding */
+}
+
+/* Tooltip 樣式 (雖然不完全屬於 Calendar，但視覺上相關) */
+.event-tooltip { 
+    position: absolute; z-index: 1070; display: none; 
+    padding: 0.6rem 0.9rem; font-size: 0.875rem; color: #fff; 
+    background-color: rgba(0, 0, 0, 0.85); border-radius: 0.3rem; 
+    white-space: normal; max-width: 280px; pointer-events: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
