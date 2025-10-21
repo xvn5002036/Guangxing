@@ -119,7 +119,7 @@ footer { position: relative; z-index: 10; background-color: #1f2937; /* gray-800
 }
 /* 活動報名卡片特定樣式 */
 .registrable-event-card {
-    height: 100%; /* 讓 flexbox 生效 */
+    /*height: 100%; /* 讓 flexbox 生效 */
 }
 
 /* Modal Animation */
