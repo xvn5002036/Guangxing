@@ -162,11 +162,28 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     padding: 2px 4px; 
     font-size: 0.85em; 
     border-radius: 3px; 
-    font-weight: 600; /* [新增] 讓文字變粗，增加易讀性 */
+    font-weight: 600; /* [已修改] 讓文字變粗 */
 }
 .fc-event:hover { background-color: #f59e0b !important; }
 .fc .fc-daygrid-day-number { padding: 0.5em; }
 .fc .fc-day-today { background-color: #fef9c3 !important; }
+
+/* [新增] 修正列表視圖 (List View) 的文字顏色 */
+.fc-list-event-title a {
+    color: #422006 !important; /* 確保列表中的事件標題也是深褐色 */
+    font-weight: 600; /* 保持加粗 */
+}
+.fc-list-event-title a:hover {
+    color: #1e293b !important; /* 滑過時變更深 */
+}
+.fc-list-event-time {
+    color: #475569 !important; /* 列表中的時間 (slate-600) */
+}
+/* [新增] 調整 "No events to display" 訊息樣式 */
+.fc-list-empty-message, .fc-list-empty-msg { /* 兼容不同版本 */
+    color: #64748b !important; /* slate-500 */
+    font-size: 1.1em !important;
+}
 
 /* Tooltip 樣式 */
 .event-tooltip { position: absolute; z-index: 1070; display: none; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #fff; background-color: rgba(0, 0, 0, 0.8); border-radius: 0.25rem; white-space: normal; max-width: 250px; pointer-events: none; }
