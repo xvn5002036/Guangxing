@@ -17,7 +17,7 @@
     <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
     <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     </head>
 <body class="text-slate-700">
@@ -25,7 +25,8 @@
     <header id="header" class="bg-gray-900 bg-opacity-80 backdrop-blur-lg text-white shadow-lg sticky top-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-xl md:text-2xl font-bold text-amber-400 tracking-wider hover:text-amber-300 transition-colors duration-300">新莊武壇廣行宮</a>
-            <nav class="hidden md:flex space-x-8 text-sm tracking-wider">
+            
+            <nav class="hidden lg:flex space-x-4 text-sm tracking-wider">
                 <a href="#about" class="nav-link">本宮介紹</a>
                 <a href="#news" class="nav-link">最新消息</a>
                 <a href="#fortune" class="nav-link">線上求籤</a>
@@ -35,9 +36,10 @@
                 <a href="#events" class="nav-link">活動紀實</a>
                 <a href="#info" class="nav-link">參拜資訊</a>
             </nav>
-            <button id="mobile-menu-button" class="md:hidden focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
+            
+            <button id="mobile-menu-button" class="lg:hidden focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-gray-800">
+        <div id="mobile-menu" class="hidden lg:hidden bg-gray-800">
              <a href="#about" class="block py-3 px-6 hover:bg-gray-700">本宮介紹</a>
             <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a>
             <a href="#fortune" class="block py-3 px-6 hover:bg-gray-700">線上求籤</a>
