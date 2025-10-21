@@ -139,65 +139,14 @@ button:hover, a.map-button:hover { transform: translateY(-2px); box-shadow: 0 4p
 a.map-button.bg-blue-500:hover { background-color: #2563eb !important; }
 a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
 
-/* [新增] FullCalendar 樣式調整 */
-#calendar-container { /* 容器樣式 (可選) */ }
-.fc .fc-toolbar { flex-direction: column; gap: 1rem; margin-bottom: 1.5rem !important; }
-@media (min-width: 768px) { .fc .fc-toolbar { flex-direction: row; justify-content: space-between; } }
-.fc .fc-toolbar-title { font-size: 1.5em !important; font-family: 'Noto Serif TC', serif; }
-.fc .fc-button { 
-    background-color: #f59e0b !important; 
-    border-color: #f59e0b !important; 
-    color: #422006 !important; /* [已修改] 將 white 改為深褐色 */
-    text-transform: none !important; 
-    box-shadow: none !important; 
-    transition: background-color 0.3s ease; 
-}
-.fc .fc-button:hover { background-color: #d97706 !important; border-color: #d97706 !important; }
-.fc .fc-button-primary:disabled { background-color: #fcd34d !important; border-color: #fcd34d !important; }
-.fc-event { 
-    cursor: pointer; 
-    border: none !important; 
-    background-color: #fbbf24 !important; 
-    color: #000000 !important; /* [修改] 改為純黑色，對比最強 */
-    padding: 2px 4px; 
-    font-size: 0.9em; /* [修改] 字體稍微放大 */
-    border-radius: 3px; 
-    font-weight: 600; /* [已修改] 讓文字變粗 */
-}
-.fc-event:hover { background-color: #f59e0b !important; }
-.fc .fc-daygrid-day-number { padding: 0.5em; }
-.fc .fc-day-today { background-color: #fef9c3 !important; }
-
-
-/* --- [!! 針對列表視圖的強硬修正 !!] --- */
-
-/* 1. 修正 "No events to display" 訊息 */
-.fc-list-empty-message, .fc-list-empty-msg {
-    color: #64748b !important; /* slate-500 */
-    font-size: 1.1em !important;
-}
-
-/* 2. 強制設定列表 "事件標題" 的 <a> 連結文字顏色 */
-.fc-list-event-title a,
-.fc-list-event-title a:link,
-.fc-list-event-title a:visited {
-    color: #000000 !important; /* [修改] 改為純黑色 */
-    font-weight: 600 !important; /* 加粗 */
-    font-size: 1.05em; /* [修改] 列表的字體也放大 */
-    text-decoration: none !important; /* 移除底線 */
-}
-
-/* 3. 設定滑鼠移過 (hover) 時的標題顏色 */
-.fc-list-event-title a:hover {
-    color: #1e293b !important; /* 變更深 (slate-800) */
-}
-
-/* 4. 修正列表 "事件時間" 的文字顏色 */
-.fc-list-event-time {
-    color: #475569 !important; /* slate-600 */
-}
-/* --- [修正結束] --- */
+/* [新增] FullCalendar 樣式調整 (已從 style.css 移除，移至 calendar.css) */
+/* (原 .fc 相關樣式已刪除) */
 
 
 /* Tooltip 樣式 */
 .event-tooltip { position: absolute; z-index: 1070; display: none; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #fff; background-color: rgba(0, 0, 0, 0.8); border-radius: 0.25rem; white-space: normal; max-width: 250px; pointer-events: none; }
+
+/* --- [!! 新增 密碼錯誤樣式 !!] --- */
+#password-error {
+    color: #dc2626; /* text-red-600 */
+}

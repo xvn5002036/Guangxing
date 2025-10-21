@@ -5,7 +5,12 @@ let mobileMenuButton, mobileMenu, header, registrationModal, closeModalBtn, regi
     resultModal, closeResultModalBtn, resultIconContainer, resultTitle, resultMessage,
     findRegistrationForm, findBtn, findBtnText, findBtnSpinner, cancellationResultArea,
     fortuneModal, closeFortuneModalBtn, shakeButton, shakeLoadingText,
-    birthTimeGroup, birthTimeInput; // <-- [已修改] 加入 birthTime 變數
+    birthTimeGroup, birthTimeInput;
+
+// --- [!! 新增以下變數 !!] ---
+let passwordModal, closePasswordModalBtn, passwordForm, eventPasswordInput, passwordError,
+    currentEventButton; // 用來暫存被點擊的按鈕
+// --- [新增結束] ---
 
 // --- 初始載入 ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,6 +52,14 @@ document.addEventListener('DOMContentLoaded', () => {
     birthTimeInput = document.getElementById('birthTime');
     // [修改結束]
 
+    // --- [!! 新增以下抓取 !!] ---
+    passwordModal = document.getElementById('password-modal');
+    closePasswordModalBtn = document.getElementById('close-password-modal-btn');
+    passwordForm = document.getElementById('password-form');
+    eventPasswordInput = document.getElementById('eventPasswordInput');
+    passwordError = document.getElementById('password-error');
+    // --- [新增結束] ---
+
     // --- 載入資料和設定 ---
     fetchAllData();
     setupEventListeners();
@@ -71,6 +84,12 @@ function setupEventListeners() {
     if (shakeButton) shakeButton.addEventListener('click', handleFortuneShake);
     if (closeFortuneModalBtn) closeFortuneModalBtn.addEventListener('click', closeFortuneModal);
     if (fortuneModal) fortuneModal.addEventListener('click', (e) => { if (e.target === fortuneModal) closeFortuneModal(); });
+
+    // --- [!! 新增以下監聽 !!] ---
+    if (closePasswordModalBtn) closePasswordModalBtn.addEventListener('click', closePasswordModal);
+    if (passwordModal) passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) closePasswordModal(); });
+    if (passwordForm) passwordForm.addEventListener('submit', handlePasswordSubmit);
+    // --- [新增結束] ---
 }
 
 // --- 資料載入 ---
@@ -219,7 +238,10 @@ async function fetchRegistrableEventsData() {
                                 data-require-id="${event.requireID}"
                                 data-require-birthday="${event.requireBirthday}"
                                 data-require-address="${event.requireAddress}"
-                                data-require-birth-time="${event.requireBirthTime}">
+                                data-require-birth-time="${event.requireBirthTime}"
+                                
+                                data-is-internal="${event.isInternal === true ? 'true' : 'false'}"
+                                data-event-password="${event.eventPassword || ''}">
                             我要報名
                         </button>
                     </div>
@@ -230,6 +252,7 @@ async function fetchRegistrableEventsData() {
             const msnry = new Masonry(grid, { itemSelector: '.grid-item', columnWidth: '.grid-item', percentPosition: true, gutter: 24 });
             imagesLoaded(grid).on('progress', () => msnry.layout());
         }
+        // [!! 已修改 !!] 此監聽器現在會指向新的 "總控制" 函數
         document.querySelectorAll('.register-btn').forEach(button => button.addEventListener('click', openRegistrationModal));
     } catch (error) {
         console.error("無法獲取可報名活動:", error);
@@ -240,39 +263,6 @@ async function fetchRegistrableEventsData() {
 
 
 // 活動紀實 (相簿功能)
-async function fetchEventsDataForAlbums() {
-    const albumList = document.getElementById('events-album-list');
-    const loadingIndicator = document.getElementById('events-loading');
-    if (!albumList || !loadingIndicator) return;
-    try {
-        const response = await fetch('/api/get-events');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const events = await response.json();
-        loadingIndicator.style.display = 'none';
-        albumList.innerHTML = '';
-        if (!events || events.length === 0) { albumList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有活動紀實相簿。</p>'; return; }
-        events.forEach(event => {
-            if (!event.albumFolder && !event.videoLink) return;
-            const albumCard = `
-                <div class="album-card card-hover bg-slate-800 rounded-lg shadow-lg overflow-hidden aspect-w-1 aspect-h-1 group"
-                     data-album-folder="${event.albumFolder || ''}" data-album-title="${event.title || ''}" data-video-link="${event.videoLink || ''}">
-                    <img loading="lazy" src="${event.coverImage || 'https://placehold.co/600x600/e2e8f0/64748b?text=無封面'}" alt="${event.title || ''}" class="w-full h-full object-cover">
-                    <div class="album-overlay flex flex-col justify-end p-6">
-                        <p class="text-sm text-amber-400 mb-1">${event.date || ''}</p>
-                        <h3 class="text-xl font-bold text-white">${event.title || '無標題'}</h3>
-                    </div>
-                </div>`;
-            albumList.innerHTML += albumCard;
-        });
-        document.querySelectorAll('.album-card').forEach(card => card.addEventListener('click', openAlbumGallery));
-    } catch (error) {
-        console.error("無法獲取相簿資料:", error);
-        loadingIndicator.style.display = 'none';
-        albumList.innerHTML = `<p class="col-span-full text-center text-red-500">無法載入相簿，請稍後再試。</p>`;
-    }
-}
-
-// 開啟相簿燈箱 (支援影片)
 async function openAlbumGallery(event) {
     const card = event.currentTarget;
     const folder = card.dataset.albumFolder;
@@ -404,9 +394,72 @@ function closeFortuneModal() {
     }
 }
 
-// 報名 Modal
+
+// --- [!! 全新函數 (1/4) !!] ---
+// 這是新的 "總控制" 函數，會被 .register-btn 觸發
 function openRegistrationModal(event) {
     const button = event.currentTarget;
+    const isInternal = button.dataset.isInternal === 'true';
+
+    // 暫存當前點擊的按鈕，以便密碼驗證成功後使用
+    currentEventButton = button; 
+
+    if (isInternal) {
+        // 如果是內部活動，打開密碼彈窗
+        openPasswordModal();
+    } else {
+        // 如果是公開活動，直接顯示報名表單 (舊流程)
+        showRegistrationForm(button);
+    }
+}
+
+// --- [!! 全新函數 (2/4) !!] ---
+// 處理密碼提交
+async function handlePasswordSubmit(event) {
+    event.preventDefault();
+    if (!currentEventButton) return; // 如果沒有暫存按鈕，則返回
+
+    const enteredPassword = eventPasswordInput.value;
+    const correctPassword = currentEventButton.dataset.eventPassword;
+
+    if (enteredPassword === correctPassword) {
+        // 密碼正確
+        closePasswordModal();
+        showRegistrationForm(currentEventButton); // 顯示報名表單
+    } else {
+        // 密碼錯誤
+        passwordError.classList.remove('hidden');
+        eventPasswordInput.focus();
+    }
+}
+
+// --- [!! 全新函數 (3/4) !!] ---
+// 打開密碼彈窗
+function openPasswordModal() {
+    if (passwordModal) {
+        passwordModal.classList.remove('hidden');
+        passwordModal.classList.add('flex');
+        eventPasswordInput.value = ''; // 清空密碼
+        passwordError.classList.add('hidden'); // 隱藏錯誤訊息
+        eventPasswordInput.focus(); // 自動對焦
+    }
+}
+
+// --- [!! 全新函數 (4/4) !!] ---
+// 關閉密碼彈窗
+function closePasswordModal() {
+    if (passwordModal) {
+        passwordModal.classList.add('hidden');
+        passwordModal.classList.remove('flex');
+    }
+}
+
+
+// 報名 Modal (原 openRegistrationModal)
+// [!! 函數名已修改為 showRegistrationForm !!]
+// [!! 參數 (event) 已修改為 (button) !!]
+function showRegistrationForm(button) {
+    // const button = event.currentTarget; // [!! 移除這行 !!]
     const title = button.dataset.eventTitle;
 
     const requireId = button.dataset.requireId === 'true';
@@ -719,6 +772,3 @@ function positionTooltip(mouseEvent) {
      tooltipElement.style.left = `${finalX}px`;
      tooltipElement.style.top = `${finalY}px`;
 }
-
-// --- [!! 重要：移除末尾重複的程式碼 !!] ---
-// (此處不再包含從 async function initializeCalendar() 開始的重複區塊)
