@@ -96,7 +96,7 @@ function setupEventListeners() {
 function fetchAllData() {
     fetchNewsData();
     fetchRegistrableEventsData();
-    fetchEventsDataForAlbums();
+    fetchEventsDataForAlbums(); // [!! 錯誤已修復 !!]
     fetchDeitiesData();
     fetchArticlesData();
 	initializeCalendar();
@@ -262,7 +262,41 @@ async function fetchRegistrableEventsData() {
 }
 
 
+// --- [!! 這裡已加回遺失的函數 !!] ---
 // 活動紀實 (相簿功能)
+async function fetchEventsDataForAlbums() {
+    const albumList = document.getElementById('events-album-list');
+    const loadingIndicator = document.getElementById('events-loading');
+    if (!albumList || !loadingIndicator) return;
+    try {
+        const response = await fetch('/api/get-events');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const events = await response.json();
+        loadingIndicator.style.display = 'none';
+        albumList.innerHTML = '';
+        if (!events || events.length === 0) { albumList.innerHTML = '<p class="col-span-full text-center text-slate-500">目前沒有活動紀實相簿。</p>'; return; }
+        events.forEach(event => {
+            if (!event.albumFolder && !event.videoLink) return;
+            const albumCard = `
+                <div class="album-card card-hover bg-slate-800 rounded-lg shadow-lg overflow-hidden aspect-w-1 aspect-h-1 group"
+                     data-album-folder="${event.albumFolder || ''}" data-album-title="${event.title || ''}" data-video-link="${event.videoLink || ''}">
+                    <img loading="lazy" src="${event.coverImage || 'https://placehold.co/600x600/e2e8f0/64748b?text=無封面'}" alt="${event.title || ''}" class="w-full h-full object-cover">
+                    <div class="album-overlay flex flex-col justify-end p-6">
+                        <p class="text-sm text-amber-400 mb-1">${event.date || ''}</p>
+                        <h3 class="text-xl font-bold text-white">${event.title || '無標題'}</h3>
+                    </div>
+                </div>`;
+            albumList.innerHTML += albumCard;
+        });
+        document.querySelectorAll('.album-card').forEach(card => card.addEventListener('click', openAlbumGallery));
+    } catch (error) {
+        console.error("無法獲取相簿資料:", error);
+        loadingIndicator.style.display = 'none';
+        albumList.innerHTML = `<p class="col-span-full text-center text-red-500">無法載入相簿，請稍後再試。</p>`;
+    }
+}
+
+// 開啟相簿燈箱 (支援影片)
 async function openAlbumGallery(event) {
     const card = event.currentTarget;
     const folder = card.dataset.albumFolder;
