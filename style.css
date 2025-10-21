@@ -148,7 +148,7 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     background-color: #f59e0b !important; 
     border-color: #f59e0b !important; 
     color: #422006 !important; /* [已修改] 將 white 改為深褐色以提高對比 */
-    text-transform: #422006 !important; 
+    text-transform: none !important; 
     box-shadow: none !important; 
     transition: background-color 0.3s ease; 
 }
