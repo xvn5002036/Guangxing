@@ -2,7 +2,7 @@
 import { Client } from "@notionhq/client";
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
-const databaseId = process.env.NOTION_ARTICLES_DATABASE_ID;
+const databaseId = process.env.NOTION_ARTICLES_DATABASE_ID; // 使用新的環境變數
 
 // 輔助函數：安全地從 Notion 屬性中提取內容
 const getProperty = (properties, name, type) => {
@@ -27,6 +27,7 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
     if (!databaseId) {
+        console.error("Articles Database ID not configured."); // 加入錯誤提示
         return res.status(500).json({ message: "Articles Database ID not configured." });
     }
 
@@ -41,8 +42,8 @@ export default async function handler(req, res) {
             },
             sorts: [
                 {
-                    property: 'PublishDate', // 或 SortOrder
-                    direction: 'descending', // 或 ascending
+                    property: 'PublishDate', // 依照發布日期排序
+                    direction: 'descending', // 最新在前
                 },
             ],
         });
@@ -52,8 +53,8 @@ export default async function handler(req, res) {
             return {
                 id: page.id,
                 title: getProperty(properties, 'Title', 'title'),
-                content: getProperty(properties, 'Content', 'rich_text'),
-                publishDate: getProperty(properties, 'PublishDate', 'date'),
+                content: getProperty(properties, 'Content', 'rich_text'), // 抓取 Content 欄位
+                publishDate: getProperty(properties, 'PublishDate', 'date'), // 抓取 PublishDate 欄位
             };
         });
 
