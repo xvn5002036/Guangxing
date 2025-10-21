@@ -11,34 +11,18 @@ h1, h2, h3 {
 /* ---------------------------------- */
 /* 豪華升級：Hero 影片背景 */
 /* ---------------------------------- */
-/* 豪華升級：Hero 影片背景 */
-/* ---------------------------------- */
 .hero-bg {
     position: relative;
     overflow: hidden;
 }
 
-/* [修改] 讓 video 和 iframe 都能填滿背景 */
-.hero-bg > video,
-.hero-bg > iframe {
+.hero-bg > video {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    inset: 0;
+    w-full: 100%;
     height: 100%;
-    object-fit: cover; /* 這對 video 有效 */
+    object-fit: cover;
     z-index: 0;
-    
-    /* [新增] 針對 iframe，確保它能像 cover 一樣填滿 */
-    /* 如果 100% 高度無法填滿，可嘗試以下設定:
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    transform: translateX(-50%) translateY(-50%);
-    */
 }
 /* ---------------------------------- */
 
