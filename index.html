@@ -300,6 +300,28 @@
         </div>
     </div>
     
+    <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm relative animate-fade-in-up">
+            <button id="close-password-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <h3 class="text-xl font-bold text-slate-800 mb-2">請輸入活動密碼</h3>
+            <p class="text-slate-500 mb-6">這是一個內部活動，請輸入密碼以繼續報名。</p>
+            
+            <form id="password-form" class="space-y-4">
+                <div>
+                    <label for="eventPasswordInput" class="block text-sm font-medium text-slate-700">活動密碼</label>
+                    <input type="password" id="eventPasswordInput" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <p id="password-error" class="text-red-600 text-sm mt-2 hidden">密碼錯誤，請重新輸入。</p>
+                </div>
+                
+                <button type="submit" class="w-full bg-amber-500 text-white font-bold py-3 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+                    驗證密碼
+                </button>
+            </form>
+        </div>
+    </div>
     <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm text-center animate-fade-in-up">
             <div id="result-icon-container" class="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"></div>
