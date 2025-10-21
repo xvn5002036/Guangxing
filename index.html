@@ -17,7 +17,9 @@
     <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
     <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
-    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="style.css?v=3">
+    
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     </head>
 <body class="text-slate-700">
@@ -30,7 +32,8 @@
                 <a href="#about" class="nav-link">本宮介紹</a>
                 <a href="#news" class="nav-link">最新消息</a>
                 <a href="#fortune" class="nav-link">線上求籤</a>
-                <a href="#calendar" class="nav-link">年度行事曆</a> <a href="#articles" class="nav-link">參拜知識</a>
+                <a href="#calendar" class="nav-link">年度行事曆</a>
+                <a href="#articles" class="nav-link">參拜知識</a>
                 <a href="#registration" class="nav-link">活動報名</a>
                 <a href="#cancellation" class="nav-link">報名查詢</a>
                 <a href="#events" class="nav-link">活動紀實</a>
@@ -39,11 +42,13 @@
             
             <button id="mobile-menu-button" class="lg:hidden focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
         </div>
+        
         <div id="mobile-menu" class="hidden lg:hidden bg-gray-800">
              <a href="#about" class="block py-3 px-6 hover:bg-gray-700">本宮介紹</a>
             <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a>
             <a href="#fortune" class="block py-3 px-6 hover:bg-gray-700">線上求籤</a>
-            <a href="#calendar" class="block py-3 px-6 hover:bg-gray-700">年度行事曆</a> <a href="#articles" class="block py-3 px-6 hover:bg-gray-700">參拜知識</a>
+            <a href="#calendar" class="block py-3 px-6 hover:bg-gray-700">年度行事曆</a>
+            <a href="#articles" class="block py-3 px-6 hover:bg-gray-700">參拜知識</a>
             <a href="#registration" class="block py-3 px-6 hover:bg-gray-700">活動報名</a>
             <a href="#cancellation" class="block py-3 px-6 hover:bg-gray-700">報名查詢</a>
             <a href="#events" class="block py-3 px-6 hover:bg-gray-700">活動紀實</a>
@@ -111,7 +116,8 @@
                 <h2 class="text-4xl font-bold text-center section-title">線上求籤</h2>
                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">心誠則靈。請誠心默念您的姓名、生辰、地址與所求之事，然後點擊下方籤筒求籤。</p>
                 <div id="shake-button" class="shake-button">
-                    <img src="shake.svg" alt="點此求籤"> </div>
+                    <img src="shake.svg" alt="點此求籤"> 
+                </div>
                 <p id="shake-loading-text" class="text-center text-slate-500 mt-2 h-6"></p>
             </div>
         </section>
