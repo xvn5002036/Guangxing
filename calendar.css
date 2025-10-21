@@ -1,96 +1,103 @@
-/* --- FullCalendar 樣式調整 --- */
+/* --- FullCalendar 樣式調整 --- */ /* 註解區塊：標示以下 CSS 是針對 FullCalendar 的 */
 
-#calendar-container .fc { /* [美化] 提高 specificity */
-    font-size: 0.9rem; /* 調整日曆基礎字號 */
+#calendar-container .fc { /* 針對 ID 為 "calendar-container" 內的 .fc (FullCalendar 根元素)，[美化] 這樣寫可以提高樣式優先級(specificity) */
+    font-size: 0.9rem; /* 調整日曆整體的基礎字體大小為 0.9rem (rem 是相對單位) */
 }
-.fc .fc-toolbar { 
-    flex-direction: column; 
-    gap: 1rem; 
-    margin-bottom: 1.5rem !important; 
+.fc .fc-toolbar { /* 選取 FullCalendar 的工具列 (包含按鈕和標題的區域) */
+    flex-direction: column; /* (預設) 在小螢幕時，工具列項目垂直堆疊 (如標題在上方，按鈕在下方) */
+    gap: 1rem; /* 垂直堆疊時，項目之間的間距為 1rem */
+    margin-bottom: 1.5rem !important; /* 工具列與日曆主體之間的下邊距，!important 表示強制覆蓋 FullCalendar 的預設樣式 */
 }
-@media (min-width: 768px) { 
-    .fc .fc-toolbar { 
-        flex-direction: row; 
-        justify-content: space-between; 
-    } 
+@media (min-width: 768px) { /* 這是一個媒體查詢，代表 "當螢幕寬度大於或等於 768px 時" (通常是平板或電腦) */
+    .fc .fc-toolbar { /* 選取 768px 以上的工具列 */
+        flex-direction: row; /* 將工具列項目的排列方式改回 "水平排列" */
+        justify-content: space-between; /* 讓工具列內的元素 (左側按鈕、中間標題、右側按鈕) 水平分散對齊 */
+    }
+} /* 媒體查詢結束 */
+.fc .fc-toolbar-title { /* 選取工具列的標題 (例如 "2025年10月") */
+    font-size: 1.6em !important; /* 將標題字體大小設為 1.6em (相對於父元素)，並強制覆蓋 */
+    font-family: 'Noto Serif TC', serif; /* [美化] 標題使用 "Noto Serif TC" (思源宋體) 字體，若找不到則使用通用 serif 字體 */
 }
-.fc .fc-toolbar-title { 
-    font-size: 1.6em !important; 
-    font-family: 'Noto Serif TC', serif; /* [美化] 標題稍大 */
+.fc .fc-button { /* 選取工具列上的所有按鈕 (例如 "上個月"、"今天"、"月"、"週") */
+    background-color: #f59e0b !important; /* 設定按鈕背景色 (amber-500)，並強制覆蓋 */
+    border-color: #f59e0b !important; /* 設定按鈕邊框色 (amber-500)，並強制覆蓋 */
+    color: #422006 !important; /* 設定按鈕文字顏色 (amber-900 - 深褐色)，並強制覆蓋 */
+    text-transform: none !important; /* 取消 FullCalendar 預設的 "文字全部大寫"，並強制覆蓋 */
+    box-shadow: none !important; /* 移除按鈕的陰影，並強制覆蓋 */
+    transition: background-color 0.3s ease; /* 設定背景顏色變化的過渡動畫效果，持續 0.3 秒，速度曲線為 ease (緩入緩出) */
+    font-size: 0.9em !important; /* 設定按鈕的字體大小，並強制覆蓋 */
+    padding: 0.5em 0.8em !important; /* [美化] 調整按鈕的內部留白 (上下 0.5em, 左右 0.8em)，並強制覆蓋 */
 }
-.fc .fc-button { 
-    background-color: #f59e0b !important; /* amber-500 */
-    border-color: #f59e0b !important; 
-    color: #422006 !important; /* amber-900 - 深褐色 */
-    text-transform: none !important; 
-    box-shadow: none !important; 
-    transition: background-color 0.3s ease; 
-    font-size: 0.9em !important; 
-    padding: 0.5em 0.8em !important; /* [美化] 調整按鈕大小 */
+.fc .fc-button:hover { /* 選取 "滑鼠懸停 (hover) 在按鈕上" 的狀態 */
+    background-color: #d97706 !important; /* 將背景顏色改為較深的 amber-600，並強制覆蓋 */
+    border-color: #d97706 !important; /* 將邊框顏色也改為較深的 amber-600，並強制覆蓋 */
 }
-.fc .fc-button:hover { 
-    background-color: #d97706 !important; /* amber-600 */
-    border-color: #d97706 !important; 
-}
-.fc .fc-button-primary:disabled { 
-    background-color: #fcd34d !important; /* amber-300 */
-    border-color: #fcd34d !important; 
-}
-
-/* 事件樣式 */
-.fc-event { 
-    cursor: pointer; 
-    border: none !important; 
-    background-color: #fbbf24 !important; /* amber-400 */
-    color: #000000 !important; /* 純黑色 */
-    padding: 3px 5px !important; 
-    font-size: 0.9em !important; 
-    border-radius: 3px !important; 
-    font-weight: 600 !important;
-    line-height: 1.4 !important; /* [美化] 增加事件行高 */
-}
-.fc-event:hover { 
-    background-color: #f59e0b !important; /* amber-500 */
+.fc .fc-button-primary:disabled { /* 選取 "按鈕處於不可點擊 (disabled) 狀態" 時 (例如在第一個月時，"上個月" 按鈕) */
+    background-color: #fcd34d !important; /* 設定不可點擊狀態的背景色 (amber-300)，並強制覆蓋 */
+    border-color: #fcd34d !important; /* 設定不可點擊狀態的邊框色 (amber-300)，並強制覆蓋 */
 }
 
-/* 日期格子 */
-.fc .fc-daygrid-day-number { 
-    padding: 0.5em; 
-    color: #475569; /* slate-600 - 日期數字顏色 */
-} 
-.fc .fc-day-today { 
-    background-color: #fef9c3 !important; /* yellow-100 - 今天背景色 */
-} 
-.fc .fc-daygrid-day:hover { 
-    background-color: #f8fafc; /* slate-50 - 日期格子 hover 效果 */
-} 
-
-/* 列表視圖修正 */
-.fc-list-event-title a, 
-.fc-list-event-title a:link, 
-.fc-list-event-title a:visited {
-    color: #000000 !important; /* 純黑色 */
-    font-weight: 600 !important; 
-    font-size: 1.05em; 
-    text-decoration: none !important;
+/* 事件樣式 */ /* 註解區塊：標示以下是日曆上 "事件" 的樣式 */
+.fc-event { /* 選取日曆中代表一個 "事件" 的元素 */
+    cursor: pointer; /* 當滑鼠移到事件上時，顯示為 "手指" (pointer) 游標，提示可點擊 */
+    border: none !important; /* 移除事件的邊框，並強制覆蓋 */
+    background-color: #fbbf24 !important; /* 設定事件的背景色 (amber-400)，並強制覆蓋 */
+    color: #000000 !important; /* 設定事件的文字顏色 (純黑色)，確保對比度，並強制覆蓋 */
+    padding: 3px 5px !important; /* 設定事件的內部留白 (上下 3px, 左右 5px)，並強制覆蓋 */
+    font-size: 0.9em !important; /* 設定事件的字體大小，並強制覆蓋 */
+    border-radius: 3px !important; /* 設定事件的邊框圓角 (3px)，並強制覆蓋 */
+    font-weight: 600 !important; /* 設定事件的文字粗細為 600 (加粗)，並強制覆蓋 */
+    line-height: 1.4 !important; /* [美化] 增加事件的行高，讓文字更易讀，並強制覆蓋 */
 }
-.fc-list-event-title a:hover { 
-    color: #1e293b !important; /* slate-800 */
-}
-.fc-list-event-time { 
-    color: #475569 !important; /* slate-600 */
-}
-.fc-list-empty-message, .fc-list-empty-msg { 
-    color: #64748b !important; /* slate-500 */
-    font-size: 1.1em !important; 
-    padding: 2em 0 !important; /* [美化] 增加 padding */
+.fc-event:hover { /* 選取 "滑鼠懸停在事件上" 的狀態 */
+    background-color: #f59e0b !important; /* 將背景顏色改為較深的 amber-500，並強制覆蓋 */
 }
 
-/* Tooltip 樣式 (雖然不完全屬於 Calendar，但視覺上相關) */
-.event-tooltip { 
-    position: absolute; z-index: 1070; display: none; 
-    padding: 0.6rem 0.9rem; font-size: 0.875rem; color: #fff; 
-    background-color: rgba(0, 0, 0, 0.85); border-radius: 0.3rem; 
-    white-space: normal; max-width: 280px; pointer-events: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+/* 日期格子 */ /* 註解區塊：標示以下是 "月" 視圖中日期格子的樣式 */
+.fc .fc-daygrid-day-number { /* 選取日期格子右上角的 "日期數字" (例如 1, 2, 3...) */
+    padding: 0.5em; /* 設定日期數字的內部留白 */
+    color: #475569; /* slate-600 - 設定日期數字的顏色 (石板灰) */
+}
+.fc .fc-day-today { /* 選取代表 "今天" 的那個日期格子 */
+    background-color: #fef9c3 !important; /* yellow-100 - 設定 "今天" 格子的背景色 (淡黃色)，並強制覆蓋 */
+}
+.fc .fc-daygrid-day:hover { /* 選取 "滑鼠懸停在任一日期格子上" 的狀態 */
+    background-color: #f8fafc; /* slate-50 - 設定懸停時的背景色 (淡灰色)，提供視覺反饋 */
+}
+
+/* 列表視圖修正 */ /* 註解區塊：標示以下是針對 "列表" 視圖的樣式修正 */
+.fc-list-event-title a, /* 選取列表視圖中，事件標題的連結 (<a> 標籤) */
+.fc-list-event-title a:link, /* 選取 "尚未訪問過" 的連結狀態 */
+.fc-list-event-title a:visited { /* 選取 "已經訪問過" 的連結狀態 */
+    color: #000000 !important; /* 設定連結文字顏色 (純黑色)，並強制覆蓋 (避免瀏覽器預設的藍色/紫色) */
+    font-weight: 600 !important; /* 設定文字粗細 (加粗)，並強制覆蓋 */
+    font-size: 1.05em; /* 設定字體大小 (比基礎稍大一點) */
+    text-decoration: none !important; /* 移除連結的底線，並強制覆蓋 */
+}
+.fc-list-event-title a:hover { /* 選取 "滑鼠懸停在列表事件標題上" 的狀態 */
+    color: #1e293b !important; /* 將文字顏色改為深灰色 (slate-800)，並強制覆蓋 */
+}
+.fc-list-event-time { /* 選取列表視圖中的 "事件時間" (例如 "上午10:00") */
+    color: #475569 !important; /* slate-600 - 設定時間的文字顏色 (石板灰)，並強制覆蓋 */
+}
+.fc-list-empty-message, .fc-list-empty-msg { /* 選取列表視圖中 "沒有事件可顯示" 時的提示訊息 */
+    color: #64748b !important; /* slate-500 - 設定提示訊息的文字顏色，並強制覆蓋 */
+    font-size: 1.1em !important; /* 設定提示訊息的字體大小 (稍大)，並強制覆蓋 */
+    padding: 2em 0 !important; /* [美化] 增加提示訊息的上下內部留白，使其更置中，並強制覆蓋 */
+}
+
+/* Tooltip 樣式 (雖然不完全屬於 Calendar，但視覺上相關) */ /* 註解：以下是自訂的 "事件提示框" (Tooltip) 樣式 */
+.event-tooltip { /* 選取我們在 script.js 中動態建立的 .event-tooltip 元素 */
+    position: absolute; /* 設定為絕對定位，使其可以浮動在頁面之上 */
+    z-index: 1070; /* 設定堆疊層級，確保它在日曆之上 (1070 是一個常用的高數值) */
+    display: none; /* 預設為隱藏 (none)，透過 JavaScript 來控制顯示 */
+    padding: 0.6rem 0.9rem; /* 設定提示框的內部留白 */
+    font-size: 0.875rem; /* 設定提示框的字體大小 */
+    color: #fff; /* 設定提示框的文字顏色 (白色) */
+    background-color: rgba(0, 0, 0, 0.85); /* 設定背景色 (帶有 85% 不透明度的黑色) */
+    border-radius: 0.3rem; /* 設定提示框的邊框圓角 */
+    white-space: normal; /* 允許提示框內的文字自動換行 */
+    max-width: 280px; /* 設定提示框的最大寬度，超過會自動換行 */
+    pointer-events: none; /* 讓滑鼠可以 "穿透" 提示框，不會擋住下方的元素 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* 加上一點輕微的陰影，增加立體感 */
 }
