@@ -23,7 +23,8 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { registrantName, phoneNumber, eventName, idNumber, birthday, address } = req.body;
+        // [已修改] 加入 birthTime
+        const { registrantName, phoneNumber, eventName, idNumber, birthday, address, birthTime } = req.body;
 
         if (!registrantName || !phoneNumber || !eventName) {
             return res.status(400).json({ message: '缺少姓名、電話、活動名稱等必要欄位' });
@@ -32,7 +33,6 @@ export default async function handler(req, res) {
         const registrationId = uuidv4().split('-')[0].toUpperCase(); 
         const now = new Date();
 
-        // 準備要寫入 Notion 的資料物件
         const propertiesToCreate = {
             'RegistrantName': { title: [{ text: { content: registrantName } }] },
             'PhoneNumber': { rich_text: [{ text: { content: phoneNumber } }] },
@@ -47,12 +47,16 @@ export default async function handler(req, res) {
             propertiesToCreate['IDNumber'] = { rich_text: [{ text: { content: idNumber } }] };
         }
         if (birthday) {
-            // Notion API 的 Date 類型需要 YYYY-MM-DD 格式
             propertiesToCreate['Birthday'] = { date: { start: birthday } };
         }
         if (address) {
             propertiesToCreate['Address'] = { rich_text: [{ text: { content: address } }] };
         }
+        // [已修改] 加入出生時辰
+        if (birthTime) {
+            propertiesToCreate['BirthTime'] = { rich_text: [{ text: { content: birthTime } }] };
+        }
+        // [修改結束]
 
         await notion.pages.create({
             parent: { database_id: databaseId },
@@ -66,4 +70,3 @@ export default async function handler(req, res) {
         res.status(500).json({ message: '報名資料送出失敗，請聯絡管理員。', details: error.message });
     }
 };
-

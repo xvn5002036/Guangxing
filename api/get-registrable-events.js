@@ -70,6 +70,7 @@ export default async function handler(req, res) {
                 requireID: getProperty(properties, 'RequireID', 'checkbox'),
                 requireBirthday: getProperty(properties, 'RequireBirthday', 'checkbox'),
                 requireAddress: getProperty(properties, 'RequireAddress', 'checkbox'),
+                requireBirthTime: getProperty(properties, 'RequireBirthTime', 'checkbox'), // <-- [已修改] 新增讀取 RequireBirthTime
             };
         });
 
@@ -79,4 +80,3 @@ export default async function handler(req, res) {
         res.status(500).json({ message: 'Failed to fetch registrable events', details: error.message });
     }
 }
-
