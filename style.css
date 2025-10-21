@@ -71,11 +71,21 @@ footer { position: relative; z-index: 10; background-color: #1f2937; }
 .swiper-slide { padding: 2.5rem; text-align: center; background: #f8fafc; border-radius: 0.5rem; }
 .swiper-pagination-bullet-active { background-color: #f59e0b; }
 
-/* Masonry */
+/* [美化] 修正 Masonry (瀑布流) 
+  使其配合 script.js 中的 gutter: 24 (1.5rem) 設定
+*/
 .masonry-grid { width: 100%; }
-.grid-item { width: calc(33.333% - 1.5rem); margin-bottom: 1.5rem; }
-@media (max-width: 1024px) { .grid-item { width: calc(50% - 1.5rem); } } /* 修正 gutter 計算 */
-@media (max-width: 768px) { .grid-item { width: 100%; } }
+.grid-item { 
+    width: 100%; /* 預設為 1 欄 */
+    margin-bottom: 1.5rem; /* 統一垂直間距 */
+}
+@media (min-width: 768px) { /* 768px 以上改為 2 欄 */
+    .grid-item { width: 50%; }
+}
+@media (min-width: 1024px) { /* 1024px 以上改為 3 欄 */
+    .grid-item { width: 33.333%; }
+}
+
 
 /* Modal Animation */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
