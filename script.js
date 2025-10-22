@@ -248,10 +248,31 @@ async function fetchRegistrableEventsData() {
                 </div>
             </div>`).join('');
 
+        // --- [!! 程式碼已修正 !!] ---
         if (typeof Masonry !== 'undefined' && typeof imagesLoaded !== 'undefined') {
-            const msnry = new Masonry(grid, { itemSelector: '.grid-item', columnWidth: '.grid-item', percentPosition: true, gutter: 24 });
-            imagesLoaded(grid).on('progress', () => msnry.layout());
+            
+            // [!! 修正 !!] 只在螢幕寬度大於 768px (CSS 中的手機斷點) 時才啟用 Masonry 瀑布流
+            // 在手機上 (<= 768px)，CSS 裡的 @media query 會自動將 .grid-item 設為 width: 100%，
+            // 並且繼承 .grid-item 基礎規則裡的 margin-bottom: 1.5rem 來提供間距。
+            if (window.innerWidth > 768) {
+                const msnry = new Masonry(grid, { 
+                    itemSelector: '.grid-item', 
+                    columnWidth: '.grid-item', 
+                    percentPosition: true, 
+                    gutter: 24 
+                });
+                
+                // 確保圖片載入後重新計算佈局
+                imagesLoaded(grid).on('progress', () => msnry.layout());
+            } else {
+                // 在手機上，我們不需要 Masonry。
+                // 瀏覽器會自動使用 CSS 規則 (width: 100% 和 margin-bottom) 來堆疊卡片。
+                // 我們仍然可以呼叫 imagesLoaded 確保圖片載入流暢。
+                imagesLoaded(grid);
+            }
         }
+        // --- [!! 修正結束 !!] ---
+
         // [!! 已修改 !!] 此監聽器現在會指向新的 "總控制" 函數
         document.querySelectorAll('.register-btn').forEach(button => button.addEventListener('click', openRegistrationModal));
     } catch (error) {
