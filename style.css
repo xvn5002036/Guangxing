@@ -1,7 +1,7 @@
 /* 基本設定 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    background-color: #f8fafc; /* slate-50 */
+    /* [!! 修正 !!] 移除 body 的背景顏色，讓 z-index: -1 的背景可見 */
 }
 h1, h2, h3 {
     font-family: 'Noto Serif TC', serif; /* 預設標題字體 */
