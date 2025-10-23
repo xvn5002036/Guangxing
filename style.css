@@ -151,8 +151,8 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     color: #dc2626; /* text-red-600 */
 }
 
-/* --- [!! 新增 !!] 固定背景 (Hero Section) 樣式 --- */
-/* (請加在檔案的最末端) */
+/* --- [!! [修改] 固定背景 (Hero Section) 樣式 !!] --- */
+/* (已更新，解決手機版問題) */
 
 /* 固定的影片背景 */
 .fixed-background-video {
@@ -165,11 +165,14 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     z-index: -1; /* 關鍵：放在所有內容的最底層 (低於 z-10 的 overlay) */
 }
 
-/* 固定的圖片背景 */
-.hero-bg.fixed-image {
+/* [!! 新增 !!] 固定的圖片背景 (適用於所有裝置的解決方案) */
+.fixed-background-image {
+    position: fixed; /* 關鍵：使用 position: fixed，這在手機上有效 */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-position: center center;
     background-size: cover;
-    
-    /* 關鍵：讓背景圖片固定不滾動 */
-    background-attachment: fixed;
+    z-index: -1; /* 確保在 overlay 之下 */
 }
