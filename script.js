@@ -94,6 +94,7 @@ function setupEventListeners() {
 
 // --- 資料載入 ---
 function fetchAllData() {
+    fetchBackgroundData(); // [!! 新增 !!]
     fetchNewsData();
     fetchRegistrableEventsData();
     fetchEventsDataForAlbums(); // [!! 錯誤已修復 !!]
@@ -128,6 +129,69 @@ function handleHeaderScroll() {
 }
 
 // --- 資料獲取與渲染 ---
+
+// [!! 新增 !!] 載入 Hero 區塊的動態背景
+async function fetchBackgroundData() {
+    const heroSection = document.getElementById('hero-section');
+    if (!heroSection) {
+        console.warn("Hero section (id=hero-section) not found.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/get-background'); // 呼叫新的 API
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}, message: ${(await response.json()).message || 'Unknown error'}`);
+        
+        const background = await response.json();
+
+        // 優先使用影片 (如果 Video_URL 有填)
+        if (background.video) {
+            // 移除可能存在的圖片背景 (如果 Notion 中途切換)
+            heroSection.classList.remove('fixed-image');
+            heroSection.style.backgroundImage = '';
+
+            // 檢查是否已存在影片，避免重複添加
+            let videoEl = heroSection.querySelector('.fixed-background-video');
+            if (!videoEl) {
+                videoEl = document.createElement('video');
+                videoEl.classList.add('fixed-background-video');
+                videoEl.autoplay = true;
+                videoEl.muted = true;
+                videoEl.loop = true;
+                videoEl.playsInline = true;
+                // 插入到 heroSection 的最前面，確保它在 overlay (z-10) 之下
+                heroSection.prepend(videoEl);
+            }
+            // 更新影片來源
+            if (videoEl.src !== background.video) {
+                videoEl.src = background.video;
+            }
+        } 
+        // 其次使用圖片 (如果 Video_URL 是空的，但 Image 有上傳)
+        else if (background.image) {
+            // 移除可能存在的影片
+            let existingVideo = heroSection.querySelector('.fixed-background-video');
+            if (existingVideo) existingVideo.remove();
+
+            // 套用固定圖片的 CSS
+            heroSection.classList.add('fixed-image');
+            heroSection.style.backgroundImage = `url(${background.image})`;
+        } 
+        // 都沒有 (Notion 欄位都是空的)
+        else {
+            // 移除所有動態背景
+            let existingVideo = heroSection.querySelector('.fixed-background-video');
+            if (existingVideo) existingVideo.remove();
+            heroSection.classList.remove('fixed-image');
+            heroSection.style.backgroundImage = '';
+            // 保持預設的黑色半透明遮罩
+        }
+
+    } catch (error) {
+        console.error("無法獲取背景資料:", error);
+        // 發生錯誤時，不做任何事，保持預設樣式
+    }
+}
 
 // 載入文章資料
 async function fetchArticlesData() {
