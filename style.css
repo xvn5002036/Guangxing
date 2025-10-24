@@ -1,45 +1,47 @@
 /* 基本設定 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    /* 保持 body 背景透明 */
+    /* [!! 關鍵 !!] 保持 body 背景透明 */
     background-color: transparent;
 }
 h1, h2, h3 {
     font-family: 'Noto Serif TC', serif; /* 預設標題字體 */
 }
 
-/* --- [!! 新增 !!] --- */
-/* 讓背景容器建立一個堆疊上下文，但它本身仍在正常流中 */
+/* --- [!! 修改 !!] --- */
+/* 背景容器不需要任何特殊樣式 */
 #fixed-background-container {
-    position: relative; /* 讓內部的 fixed 相對它定位 z-index */
-    z-index: 0; /* 或者不設定 z-index，讓它處於基礎層 */
+    /* No position or z-index needed here */
+    /* Ensure it doesn't accidentally get hidden if empty before JS runs */
+    /* min-height: 1px; (Optional, unlikely needed) */
 }
 
 /* Hero 區塊 */
 .hero-bg {
-    position: relative; /* 讓 ::before 和 .hero-content 可以相對於它定位 */
-    overflow: hidden;
+    position: relative; /* For stacking ::before and .hero-content */
+    overflow: hidden; /* Keep this to contain ::before */
 }
-/* 使用 ::before 偽元素製作半透明遮罩 */
+/* 半透明遮罩 */
 #hero-section::before {
     content: "";
     position: absolute;
     inset: 0;
-    background-color: rgba(17, 24, 39, 0.6);
-    z-index: 1; /* 遮罩在背景之上 */
+    background-color: rgba(17, 24, 39, 0.6); /* bg-gray-900 bg-opacity-60 */
+    z-index: 1; /* Above background (-1), below content (2) */
 }
-/* 確保 Hero 區塊的文字內容在遮罩之上 */
+/* Hero 文字內容 */
 #hero-section .hero-content {
-    position: relative;
-    z-index: 2; /* 內容在遮罩之上 */
+    position: relative; /* Needed for z-index */
+    z-index: 2; /* Above mask (1) */
 }
 
 
 /* 主要內容區塊背景 */
-/* 保持移除 main > section 的 position: relative 和 z-index: 10 */
+/* 保持移除 main > section 的 position: relative 和 z-index */
 main > section:not(.hero-bg) {
-    background-color: white;
+    background-color: white; /* Default background for sections */
 }
+/* Specific background colors for certain sections */
 main > section#news,
 main > section#cancellation,
 main > section#fortune,
@@ -47,6 +49,7 @@ main > section#articles,
 main > section#calendar {
     background-color: #f8fafc; /* slate-50 */
 }
+/* Explicitly white sections (redundant maybe, but safe) */
 main > section#about,
 main > section#registration,
 main > section#events {
@@ -55,28 +58,32 @@ main > section#events {
 
 
 /* 參拜資訊區塊樣式 */
-#info { background-color: #111827; color: #d1d5db; position: relative; z-index: 10; }
+/* #info needs position: relative ONLY if other elements inside it need absolute positioning relative to it. */
+/* Keep z-index: 10 to ensure it's above the fixed background */
+#info {
+    background-color: #111827; color: #d1d5db;
+    position: relative; /* Keep if needed for internal positioning */
+    z-index: 10;
+}
 #info h2 { color: white; }
 #info h3 { color: #fbbf24; }
 .info-card { background-color: rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 0.5rem; }
 .info-card-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 0.5rem; }
 .info-card-content { display: flex; flex-direction: column; gap: 1rem; }
 .info-item { display: flex; align-items: flex-start; }
-.info-item-icon {
-    margin-right: 0.75rem; width: 2rem; text-align: center; flex-shrink: 0; color: #fbbf24;
-}
+.info-item-icon { margin-right: 0.75rem; width: 2rem; text-align: center; flex-shrink: 0; color: #fbbf24; }
 .info-icon-svg { display: inline-block; width: 1.5em; height: 1.5em; fill: currentColor; }
 .map-button { display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; color: white; border-radius: 0.375rem; transition: background-color 0.3s; font-weight: 600; }
 
 /* Footer */
-footer { position: relative; z-index: 10; background-color: #1f2937; }
-
-/* 其他樣式 (保持不變) ... */
-/* 區塊標題底線動畫 */
-.section-title::after {
-    content: ''; display: block; width: 50px; height: 3px; background-color: #f59e0b; margin: 1rem auto 0; border-radius: 2px;
-    transform: scaleX(0); transition: transform 0.5s ease-out 0.2s;
+footer {
+    position: relative; /* Keep if needed for internal positioning */
+    z-index: 10; /* Ensure above fixed background */
+    background-color: #1f2937;
 }
+
+/* 區塊標題底線動畫 */
+.section-title::after { content: ''; display: block; width: 50px; height: 3px; background-color: #f59e0b; margin: 1rem auto 0; border-radius: 2px; transform: scaleX(0); transition: transform 0.5s ease-out 0.2s; }
 .scroll-animate.scrolled-in .section-title::after { transform: scaleX(1); }
 
 /* 導覽列連結 hover 效果 */
@@ -146,10 +153,7 @@ footer { position: relative; z-index: 10; background-color: #1f2937; }
 .article-card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
 .article-card h3 { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
 .article-card .publish-date { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
-.article-card p {
-    font-size: 1rem; color: #475569; line-height: 1.7;
-    white-space: pre-wrap;
-}
+.article-card p { font-size: 1rem; color: #475569; line-height: 1.7; white-space: pre-wrap; }
 
 /* 按鈕 Hover 效果 */
 button, a.map-button { transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; }
@@ -166,28 +170,23 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
 .event-tooltip { position: absolute; z-index: 1070; display: none; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #fff; background-color: rgba(0, 0, 0, 0.8); border-radius: 0.25rem; white-space: normal; max-width: 250px; pointer-events: none; }
 
 /* 密碼錯誤樣式 */
-#password-error {
-    color: #dc2626; /* text-red-600 */
-}
+#password-error { color: #dc2626; }
 
-/* 固定背景 (Hero Section) 樣式 */
-.fixed-background-video {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
-    z-index: -1; /* 相對於 #fixed-background-container 定位在後面 */
-}
-
+/* --- [!! 最終確認 !!] --- */
+/* 固定背景樣式 */
+.fixed-background-video,
 .fixed-background-image {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+    z-index: -1; /* Place it behind everything */
+}
+.fixed-background-video {
+    object-fit: cover;
+}
+.fixed-background-image {
     background-position: center center;
     background-size: cover;
-    z-index: -1; /* 相對於 #fixed-background-container 定位在後面 */
 }
