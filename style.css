@@ -9,11 +9,12 @@ h1, h2, h3 {
 }
 
 /* Hero 區塊 */
-.hero-bg { 
+.hero-bg {
     position: relative; /* 讓 ::before 和 .hero-content 可以相對於它定位 */
-    overflow: hidden; 
+    overflow: hidden;
+    /* [!! 移除 !!] 不再需要 z-index，因為 main 的 z-index 已移除 */
 }
-/* [!! 新增 !!] 使用 ::before 偽元素製作半透明遮罩 */
+/* 使用 ::before 偽元素製作半透明遮罩 */
 #hero-section::before {
     content: "";
     position: absolute;
@@ -21,29 +22,38 @@ h1, h2, h3 {
     background-color: rgba(17, 24, 39, 0.6); /* bg-gray-900 bg-opacity-60 */
     z-index: 1; /* 遮罩在背景之上 (背景是 z-index: -1) */
 }
-/* [!! 新增 !!] 確保 Hero 區塊的文字內容在遮罩之上 */
+/* 確保 Hero 區塊的文字內容在遮罩之上 */
 #hero-section .hero-content {
     position: relative; /* 確保 z-index 生效 */
     z-index: 2; /* 內容在遮罩之上 */
 }
 
 /* 舊的 Hero 影片/iframe 樣式 (移除 z-index: 0) */
+/* [!! 移除 !!] 這段不再需要，因為背景已移到 #fixed-background-container */
+/*
 .hero-bg > video,
 .hero-bg > iframe {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
 }
+*/
 
 
 /* 主要內容區塊背景 */
-main > section:not(.hero-bg) { position: relative; z-index: 10; background-color: white; }
+/* [!! 關鍵修改 !!] 移除 main > section 的 position: relative 和 z-index: 10 */
+/* 讓它們不會創建新的堆疊上下文 (stacking context) 來覆蓋 z-index: -1 的背景 */
+main > section:not(.hero-bg) {
+    background-color: white; /* 保留背景色 */
+    /* position: relative; */ /* <-- 移除 */
+    /* z-index: 10; */      /* <-- 移除 */
+}
+/* 其他區塊的背景色設定保持不變 */
 main > section#news,
 main > section#cancellation,
 main > section#fortune,
-main > section#articles, /* [修改] articles 也設為灰色 */
-main > section#calendar { /* [修改] calendar 設為白色 (原為預設白色) */
+main > section#articles,
+main > section#calendar {
     background-color: #f8fafc; /* slate-50 */
 }
-/* [修正] 將白色區塊明確設回白色，避免上面規則影響 */
 main > section#about,
 main > section#registration,
 main > section#events {
@@ -52,7 +62,7 @@ main > section#events {
 
 
 /* 參拜資訊區塊樣式 */
-#info { background-color: #111827; color: #d1d5db; }
+#info { background-color: #111827; color: #d1d5db; position: relative; z-index: 10; } /* <-- 確保參拜資訊區塊在最上層之一 */
 #info h2 { color: white; }
 #info h3 { color: #fbbf24; }
 .info-card { background-color: rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 0.5rem; }
@@ -67,7 +77,7 @@ main > section#events {
 .map-button { display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; color: white; border-radius: 0.375rem; transition: background-color 0.3s; font-weight: 600; }
 
 /* Footer */
-footer { position: relative; z-index: 10; background-color: #1f2937; }
+footer { position: relative; z-index: 10; background-color: #1f2937; } /* <-- 確保 Footer 在最上層之一 */
 
 /* 區塊標題底線動畫 */
 .section-title::after {
@@ -171,23 +181,23 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
 
 /* 固定的影片背景 */
 .fixed-background-video {
-    position: fixed; 
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100vw; 
-    height: 100vh; 
-    object-fit: cover; 
-    z-index: -1; /* 確保在最底層 (配合 body transparent) */
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1; /* 保持在最底層 */
 }
 
 /* 固定的圖片背景 */
 .fixed-background-image {
-    position: fixed; 
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     background-position: center center;
     background-size: cover;
-    z-index: -1; /* 確保在最底層 (配合 body transparent) */
+    z-index: -1; /* 保持在最底層 */
 }
