@@ -18,158 +18,170 @@
     <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
     
-    <link rel="stylesheet" href="style.css?v=5">
-    <link rel="stylesheet" href="calendar.css"> <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-    </head>
-<body class="text-slate-700">
+    <link rel="stylesheet" href="style.css?v=6-dark"> 
+    <link rel="stylesheet" href="calendar.css"> 
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body class="text-zinc-300 bg-zinc-900 antialiased">
 
     <div id="fixed-background-container"></div>
 
-    <header id="header" class="bg-gray-900 bg-opacity-80 backdrop-blur-lg text-white shadow-lg sticky top-0 z-50 transition-all duration-300">
+    <header id="header" class="bg-zinc-950 bg-opacity-80 backdrop-blur-lg text-white shadow-lg sticky top-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#" class="text-xl md:text-2xl font-bold text-amber-400 tracking-wider hover:text-amber-300 transition-colors duration-300">新莊武壇廣行宮</a>
+            <a href="#" class="text-xl md:text-2xl font-bold text-amber-300 tracking-wider hover:text-amber-200 transition-colors duration-300 font-serif">新莊武壇廣行宮</a>
             
             <nav class="hidden lg:flex space-x-4 text-sm tracking-wider">
-                <a href="#about" class="nav-link">本宮介紹</a>
-                <a href="#news" class="nav-link">最新消息</a>
-                <a href="#fortune" class="nav-link">線上求籤</a>
-                <a href="#calendar" class="nav-link">年度行事曆</a>
-                <a href="#articles" class="nav-link">參拜知識</a>
-                <a href="#registration" class="nav-link">活動報名</a>
-                <a href="#cancellation" class="nav-link">報名查詢</a>
-                <a href="#events" class="nav-link">活動紀實</a>
-                <a href="#info" class="nav-link">參拜資訊</a>
+                <a href="#about" class="nav-link text-zinc-200">本宮介紹</a>
+                <a href="#news" class="nav-link text-zinc-200">最新消息</a>
+                <a href="#fortune" class="nav-link text-zinc-200">線上求籤</a>
+                <a href="#calendar" class="nav-link text-zinc-200">年度行事曆</a>
+                <a href="#articles" class="nav-link text-zinc-200">參拜知識</a>
+                <a href="#registration" class="nav-link text-zinc-200">活動報名</a>
+                <a href="#cancellation" class="nav-link text-zinc-200">報名查詢</a>
+                <a href="#events" class="nav-link text-zinc-200">活動紀實</a>
+                <a href="#info" class="nav-link text-zinc-200">參拜資訊</a>
             </nav>
             
-            <button id="mobile-menu-button" class="lg:hidden focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
+            <button id="mobile-menu-button" class="lg:hidden focus:outline-none text-zinc-200"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
         </div>
         
-        <div id="mobile-menu" class="hidden lg:hidden bg-gray-800">
-             <a href="#about" class="block py-3 px-6 hover:bg-gray-700">本宮介紹</a>
-            <a href="#news" class="block py-3 px-6 hover:bg-gray-700">最新消息</a>
-            <a href="#fortune" class="block py-3 px-6 hover:bg-gray-700">線上求籤</a>
-            <a href="#calendar" class="block py-3 px-6 hover:bg-gray-700">年度行事曆</a>
-            <a href="#articles" class="block py-3 px-6 hover:bg-gray-700">參拜知識</a>
-            <a href="#registration" class="block py-3 px-6 hover:bg-gray-700">活動報名</a>
-            <a href="#cancellation" class="block py-3 px-6 hover:bg-gray-700">報名查詢</a>
-            <a href="#events" class="block py-3 px-6 hover:bg-gray-700">活動紀實</a>
-            <a href="#info" class="block py-3 px-6 hover:bg-gray-700">參拜資訊</a>
+        <div id="mobile-menu" class="hidden lg:hidden bg-zinc-900">
+             <a href="#about" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">本宮介紹</a>
+            <a href="#news" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">最新消息</a>
+            <a href="#fortune" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">線上求籤</a>
+            <a href="#calendar" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">年度行事曆</a>
+            <a href="#articles" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">參拜知識</a>
+            <a href="#registration" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">活動報名</a>
+            <a href="#cancellation" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">報名查詢</a>
+            <a href="#events" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">活動紀實</a>
+            <a href="#info" class="block py-3 px-6 hover:bg-zinc-800 text-zinc-200">參拜資訊</a>
         </div>
     </header>
 
     <main>
         <section id="hero-section" class="hero-bg min-h-screen flex items-center justify-center text-white pt-16">
             <div class="hero-content text-center p-6 relative z-20 scroll-animate"> 
-                <h1 class="text-5xl md:text-7xl font-bold tracking-wider leading-tight">代天巡狩 池府王爺</h1>
-                <p class="mt-4 text-lg text-slate-200 max-w-3xl mx-auto">承福建廈門馬巷元威殿香火，為在地信眾提供心靈慰藉與寄託。闡揚王爺忠勇慈悲精神，歡迎十方善信蒞臨參拜。</p>
+                <h1 class="text-5xl md:text-7xl font-bold tracking-wider leading-tight font-serif">代天巡狩 池府王爺</h1>
+                <p class="mt-4 text-lg text-zinc-300 max-w-3xl mx-auto">承福建廈門馬巷元威殿香火，為在地信眾提供心靈慰藉與寄託。闡揚王爺忠勇慈悲精神，歡迎十方善信蒞臨參拜。</p>
             </div>
         </section>
 
-        <section id="about" class="py-24 bg-white">
+        <section id="about" class="py-24 bg-zinc-900">
             <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                <h2 class="text-4xl font-bold text-center section-title">本宮介紹</h2>
+                <h2 class="text-4xl font-bold text-center section-title text-white">本宮介紹</h2>
                 <div class="mt-16 mx-auto grid md:grid-cols-2 gap-12 items-center">
-                    <img loading="lazy" src="https://placehold.co/600x400/1e293b/f8fafc?text=廣行宮建築外觀" alt="廣行宮建築" class="rounded-lg shadow-xl w-full h-auto">
-                    <div class="text-slate-600 leading-relaxed space-y-4">
-                        <h3 class="text-2xl font-semibold text-slate-800">建宮沿革</h3>
+                    <img loading="lazy" src="https://placehold.co/600x400/1e293b/f8fafc?text=廣行宮建築外觀" alt="廣行宮建築" class="rounded-lg shadow-xl w-full h-auto border border-zinc-700">
+                    <div class="text-zinc-400 leading-relaxed space-y-4">
+                        <h3 class="text-2xl font-semibold text-zinc-100 font-serif">建宮沿革</h3>
                         <p>新莊武壇廣行宮，主祀代天巡狩池府王爺，緣起於創辦人對王爺的虔誠信仰，為弘揚道教科儀、推動公益慈善、傳承傳統文化而建立。我們致力於在社區中扮演穩定人心的角色，提供一個祥和的信仰中心。</p>
                         <p class="mt-4">（此處可放置更多關於建宮歷史、重要事件的描述...）</p>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold text-center mt-24 mb-12 text-slate-800">祀奉神明</h3>
+                <h3 class="text-3xl font-bold text-center mt-24 mb-12 text-zinc-100 font-serif">祀奉神明</h3>
                 <div id="deities-grid" class="mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div id="deities-loading" class="col-span-full text-center text-slate-500">
+                    <div id="deities-loading" class="col-span-full text-center text-zinc-500">
                         <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <p class="mt-2">神明資料載入中...</p>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold text-center mt-24 mb-12 text-slate-800">建築藝術</h3>
-                <div class="mx-auto text-center text-slate-600 leading-relaxed space-y-4 max-w-4xl">
+                <h3 class="text-3xl font-bold text-center mt-24 mb-12 text-zinc-100 font-serif">建築藝術</h3>
+                <div class="mx-auto text-center text-zinc-400 leading-relaxed space-y-4 max-w-4xl">
                     <p>（此處可放置關於宮廟建築特色、龍柱、剪黏、彩繪等介紹文字，並可搭配圖片或相簿連結。）</p>
-                    <img loading="lazy" src="https://placehold.co/800x400/e2e8f0/64748b?text=宮廟建築細節" alt="建築藝術" class="rounded-lg shadow-lg w-full h-auto mt-8">
+                    <img loading="lazy" src="https://placehold.co/800x400/27272a/9ca3af?text=宮廟建築細節" alt="建築藝術" class="rounded-lg shadow-lg w-full h-auto mt-8 border border-zinc-700">
                 </div>
             </div>
         </section>
-        <section id="news" class="py-24 bg-slate-50">
-             <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">最新消息</h2>
-                 <div class="mt-16 mx-auto bg-white rounded-lg shadow-lg p-8 news-carousel max-w-4xl">
+        
+        <section id="news" class="py-24 bg-zinc-850"> <div class="container mx-auto px-6 max-w-7xl scroll-animate">
+                 <h2 class="text-4xl font-bold text-center section-title text-white">最新消息</h2>
+                 <div class="mt-16 mx-auto bg-zinc-900 rounded-lg shadow-xl p-8 news-carousel max-w-4xl">
                      <div class="swiper newsSwiper">
                          <div class="swiper-wrapper" id="news-swiper-wrapper"></div>
                          <div class="swiper-pagination"></div>
                      </div>
-                     <div id="news-loading" class="text-center text-slate-500">
+                     <div id="news-loading" class="text-center text-zinc-500">
                          <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                          <p class="mt-2">消息載入中...</p>
                      </div>
                  </div>
              </div>
          </section>
-         <section id="fortune" class="py-24 bg-slate-50">
-             <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">線上求籤</h2>
-                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">心誠則靈。請誠心默念您的姓名、生辰、地址與所求之事，然後點擊下方籤筒求籤。</p>
-                 <div id="shake-button" class="shake-button">
-                     <img src="shake.svg" alt="點此求籤"> 
-                 </div>
-                 <p id="shake-loading-text" class="text-center text-slate-500 mt-2 h-6"></p>
+         
+         <section id="fortune" class="py-24 bg-zinc-900">
+             <div class="container mx-auto px-6 max-w-7xl scroll-animate text-center">
+                 <h2 class="text-4xl font-bold text-center section-title text-white">線上求籤</h2>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-zinc-400">心誠則靈。請誠心默念您的姓名、生辰、地址與所求之事，然後點擊下方求籤。</p>
+                 
+                 <button id="shake-button" class="shake-button mx-auto mt-10 px-12 py-5 bg-amber-400 text-zinc-900 font-bold text-lg rounded-lg shadow-lg hover:bg-amber-300 transition-all duration-300 ease-in-out transform hover:scale-105">
+                     <span class="inline-block">誠心求籤</span>
+                 </button>
+                 
+                 <p id="shake-loading-text" class="text-center text-zinc-500 mt-4 h-6"></p>
              </div>
          </section>
-         <section id="calendar" class="py-24 bg-white">
+         
+         <section id="calendar" class="py-24 bg-zinc-850">
              <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">年度行事曆</h2>
-                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">查看本宮年度重要法會、慶典及活動時程。</p>
-                 <div id="calendar-container" class="mt-16 mx-auto bg-white p-4 md:p-8 rounded-lg shadow-lg">
-                     <div id='calendar-loading' class="text-center text-slate-500 py-10">
+                 <h2 class="text-4xl font-bold text-center section-title text-white">年度行事曆</h2>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-zinc-400">查看本宮年度重要法會、慶典及活動時程。</p>
+                 <div id="calendar-container" class="mt-16 mx-auto bg-zinc-900 p-4 md:p-8 rounded-lg shadow-xl">
+                     <div id='calendar-loading' class="text-center text-zinc-500 py-10">
                          <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                          <p class="mt-2">行事曆載入中...</p>
                      </div>
                      <div id='calendar-element' style="display: none;"></div> 
-                     <div id="calendar-error" class="text-center text-red-500 py-10" style="display: none;">
+                     <div id="calendar-error" class="text-center text-red-400 py-10" style="display: none;">
                          無法載入活動行事曆，請稍後再試。
                      </div>
                  </div>
              </div>
          </section>
-         <section id="articles" class="py-24 bg-slate-50"> 
+         
+         <section id="articles" class="py-24 bg-zinc-900"> 
              <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">參拜知識</h2>
-                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">了解更多道教文化與參拜禮儀。</p>
+                 <h2 class="text-4xl font-bold text-center section-title text-white">參拜知識</h2>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-zinc-400">了解更多道教文化與參拜禮儀。</p>
                  <div id="articles-list" class="mt-16 mx-auto space-y-8 max-w-4xl">
-                     <div id="articles-loading" class="col-span-full text-center text-slate-500">
+                     <div id="articles-loading" class="col-span-full text-center text-zinc-500">
                          <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                          <p class="mt-2">文章載入中...</p>
                      </div>
                      </div>
              </div>
          </section>
-         <section id="registration" class="py-24 bg-white">
+         
+         <section id="registration" class="py-24 bg-zinc-850">
              <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">活動報名</h2>
-                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">此處為本宮近期開放報名之活動，歡迎十方善信踴躍參與，共沐神恩。</p>
+                 <h2 class="text-4xl font-bold text-center section-title text-white">活動報名</h2>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-zinc-400">此處為本宮近期開放報名之活動，歡迎十方善信踴躍參與，共沐神恩。</p>
                  <div id="registrable-events-grid" class="mt-16 masonry-grid">
-                     <div id="registrable-events-loading" class="col-span-full text-center text-slate-500">
+                     <div id="registrable-events-loading" class="col-span-full text-center text-zinc-500">
                          <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                          <p class="mt-2">可報名活動載入中...</p>
                      </div>
                  </div>
              </div>
          </section>
-         <section id="cancellation" class="py-24 bg-slate-50">
+         
+         <section id="cancellation" class="py-24 bg-zinc-900">
              <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">報名查詢／取消</h2>
-                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">請輸入您報名時填寫的「姓名」與「聯絡電話」，以查詢或取消您的報名紀錄。</p>
-                 <div class="mt-12 max-w-xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                 <h2 class="text-4xl font-bold text-center section-title text-white">報名查詢／取消</h2>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-zinc-400">請輸入您報名時填寫的「姓名」與「聯絡電話」，以查詢或取消您的報名紀錄。</p>
+                 <div class="mt-12 max-w-xl mx-auto bg-zinc-800 p-8 rounded-lg shadow-xl">
                      <form id="find-registration-form" class="space-y-4">
                          <div>
-                             <label for="searchName" class="block text-sm font-medium text-slate-700">您的姓名</label>
-                             <input type="text" id="searchName" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500" placeholder="請輸入您報名時使用的大名">
+                             <label for="searchName" class="block text-sm font-medium text-zinc-300">您的姓名</label>
+                             <input type="text" id="searchName" required class="form-input" placeholder="請輸入您報名時使用的大名">
                          </div>
                          <div>
-                             <label for="searchPhoneNumber" class="block text-sm font-medium text-slate-700">聯絡電話</label>
-                             <input type="tel" id="searchPhoneNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500" placeholder="請輸入您報名時使用的電話號碼">
+                             <label for="searchPhoneNumber" class="block text-sm font-medium text-zinc-300">聯絡電話</label>
+                             <input type="tel" id="searchPhoneNumber" required class="form-input" placeholder="請輸入您報名時使用的電話號碼">
                          </div>
-                         <button type="submit" id="find-registration-btn" class="w-full bg-slate-700 text-white font-bold py-3 px-4 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors flex items-center justify-center">
+                         <button type="submit" id="find-registration-btn" class="w-full bg-zinc-600 text-white font-bold py-3 px-4 rounded-md hover:bg-zinc-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-400 focus:ring-offset-zinc-800 transition-colors flex items-center justify-center">
                              <span id="find-btn-text">查詢報名</span>
                              <svg id="find-btn-spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                          </button>
@@ -178,18 +190,20 @@
                  </div>
              </div>
          </section>
-         <section id="events" class="py-24 bg-white">
+         
+         <section id="events" class="py-24 bg-zinc-850">
              <div class="container mx-auto px-6 max-w-7xl scroll-animate">
-                 <h2 class="text-4xl font-bold text-center section-title">活動紀實</h2>
-                 <p class="text-center mt-4 max-w-2xl mx-auto text-slate-600">回顧本宮歷年來的精彩活動與慶典相簿。</p>
+                 <h2 class="text-4xl font-bold text-center section-title text-white">活動紀實</h2>
+                 <p class="text-center mt-4 max-w-2xl mx-auto text-zinc-400">回顧本宮歷年來的精彩活動與慶典相簿。</p>
                  <div id="events-album-list" class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                     <div id="events-loading" class="col-span-full text-center text-slate-500">
+                     <div id="events-loading" class="col-span-full text-center text-zinc-500">
                          <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                          <p class="mt-2">相簿載入中...</p>
                      </div>
                  </div>
              </div>
          </section>
+         
          <section id="info" class="py-24">
              <div class="container mx-auto px-6 max-w-7xl scroll-animate">
                  <h2 class="text-4xl font-bold text-center section-title">參拜資訊</h2>
@@ -200,45 +214,45 @@
                                  <span class="info-item-icon">
                                      <svg class="info-icon-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
                                  </span>
-                                 <div><p class="font-semibold">地址</p><p>242新北市新莊區福營路500號</p></div>
+                                 <div><p class="font-semibold text-zinc-100">地址</p><p>242新北市新莊區福營路500號</p></div>
                              </div>
                              <div class="info-item">
                                  <span class="info-item-icon">
                                      <svg class="info-icon-svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
                                  </span>
-                                 <div><p class="font-semibold">電話</p><p>(02) 1234-5678 (此為範例)</p></div>
+                                 <div><p class="font-semibold text-zinc-100">電話</p><p>(02) 1234-5678 (此為範例)</p></div>
                              </div>
                              <div class="info-item">
                                  <span class="info-item-icon">
                                      <svg class="info-icon-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 10.586V6z" clip-rule="evenodd" /></svg>
                                  </span>
-                                 <div><p class="font-semibold">開放時間</p><p>每日 07:00 - 21:00</p></div>
+                                 <div><p class="font-semibold text-zinc-100">開放時間</p><p>每日 07:00 - 21:00</p></div>
                              </div>
                          </div></div>
                          <div class="info-card"><h3 class="info-card-title">交通指南</h3><div class="info-card-content">
-                              <div class="info-item"><span>🚆</span><div><p class="font-semibold">搭乘捷運</p><p>搭乘中和新蘆線 (橘線) 至「輔大站」，由 1 號出口步行約 10 分鐘即可抵達。</p></div></div>
-                              <div class="info-item"><span>🚌</span><div><p class="font-semibold">搭乘公車</p><p>搭乘 299、639、810 等路線公車，於「輔大」站下車後步行約 10 分鐘。</p></div></div>
-                              <div class="info-item"><span>🚗</span><div><p class="font-semibold">自行開車</p><p>可停放於本宮附近之公有停車格或輔仁大學周邊停車場。</p></div></div>
+                              <div class="info-item"><span>🚆</span><div><p class="font-semibold text-zinc-100">搭乘捷運</p><p>搭乘中和新蘆線 (橘線) 至「輔大站」，由 1 號出口步行約 10 分鐘即可抵達。</p></div></div>
+                              <div class="info-item"><span>🚌</span><div><p class="font-semibold text-zinc-100">搭乘公車</p><p>搭乘 299、639、810 等路線公車，於「輔大」站下車後步行約 10 分鐘。</p></div></div>
+                              <div class="info-item"><span>🚗</span><div><p class="font-semibold text-zinc-100">自行開車</p><p>可停放於本宮附近之公有停車格或輔仁大學周邊停車場。</p></div></div>
                           </div></div>
                          <div class="info-card"><h3 class="info-card-title">參拜須知</h3><div class="info-card-content">
                              <div class="info-item">
                                  <span class="info-item-icon">
                                      <svg class="info-icon-svg" viewBox="0 0 20 20" fill="currentColor"><path d="M11.95 1.05a2 2 0 012.1 0l4.5 2.5a2 2 0 011.1 1.73V10a2 2 0 01-.15.78l-1.9 4.82a2 2 0 01-1.85.9l-5.6-.2a2 2 0 01-1.85-.9L8.25 10.78A2 2 0 018.1 10V5.28a2 2 0 011.1-1.73l2.75-1.5zM8.05 1.05a2 2 0 00-2.1 0l-4.5 2.5a2 2 0 00-1.1 1.73V10a2 2 0 00.15.78l1.9 4.82a2 2 0 001.85.9l5.6-.2a2 2 0 001.85-.9l1.9-4.82A2 2 0 0011.9 10V5.28a2 2 0 00-1.1-1.73l-2.75-1.5z" /></svg>
                                  </span>
-                                 <div><p class="font-semibold">入廟須知</p><p>衣著整潔，輕聲細語，勿觸摸神像金身，共同維護莊嚴清靜之地。</p></div>
+                                 <div><p class="font-semibold text-zinc-100">入廟須知</p><p>衣著整潔，輕聲細語，勿觸摸神像金身，共同維護莊嚴清靜之地。</p></div>
                              </div>
                          </div></div>
                      </div>
                      <div class="sticky top-28">
-                          <div class="rounded-lg overflow-hidden shadow-2xl h-96 lg:h-[60vh]">
-                              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3615.31481015697!2d121.41696087537618!3d25.02339697782399!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442a75aadeeb6e5%3A0x1422dba0d2ca5c74!2zMjQy5paw5YyX5biC5paw6I6K5Y2A56aP55ac6LevNTAw6Jmf!5e0!3m2!1szh-TW!2stw!4v1678886400000!5m2!1szh-TW!2stw" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                          <div class="rounded-lg overflow-hidden shadow-2xl h-96 lg:h-[60vh] border border-zinc-700">
+                              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3615.31481015697!2d121.41696087537618!3d25.02339697782399!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442a75aadeeb6e5%3A0x1422dba0d2ca5c74!2zMjQy5paw5YyX5biC5paw6I6K5Y2A56aP55ac6LevNTAw6Jmf!5e0!3m2!1szh-TW!2stw!4v1678886400000!5m2!1szh-TW!2stw" width="100%" height="100%" style="border:0; filter: invert(90%) hue-rotate(180deg);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                           </div>
                           <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <a href="https://www.google.com/maps/search/?api=1&query=25.0235323,121.4195355" target="_blank" rel="noopener noreferrer" class="map-button bg-blue-500 hover:bg-blue-600">
+                              <a href="https://www.google.com/maps/search/?api=1&query=25.0235323,121.4195355" target="_blank" rel="noopener noreferrer" class="map-button bg-blue-600 hover:bg-blue-500">
                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 1.586l-4 4v2.828l-4 4v2.828l10 5.657 10-5.657v-2.828l-4-4v-2.828l-4-4zM8 12.414l-2-2V8.586l2 2v1.828zm4 0l-2-2V8.586l2 2v1.828zm4-4.828L12 5.172V3.586l4 4v1.828zM4.414 12L10 15.586 15.586 12H4.414z" clip-rule="evenodd" /></svg>
                                   Google 地圖導航
                               </a>
-                              <a href="https://maps.apple.com/?ll=25.023452,121.419489&q=新莊武壇廣行宮" target="_blank" rel="noopener noreferrer" class="map-button bg-gray-800 hover:bg-gray-900">
+                              <a href="https://maps.apple.com/?ll=25.023452,121.419489&q=新莊武壇廣行宮" target="_blank" rel="noopener noreferrer" class="map-button bg-zinc-700 hover:bg-zinc-600">
                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
                                   Apple 地圖導航
                               </a>
@@ -249,39 +263,39 @@
          </section>
      </main>
 
-    <footer class="bg-gray-900 text-slate-400 py-8">
+    <footer class="bg-zinc-950 text-zinc-500 py-8">
         <div class="container mx-auto px-6 text-center text-sm"><p>© 2025 新莊武壇廣行宮. All Rights Reserved.</p></div>
     </footer>
 
-    <div id="registration-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-lg relative animate-fade-in-up">
-            <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            <h3 class="text-2xl font-bold text-slate-800 mb-2">報名：<span id="modal-event-title"></span></h3>
-            <p class="text-slate-500 mb-6">請填寫以下報名資訊</p>
+    <div id="registration-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-zinc-800 rounded-lg shadow-2xl p-8 w-full max-w-lg relative animate-fade-in-up border border-zinc-700">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <h3 class="text-2xl font-bold text-white mb-2 font-serif">報名：<span id="modal-event-title"></span></h3>
+            <p class="text-zinc-400 mb-6">請填寫以下報名資訊</p>
             <form id="registration-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
                 <div class="md:col-span-2">
-                    <label for="registrantName" class="block text-sm font-medium text-slate-700">您的姓名</label>
-                    <input type="text" id="registrantName" name="registrantName" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <label for="registrantName" class="block text-sm font-medium text-zinc-300">您的姓名</label>
+                    <input type="text" id="registrantName" name="registrantName" required class="form-input">
                 </div>
                 <div class="md:col-span-2">
-                    <label for="phoneNumber" class="block text-sm font-medium text-slate-700">聯絡電話</label>
-                    <input type="tel" id="phoneNumber" name="phoneNumber" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <label for="phoneNumber" class="block text-sm font-medium text-zinc-300">聯絡電話</label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber" required class="form-input">
                 </div>
                 <div id="idNumber-group" class="hidden">
-                    <label for="idNumber" class="block text-sm font-medium text-slate-700">身分證字號</label>
-                    <input type="text" id="idNumber" name="idNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <label for="idNumber" class="block text-sm font-medium text-zinc-300">身分證字號</label>
+                    <input type="text" id="idNumber" name="idNumber" class="form-input">
                 </div>
                 <div id="birthday-group" class="hidden">
-                    <label for="birthday" class="block text-sm font-medium text-slate-700">出生年月日 (國曆)</label>
-                    <input type="date" id="birthday" name="birthday" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <label for="birthday" class="block text-sm font-medium text-zinc-300">出生年月日 (國曆)</label>
+                    <input type="date" id="birthday" name="birthday" class="form-input">
                 </div>
                 <div id="address-group" class="hidden md:col-span-2">
-                    <label for="address" class="block text-sm font-medium text-slate-700">聯絡地址</label>
-                    <input type="text" id="address" name="address" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <label for="address" class="block text-sm font-medium text-zinc-300">聯絡地址</label>
+                    <input type="text" id="address" name="address" class="form-input">
                 </div>
                 <div id="birthTime-group" class="hidden md:col-span-2">
-                    <label for="birthTime" class="block text-sm font-medium text-slate-700">出生時辰</label>
-                    <select id="birthTime" name="birthTime" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                    <label for="birthTime" class="block text-sm font-medium text-zinc-300">出生時辰</label>
+                    <select id="birthTime" name="birthTime" class="form-input">
                         <option value="">不確定/不提供</option>
                         <option value="子時 (23-01)">子時 (23-01)</option>
                         <option value="丑時 (01-03)">丑時 (01-03)</option>
@@ -298,52 +312,55 @@
                     </select>
                 </div>
                 <input type="hidden" id="eventName" name="eventName">
-                <button type="submit" id="submit-registration-btn" class="w-full bg-amber-500 text-white font-bold py-3 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors flex items-center justify-center md:col-span-2">
+                <button type="submit" id="submit-registration-btn" class="w-full bg-amber-400 text-zinc-900 font-bold py-3 px-4 rounded-md hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 focus:ring-offset-zinc-800 transition-colors flex items-center justify-center md:col-span-2">
                     <span id="submit-btn-text">確認送出</span>
-                    <svg id="submit-btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <svg id="submit-btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-zinc-900 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </button>
             </form>
         </div>
     </div>
-    <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm relative animate-fade-in-up">
-            <button id="close-password-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
+    
+    <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-zinc-800 rounded-lg shadow-2xl p-8 w-full max-w-sm relative animate-fade-in-up border border-zinc-700">
+            <button id="close-password-modal-btn" class="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">請輸入活動密碼</h3>
-            <p class="text-slate-500 mb-6">這是一個內部活動，請輸入密碼以繼續報名。</p>
+            <h3 class="text-xl font-bold text-white mb-2 font-serif">請輸入活動密碼</h3>
+            <p class="text-zinc-400 mb-6">這是一個內部活動，請輸入密碼以繼續報名。</p>
             <form id="password-form" class="space-y-4">
                 <div>
-                    <label for="eventPasswordInput" class="block text-sm font-medium text-slate-700">活動密碼</label>
-                    <input type="password" id="eventPasswordInput" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
-                    <p id="password-error" class="text-red-600 text-sm mt-2 hidden">密碼錯誤，請重新輸入。</p>
+                    <label for="eventPasswordInput" class="block text-sm font-medium text-zinc-300">活動密碼</label>
+                    <input type="password" id="eventPasswordInput" required class="form-input">
+                    <p id="password-error" class="text-red-400 text-sm mt-2 hidden">密碼錯誤，請重新輸入。</p>
                 </div>
-                <button type="submit" class="w-full bg-amber-500 text-white font-bold py-3 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+                <button type="submit" class="w-full bg-amber-400 text-zinc-900 font-bold py-3 px-4 rounded-md hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 focus:ring-offset-zinc-800 transition-colors">
                     驗證密碼
                 </button>
             </form>
         </div>
     </div>
-    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm text-center animate-fade-in-up">
+    
+    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-zinc-800 rounded-lg shadow-2xl p-8 w-full max-w-sm text-center animate-fade-in-up border border-zinc-700">
             <div id="result-icon-container" class="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"></div>
-            <h3 id="result-title" class="text-2xl font-bold text-slate-800 mb-2"></h3>
-            <p id="result-message" class="text-slate-600 mb-6"></p>
-            <button id="close-result-modal-btn" class="w-full bg-amber-500 text-white font-bold py-2 px-4 rounded-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">關閉</button>
+            <h3 id="result-title" class="text-2xl font-bold text-white mb-2 font-serif"></h3>
+            <p id="result-message" class="text-zinc-400 mb-6"></p>
+            <button id="close-result-modal-btn" class="w-full bg-amber-400 text-zinc-900 font-bold py-2 px-4 rounded-md hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 focus:ring-offset-zinc-800 transition-colors">關閉</button>
         </div>
     </div>
-    <div id="fortune-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 animate-fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in-up flex flex-col max-h-[85vh]">
+    
+    <div id="fortune-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-zinc-800 rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in-up flex flex-col max-h-[85vh] border border-zinc-700">
             <div class="flex-shrink-0 p-4 relative">
-                <button id="close-fortune-modal-btn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
+                <button id="close-fortune-modal-btn" class="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <div id="fortune-modal-content" class="overflow-y-auto px-8 pb-8">
-                <h3 id="fortune-title" class="text-2xl font-bold text-slate-800 mb-2"></h3>
+                <h3 id="fortune-title" class="text-2xl font-bold text-white mb-2"></h3>
                 <span id="fortune-type" class="text-lg font-bold"></span>
-                <div id="fortune-poem" class="text-lg text-slate-700 mt-4"></div>
-                <div id="fortune-interpretation" class="text-base text-slate-600 mt-6"></div>
+                <div id="fortune-poem" class="text-lg text-zinc-200 mt-4"></div>
+                <div id="fortune-interpretation" class="text-base text-zinc-300 mt-6"></div>
             </div>
         </div>
     </div>
