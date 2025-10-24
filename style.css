@@ -6,43 +6,29 @@ html, body {
     overflow-x: hidden;
 }
 
-/* --- [!! 關鍵修改 !!] --- */
 /* 基本設定 & Body 背景 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    /* 預設為透明，讓 JS 加入的背景圖/影片可見 */
-    background-color: transparent;
-    /* 背景圖相關設定 (JS 會覆蓋 backgroundImage) */
+    background-color: transparent; /* 保持透明 */
     background-repeat: no-repeat;
     background-position: center center;
-    background-size: cover;
+    /* 將 cover 改成 contain */
+    background-size: contain; /* <--- 修改處 */
     background-attachment: fixed; /* 讓背景固定 */
-    position: relative; /* 創建堆疊上下文，確保 ::before 在其下 */
-    z-index: 0; /* body 作為基礎層 */
+    position: relative;
+    z-index: 0;
 }
 
-/* --- [!! 新增 !!] --- */
 /* 用於 Body 的背景影片 */
 .body-background-video {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;
-    object-fit: cover;
-    z-index: -1; /* 將影片放在 Body 背景之下，避免遮擋 Body 的 background-image (如果有的話) */
-    /* 注意：如果同時設定 body 背景圖和 video，video 會被蓋住 */
-    /* 建議 Notion 中只填寫 Image 或 Video_URL 其中一個 */
+    object-fit: cover; /* 影片通常用 cover 效果較好 */
+    z-index: -1;
 }
 
-
-/* --- [!! 移除 !!] --- */
-/* #fixed-background-container 相關樣式已不再需要 */
-/*
-#fixed-background-container { ... }
-.fixed-background-video, .fixed-background-image { ... }
-#fixed-background-container > .fixed-background-image { ... }
-#fixed-background-container > .fixed-background-video { ... }
-*/
 
 /* 頁首 - 確保在 Body 之上 */
 header {
@@ -82,7 +68,7 @@ main {
     z-index: 2;
 }
 
-/* 主要內容區塊背景 (這些 section 在 main 的 z-index: 10 裡面) */
+/* 主要內容區塊背景 */
 main > section:not(.hero-bg) {
     background-color: white;
 }
@@ -204,3 +190,4 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
 .event-tooltip { position: absolute; z-index: 1070; display: none; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #fff; background-color: rgba(0, 0, 0, 0.8); border-radius: 0.25rem; white-space: normal; max-width: 250px; pointer-events: none; }
 /* 密碼錯誤樣式 */
 #password-error { color: #dc2626; }
+
