@@ -1,10 +1,9 @@
-/* --- [!! 新增 !!] --- */
-/* 確保根元素有高度，有時會影響 vh 單位計算 */
+/* 確保根元素有高度 */
 html, body {
     height: 100%;
-    margin: 0; /* 重設預設邊距 */
-    padding: 0; /* 重設預設內距 */
-    overflow-x: hidden; /* 防止水平滾動條可能影響佈局 */
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
 }
 
 /* 基本設定 */
@@ -15,33 +14,54 @@ h1, h2, h3 {
     font-family: 'Noto Serif TC', serif;
 }
 
-/* --- [!! 關鍵修改 !!] --- */
-/* 背景容器本身固定並鋪滿螢幕，作為基礎層 */
+/* 背景容器本身不需要特殊樣式 */
 #fixed-background-container {
-    position: fixed;
-    inset: 0; /* 等同 top: 0; right: 0; bottom: 0; left: 0; */
-    z-index: 0; /* 基礎層級 */
-    /* 不需要寬高，inset: 0 會自動鋪滿 */
+    /* No styles needed */
 }
 
-/* --- [!! 關鍵修改 !!] --- */
-/* 背景圖片/影片填滿其固定的父容器 */
+/* 固定背景樣式 - 設為基礎層級 0 並強制寬高 */
 .fixed-background-video,
 .fixed-background-image {
-    position: absolute; /* 相對於 #fixed-background-container 定位 */
-    inset: 0; /* 填滿父容器 */
-    width: 100%;  /* 填滿父容器寬度 */
-    height: 100%; /* 填滿父容器高度 */
-    /* 不需要 z-index，它會在父容器內部 */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 0; /* 基礎層級 */
 }
 .fixed-background-video { object-fit: cover; }
 .fixed-background-image { background-position: center; background-size: cover; }
+
+/* --- [!! 新增 !!] --- */
+/* 強制指定容器內背景圖片的高度和寬度 */
+#fixed-background-container > .fixed-background-image {
+    display: block !important; /* 強制顯示 */
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important; /* 再次確認 */
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 0 !important; /* 再次確認 */
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+#fixed-background-container > .fixed-background-video {
+    display: block !important; /* 強制顯示 */
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important; /* 再次確認 */
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 0 !important; /* 再次確認 */
+    object-fit: cover !important;
+}
+
 
 /* 頁首 - 確保在背景之上 */
 header {
     position: sticky;
     top: 0;
-    z-index: 50; /* 高層級 */
+    z-index: 50;
     background-color: rgba(17, 24, 39, 0.8);
     backdrop-filter: blur(10px);
     color: white;
@@ -51,15 +71,14 @@ header {
 
 /* 主要內容區塊 - 確保整體在背景之上 */
 main {
-    position: relative; /* 創建堆疊上下文 */
-    z-index: 10;      /* 高於背景 (0) */
+    position: relative;
+    z-index: 10;
 }
 
 /* Hero 區塊 */
 .hero-bg {
     position: relative;
     overflow: hidden;
-    /* Hero 區塊本身不需要背景色 */
 }
 /* 半透明遮罩 */
 #hero-section::before {
@@ -75,16 +94,16 @@ main {
     z-index: 2;
 }
 
-/* 主要內容區塊背景 (這些 section 在 main 的 z-index: 10 裡面) */
+/* 主要內容區塊背景 */
 main > section:not(.hero-bg) {
-    background-color: white; /* Default background */
+    background-color: white;
 }
 main > section#news,
 main > section#cancellation,
 main > section#fortune,
 main > section#articles,
 main > section#calendar {
-    background-color: #f8fafc; /* slate-50 */
+    background-color: #f8fafc;
 }
 main > section#about,
 main > section#registration,
