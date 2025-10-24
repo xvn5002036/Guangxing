@@ -18,7 +18,7 @@ h1, h2, h3 {
     position: absolute;
     inset: 0; /* 等同於 top:0; left:0; right:0; bottom:0; */
     background-color: rgba(17, 24, 39, 0.6); /* bg-gray-900 bg-opacity-60 */
-    z-index: 1; /* 遮罩在背景之上 (背景是 z-index: -1) */
+    z-index: 1; /* 遮罩在背景之上 (背景是 z-index: 0) */
 }
 /* [!! 新增 !!] 確保 Hero 區塊的文字內容在遮罩之上 */
 #hero-section .hero-content {
@@ -176,7 +176,7 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     width: 100vw; 
     height: 100vh; 
     object-fit: cover; 
-    z-index: -1; /* 確保在最底層 */
+    z-index: 0; /* [!! 最終修正 !!] 從 -1 改為 0 */
 }
 
 /* 固定的圖片背景 */
@@ -188,5 +188,5 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     height: 100vh;
     background-position: center center;
     background-size: cover;
-    z-index: -1; /* 確保在最底層 */
+    z-index: 0; /* [!! 最終修正 !!] 從 -1 改為 0 */
 }
