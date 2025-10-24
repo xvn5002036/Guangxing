@@ -1,4 +1,4 @@
-/* --- [新] 基本設定 & Body 背景 --- */
+/* --- [新] 基本設定 & 字體 --- */
 html, body {
     height: 100%;
     margin: 0;
@@ -7,126 +7,140 @@ html, body {
 }
 
 body {
-    /* [新] 使用 Noto Sans TC 作為基礎字體 */
+    /* [新] 基礎字體 */
     font-family: 'Noto Sans TC', sans-serif;
-    /* [新] 基礎背景色 (Tailwind's zinc-900) */
-    background-color: #18181b; 
+    /* [新] 基礎背景色改為輕微的灰色 (slate-50)，更有質感 */
+    background-color: #f8fafc;
     background-repeat: no-repeat;
     background-position: center center;
-    /* [新] 修正：背景圖應填滿 (cover) 而非 contain */
-    background-size: cover; 
-    background-attachment: fixed; /* 讓背景固定 */
+    background-size: contain; 
+    background-attachment: fixed;
     position: relative;
     z-index: 0;
-    /* [新] 讓字體渲染更平滑 */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+}
+/* [新] 標題字體 (套用在 index.html 的 .font-serif) */
+.font-serif {
+    font-family: 'Noto Serif TC', serif;
 }
 
-/* [新] 用於 Body 的背景影片 (由 script.js 添加) */
+/* 用於 Body 的背景影片 (保留原本邏輯，但降低不透明度) */
 .body-background-video {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;
     object-fit: cover;
-    z-index: -2; /* [新] 確保在 body 背景色之下 */
-    opacity: 0.3; /* [新] 讓影片變暗，不干擾文字 */
+    z-index: -1;
+    /* [新] 讓影片/背景圖更淡，不干擾文字 */
+    opacity: 0.1;
 }
 
-/* 頁首 - 確保在 Body 之上 */
+
+/* 頁首 (Header) */
+/* [新] 移除 header 的 CSS 背景/顏色設定，
+   讓 index.html 中的 Tailwind class (bg-white/90) 全權控制 */
 header {
     position: sticky;
     top: 0;
     z-index: 50;
-    /* [新] 移除舊的顏色，讓 Tailwind class 控制 */
     transition: all 0.3s ease-in-out;
-    /* [新] 使用 Noto Serif TC */
-    font-family: 'Noto Serif TC', serif;
 }
 
-/* 主要內容區塊 - 確保在 Body 之上 */
+/* 主要內容區塊 */
 main {
     position: relative;
     z-index: 10;
 }
-
-/* Hero 區塊 */
+/* Hero 區塊 (保持不變) */
 .hero-bg {
     position: relative;
     overflow: hidden;
 }
-/* [新] 半透明遮罩 (更暗) */
 #hero-section::before {
     content: "";
     position: absolute;
     inset: 0;
-    /* [新] 更暗的遮罩，並帶有漸層 */
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 100%);
+    background-color: rgba(17, 24, 39, 0.6);
     z-index: 1;
 }
-/* Hero 文字內容 */
 #hero-section .hero-content {
     position: relative;
     z-index: 2;
-    /* [新] 文字陰影，使其在背景上更突出 */
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    /* [新] 為 Hero 文字加上陰影，更突出 */
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
-/*
- * [新] 移除 main > section 的背景色設定
- * 我們現在使用 Tailwind class (bg-zinc-900 / bg-zinc-850) 來控制
- */
+/* 主要內容區塊背景 (保留原本的淺色交錯) */
+main > section:not(.hero-bg) {
+    background-color: white;
+}
+main > section#news,
+main > section#cancellation,
+main > section#fortune,
+main > section#articles {
+    background-color: #f8fafc; /* slate-50 */
+}
+main > section#about,
+main > section#registration,
+main > section#events,
+main > section#calendar { /* [新] 把 calendar 也改回白色 */
+     background-color: white;
+}
 
-/* 參拜資訊區塊樣式 */
+
+/* --- [!! 關鍵修改 !!] --- */
+/* 參拜資訊區塊 (改為淺色) */
 #info {
     position: relative;
     z-index: 10;
-    /* [新] 使用 Tailwind 的 zinc-950 (接近黑色) */
-    background-color: #09090b; 
-    color: #a1a1aa; /* zinc-400 */
+    /* [新] 改為白色背景 */
+    background-color: #f8fafc; /* slate-50 */
+    color: #475569; /* slate-600 */
 }
-/* [新] 標題使用 Noto Serif TC */
-#info h2, #info h3 { 
-    font-family: 'Noto Serif TC', serif;
-}
-#info h2 { color: white; }
-#info h3 { color: #fcd34d; } /* amber-300 */
+/* [新] 標題由 index.html 的 class 控制 */
+#info h2 { color: #1e293b; } /* slate-800 */
+#info h3 { color: #d97706; } /* amber-600 */
 .info-card { 
-    /* [新] 使用 zinc-900，比 #info 亮一點 */
-    background-color: #18181b; 
+    /* [新] 卡片改為白色，帶有細邊框 */
+    background-color: #ffffff; 
     padding: 1.5rem; 
     border-radius: 0.5rem;
-    border: 1px solid #27272a; /* zinc-800 */
+    border: 1px solid #e2e8f0; /* slate-200 */
 }
 .info-card-title { 
     font-size: 1.25rem; 
     font-weight: 600; 
     margin-bottom: 1rem; 
-    border-bottom: 1px solid #27272a; /* zinc-800 */
+    /* [新] 邊框改為淺灰色 */
+    border-bottom: 1px solid #e2e8f0; /* slate-200 */
     padding-bottom: 0.5rem; 
 }
 .info-card-content { display: flex; flex-direction: column; gap: 1rem; }
 .info-item { display: flex; align-items: flex-start; }
-.info-item-icon { margin-right: 0.75rem; width: 2rem; text-align: center; flex-shrink: 0; color: #fcd34d; } /* amber-300 */
+.info-item-icon { 
+    margin-right: 0.75rem; 
+    width: 2rem; 
+    text-align: center; 
+    flex-shrink: 0; 
+    /* [新] 圖示改為品牌色 */
+    color: #d97706; /* amber-600 */
+}
 .info-icon-svg { display: inline-block; width: 1.5em; height: 1.5em; fill: currentColor; }
-.map-button { display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; color: white; border-radius: 0.375rem; transition: all 0.3s; font-weight: 600; }
+.map-button { display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; color: white; border-radius: 0.375rem; transition: background-color 0.3s; font-weight: 600; }
 
-/* 頁尾 - 確保在 Body 之上 */
+/* 頁尾 (改為淺色) */
 footer {
     position: relative;
     z-index: 10;
-    /* [新] 使用 zinc-950 */
-    background-color: #09090b; 
-    color: #52525b; /* zinc-600 */
+    /* [新] 改為淺灰色 */
+    background-color: #f1f5f9; /* slate-100 */
+    color: #64748b; /* slate-500 */
     padding-top: 2rem;
     padding-bottom: 2rem;
-    border-top: 1px solid #27272a; /* zinc-800 */
 }
 
-/* --- [新] 通用組件樣式 (深色主題) --- */
-
-/* [新] 通用表單輸入框 */
+/* --- [新] 通用表單樣式 (淺色) --- */
+/* (用於 Modal 和報名查詢) */
 .form-input {
     margin-top: 0.25rem;
     display: block;
@@ -135,316 +149,48 @@ footer {
     padding-right: 0.75rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
-    background-color: #3f3f46; /* zinc-700 */
-    border: 1px solid #52525b; /* zinc-600 */
+    background-color: #f8fafc; /* slate-50 */
+    border: 1px solid #cbd5e1; /* slate-300 */
     border-radius: 0.375rem;
-    color: #f4f4f5; /* zinc-100 */
+    color: #1e293b; /* slate-800 */
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 .form-input::placeholder {
-    color: #a1a1aa; /* zinc-400 */
+    color: #94a3b8; /* slate-400 */
 }
 .form-input:focus {
     outline: 2px solid transparent;
     outline-offset: 2px;
-    border-color: #fcd34d; /* amber-300 */
-    --tw-ring-color: #fcd34d; /* amber-300 */
+    border-color: #f59e0b; /* amber-500 */
+    --tw-ring-color: #f59e0b;
     --tw-ring-shadow: 0 0 0 2px var(--tw-ring-color);
     box-shadow: var(--tw-ring-shadow);
 }
-/* 修正日期選擇器的顏色 */
-input[type="date"] {
-    color-scheme: dark;
-}
-select.form-input {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
-}
 
 
-/* [新] 區塊標題 (使用 Noto Serif) */
-.section-title {
-    font-family: 'Noto Serif TC', serif;
-}
-/* [新] 標題底線動畫 (使用金色) */
-.section-title::after { 
-    content: ''; 
-    display: block; 
-    width: 50px; 
-    height: 3px; 
-    background-color: #fcd34d; /* amber-300 */
-    margin: 1rem auto 0; 
-    border-radius: 2px; 
-    transform: scaleX(0); 
-    transition: transform 0.5s ease-out 0.2s; 
-}
+/* --- 其他樣式調整 --- */
+
+/* 區塊標題底線動畫 (顏色保持不變) */
+.section-title::after { content: ''; display: block; width: 50px; height: 3px; background-color: #f59e0b; margin: 1rem auto 0; border-radius: 2px; transform: scaleX(0); transition: transform 0.5s ease-out 0.2s; }
 .scroll-animate.scrolled-in .section-title::after { transform: scaleX(1); }
-
-/* [新] 導覽列連結 hover 效果 */
-.nav-link { position: relative; transition: color 0.3s ease; padding-bottom: 8px; }
-.nav-link::after { 
-    content: ''; 
-    position: absolute; 
-    width: 0; 
-    height: 3px; 
-    bottom: 0; 
-    left: 50%; 
-    background-color: #fcd34d; /* amber-300 */
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); 
-    transform: translateX(-50%); 
-    border-radius: 2px; 
-}
-.nav-link:hover { color: #fcd34d; } /* amber-300 */
+/* 導覽列連結 hover 效果 */
+.nav-link { position: relative; transition: color 0.3s ease; padding-bottom: 8px; color: #475569; }
+.nav-link::after { content: ''; position: absolute; width: 0; height: 3px; bottom: 0; left: 50%; background-color: #fbbf24; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); transform: translateX(-50%); border-radius: 2px; }
+.nav-link:hover { color: #d97706; } /* amber-600 */
 .nav-link:hover::after { width: 100%; }
 
-/* [新] 卡片 hover 效果 (更細緻) */
-.card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+/* [新] 卡片 hover 效果 (陰影柔和化) */
+.card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .card-hover:hover { 
     transform: translateY(-5px); 
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); 
-    border-color: #52525b; /* zinc-600 */
+    box-shadow: 0 10px 20px -5px rgb(0 0 0 / 0.07), 0 4px 10px -6px rgb(0 0 0 / 0.05);
 }
 
-/* [新] Swiper (深色) */
+/* Swiper (保持不變) */
 .news-carousel { position: relative; }
-.swiper-slide { 
-    padding: 2.5rem; 
-    text-align: center; 
-    background: #27272a; /* zinc-800 */
-    border-radius: 0.5rem; 
-}
-.swiper-pagination-bullet-active { background-color: #fcd34d; } /* amber-300 */
-/* [新] Swiper 內容文字顏色 */
-.swiper-slide h3 { color: #f4f4f5; } /* zinc-100 */
-.swiper-slide p { color: #a1a1aa; } /* zinc-400 */
-.swiper-slide .text-amber-600 { color: #fcd34d; } /* amber-300 */
-
-
+.swiper-slide { padding: 2.5rem; text-align: center; background: #f8fafc; border-radius: 0.5rem; }
+.swiper-pagination-bullet-active { background-color: #f59e0b; }
 /* Masonry (保持不變) */
 .masonry-grid { width: 100%; }
 .grid-item { width: calc(33.333% - 1.5rem); margin-bottom: 1.5rem; }
-@media (max-width: 1024px) { .grid-item { width: calc(50% - 1.5rem); } }
-@media (max-width: 768px) { .grid-item { width: 100%; } }
-
-/* Modal Animation (保持不變) */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-.animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-
-/* [新] 報名查詢狀態 (深色) */
-.status-tag { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
-.status-confirmed { background-color: #166534; color: #dcfce7; }
-.status-cancelled { background-color: #3f3f46; color: #d4d4d8; }
-/* [新] 報名查詢卡片 (深色) */
-#cancellation-result-area .bg-white {
-    background-color: #27272a; /* zinc-800 */
-    border-color: #3f3f46; /* zinc-700 */
-}
-#cancellation-result-area h4 { color: #f4f4f5; } /* zinc-100 */
-#cancellation-result-area p { color: #a1a1aa; } /* zinc-400 */
-#cancellation-result-area .border-slate-100 { border-color: #3f3f46; } /* zinc-700 */
-
-
-/* [新] 相簿卡片 (深色) */
-.album-card { position: relative; overflow: hidden; cursor: pointer; border-radius: 0.5rem; border: 1px solid #3f3f46; } /* zinc-700 */
-.album-card .album-overlay { 
-    position: absolute; 
-    inset: 0; 
-    background-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%); 
-    transition: background-color 0.3s ease; 
-}
-.album-card:hover .album-overlay { background-color: rgba(0,0,0,0.2); }
-.album-card img { transition: transform 0.4s ease; }
-.album-card:hover img { transform: scale(1.05); }
-.album-card .text-amber-400 { color: #fcd34d; } /* amber-300 */
-
-
-/* 滾動載入動畫 (保持不變) */
-.scroll-animate { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-.scroll-animate.scrolled-in { opacity: 1; transform: translateY(0); }
-
-/* [新] 神明介紹卡片 (深色) */
-.deity-card { 
-    background-color: #27272a; /* zinc-800 */
-    border-radius: 0.5rem; 
-    box-shadow: none; 
-    overflow: hidden; 
-    display: flex; 
-    flex-direction: column; 
-    border: 1px solid #3f3f46; /* zinc-700 */
-}
-.deity-card img { width: 100%; height: 200px; object-fit: cover; }
-.deity-card-content { padding: 1.5rem; }
-.deity-card-content h3 { 
-    font-size: 1.25rem; 
-    font-weight: 700; 
-    color: #f4f4f5; /* zinc-100 */
-    font-family: 'Noto Serif TC', serif;
-}
-.deity-card-content p { 
-    margin-top: 0.5rem; 
-    font-size: 0.875rem; 
-    color: #a1a1aa; /* zinc-400 */
-    line-height: 1.6; 
-}
-
-/* [新] 活動報名卡片 (深色) */
-.registrable-event-card.bg-white {
-    background-color: #27272a; /* zinc-800 */
-    border: 1px solid #3f3f46; /* zinc-700 */
-    box-shadow: none;
-}
-.registrable-event-card .text-amber-600 { color: #fcd34d; } /* amber-300 */
-.registrable-event-card h3 { color: #f4f4f5; } /* zinc-100 */
-.registrable-event-card p { color: #a1a1aa; } /* zinc-400 */
-.registrable-event-card .border-slate-200 { border-color: #3f3f46; } /* zinc-700 */
-
-
-/* [新] 求籤按鈕與 Modal */
-/* 移除舊的 .shake-button 圖片樣式 */
-
-/* [新] 求籤按鈕晃動動畫 */
-@keyframes shake { 
-    0%, 100% { transform: scale(1) translateX(0); } 
-    10%, 30%, 50%, 70%, 90% { transform: scale(1.05) translateX(-8px); } 
-    20%, 40%, 60%, 80% { transform: scale(1.05) translateX(8px); } 
-}
-.shake-button.is-shaking { 
-    animation: shake 0.8s ease-in-out infinite; 
-}
-
-/* [新] 求籤 Modal (深色) */
-#fortune-modal-content { text-align: left; max-height: 70vh; overflow-y: auto; }
-#fortune-title { 
-    font-family: 'Noto Serif TC', serif; 
-    font-size: 1.75rem; 
-    font-weight: 700; 
-    color: #f4f4f5; /* zinc-100 */
-    border-bottom: 2px solid #fcd34d; /* amber-300 */
-    padding-bottom: 0.5rem; 
-    margin-bottom: 1rem; 
-}
-#fortune-type { 
-    display: inline-block; 
-    padding: 0.25rem 1rem; 
-    font-size: 1.25rem; 
-    font-weight: 700; 
-    border-radius: 9999px; 
-    background-color: #fef3c7; 
-    color: #92400e; 
-    margin-bottom: 1.5rem; 
-}
-/* [新] 求籤 Modal 吉凶顏色 */
-#fortune-type.bg-red-100 { background-color: #ffe4e6; color: #9f1239; }
-#fortune-type.bg-slate-200 { background-color: #3f3f46; color: #d4d4d8; }
-#fortune-type.bg-amber-100 { background-color: #fef3c7; color: #92400e; }
-
-#fortune-poem, #fortune-interpretation { 
-    font-family: 'Noto Serif TC', serif; 
-    font-size: 1.1rem; 
-    line-height: 2; 
-    color: #d4d4d8; /* zinc-300 */
-    white-space: pre-wrap; 
-    margin-bottom: 1.5rem; 
-}
-#fortune-interpretation { 
-    font-family: 'Noto Sans TC', sans-serif; 
-    font-size: 1rem; 
-    line-height: 1.8; 
-}
-#fortune-interpretation::before { 
-    content: '【解曰】'; 
-    font-weight: 700; 
-    color: #f4f4f5; /* zinc-100 */
-    display: block; 
-    margin-bottom: 0.5rem; 
-}
-
-/* [新] 文章區塊樣式 (深色) */
-.article-card { 
-    background-color: #27272a; /* zinc-800 */
-    border-radius: 0.5rem; 
-    box-shadow: none;
-    border: 1px solid #3f3f46; /* zinc-700 */
-    padding: 1.5rem; 
-    transition: box-shadow 0.3s ease, border-color 0.3s ease; 
-}
-.article-card:hover { 
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); 
-    border-color: #52525b; /* zinc-600 */
-}
-.article-card h3 { 
-    font-size: 1.25rem; 
-    font-weight: 700; 
-    color: #f4f4f5; /* zinc-100 */
-    margin-bottom: 0.5rem; 
-    font-family: 'Noto Serif TC', serif;
-}
-.article-card .publish-date { 
-    font-size: 0.875rem; 
-    color: #71717a; /* zinc-500 */
-    margin-bottom: 1rem; 
-}
-.article-card p { 
-    font-size: 1rem; 
-    color: #a1a1aa; /* zinc-400 */
-    line-height: 1.7; 
-    white-space: pre-wrap; 
-}
-
-/* [新] 按鈕 Hover 效果 (更細緻) */
-button, a.map-button { 
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-}
-button:hover, a.map-button:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
-}
-.register-btn { background-color: #fcd34d; color: #18181b; } /* amber-300, zinc-900 */
-.register-btn:hover { background-color: #fbbf24 !important; } /* amber-400 */
-#find-registration-btn:hover { background-color: #52525b !important; } /* zinc-600 */
-.confirm-cancel-btn:hover { background-color: #b91c1c !important; } /* red-700 */
-#submit-registration-btn:hover { background-color: #fbbf24 !important; } /* amber-400 */
-#close-result-modal-btn:hover { background-color: #fbbf24 !important; } /* amber-400 */
-a.map-button.bg-blue-600:hover { background-color: #2563eb !important; } /* blue-500 */
-a.map-button.bg-zinc-700:hover { background-color: #52525b !important; } /* zinc-600 */
-
-
-/* Tooltip 樣式 (保持不變) */
-.event-tooltip { 
-    position: absolute; 
-    z-index: 1070; 
-    display: none; 
-    padding: 0.5rem 0.75rem; 
-    font-size: 0.875rem; 
-    color: #fff; 
-    background-color: rgba(0, 0, 0, 0.9); 
-    border-radius: 0.25rem; 
-    white-space: normal; 
-    max-width: 250px; 
-    pointer-events: none; 
-    border: 1px solid #3f3f46;
-}
-/* [新] 密碼錯誤樣式 */
-#password-error { color: #f87171; } /* red-400 */
-
-/* [新] 結果 Modal 圖示 (深色) */
-#result-icon-container.bg-green-100 {
-    background-color: #166534;
-}
-#result-icon-container svg.text-green-600 {
-    color: #dcfce7;
-}
-#result-icon-container.bg-red-100 {
-    background-color: #9f1239;
-}
-#result-icon-container svg.text-red-600 {
-    color: #ffe4e6;
-}
+@media (max-width: 1024px
