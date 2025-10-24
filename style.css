@@ -1,7 +1,8 @@
 /* 基本設定 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    /* [!! 修正 !!] 移除 body 的背景顏色，讓 z-index: -1 的背景可見 */
+    /* [!! 最終修正 !!] 覆蓋瀏覽器預設的白色背景，讓 z-index: -1 的背景可見 */
+    background-color: transparent;
 }
 h1, h2, h3 {
     font-family: 'Noto Serif TC', serif; /* 預設標題字體 */
@@ -18,7 +19,7 @@ h1, h2, h3 {
     position: absolute;
     inset: 0; /* 等同於 top:0; left:0; right:0; bottom:0; */
     background-color: rgba(17, 24, 39, 0.6); /* bg-gray-900 bg-opacity-60 */
-    z-index: 1; /* 遮罩在背景之上 (背景是 z-index: 0) */
+    z-index: 1; /* 遮罩在背景之上 (背景是 z-index: -1) */
 }
 /* [!! 新增 !!] 確保 Hero 區塊的文字內容在遮罩之上 */
 #hero-section .hero-content {
@@ -176,7 +177,7 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     width: 100vw; 
     height: 100vh; 
     object-fit: cover; 
-    z-index: 0; /* [!! 最終修正 !!] 從 -1 改為 0 */
+    z-index: -1; /* 確保在最底層 (配合 body transparent) */
 }
 
 /* 固定的圖片背景 */
@@ -188,5 +189,5 @@ a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
     height: 100vh;
     background-position: center center;
     background-size: cover;
-    z-index: 0; /* [!! 最終修正 !!] 從 -1 改為 0 */
+    z-index: -1; /* 確保在最底層 (配合 body transparent) */
 }
