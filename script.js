@@ -132,9 +132,11 @@ function handleHeaderScroll() {
 
 // [!! [修改] 載入 Hero 區塊的動態背景 (已更新邏輯) !!]
 async function fetchBackgroundData() {
-    const heroSection = document.getElementById('hero-section');
-    if (!heroSection) {
-        console.warn("Hero section (id=hero-section) not found.");
+    // [!! 修正 !!] 目標應該是 #fixed-background-container
+    const backgroundContainer = document.getElementById('fixed-background-container'); 
+    
+    if (!backgroundContainer) { // [!! 修正 !!]
+        console.warn("Background container (id=fixed-background-container) not found.");
         return;
     }
 
@@ -144,12 +146,8 @@ async function fetchBackgroundData() {
         
         const background = await response.json();
 
-        // 1. 先移除所有舊的動態背景 (無論是影片還是圖片div)
-        let existingVideo = heroSection.querySelector('.fixed-background-video');
-        if (existingVideo) existingVideo.remove();
-        
-        let existingImageDiv = heroSection.querySelector('.fixed-background-image');
-        if (existingImageDiv) existingImageDiv.remove();
+        // 1. 清空容器 (更簡單的方法)
+        backgroundContainer.innerHTML = ''; // [!! 修正 !!]
 
         // 2. 優先使用影片 (如果 Video_URL 有填)
         if (background.video) {
@@ -160,20 +158,18 @@ async function fetchBackgroundData() {
             videoEl.loop = true;
             videoEl.playsInline = true;
             videoEl.src = background.video;
-            // 插入到 heroSection 的最前面，確保它在 overlay (z-10) 之下
-            heroSection.prepend(videoEl);
+            backgroundContainer.prepend(videoEl); // [!! 修正 !!] 插入到正確的容器
         } 
         // 3. 其次使用圖片 (如果 Video_URL 是空的，但 Image 有上傳)
         else if (background.image) {
             let imageDiv = document.createElement('div');
             imageDiv.classList.add('fixed-background-image');
             imageDiv.style.backgroundImage = `url(${background.image})`;
-            // 插入到 heroSection 的最前面
-            heroSection.prepend(imageDiv);
+            backgroundContainer.prepend(imageDiv); // [!! 修正 !!] 插入到正確的容器
         } 
         // 4. 都沒有 (Notion 欄位都是空的)
         else {
-            // 不做任何事，因為舊的背景已在步驟 1 被移除
+            // 不做任何事，容器已在步驟 1 被清空
         }
 
     } catch (error) {
