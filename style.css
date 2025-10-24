@@ -1,47 +1,76 @@
 /* 基本設定 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    /* [!! 關鍵 !!] 保持 body 背景透明 */
-    background-color: transparent;
+    /* [!! 移除 !!] 不再需要 body 透明 */
+    /* background-color: transparent; */
 }
 h1, h2, h3 {
     font-family: 'Noto Serif TC', serif; /* 預設標題字體 */
 }
 
-/* --- [!! 修改 !!] --- */
-/* 背景容器不需要任何特殊樣式 */
+/* 背景容器本身不需要特殊樣式 */
 #fixed-background-container {
-    /* No position or z-index needed here */
-    /* Ensure it doesn't accidentally get hidden if empty before JS runs */
-    /* min-height: 1px; (Optional, unlikely needed) */
+    /* No styles needed */
+}
+
+/* --- [!! 關鍵修改 !!] --- */
+/* 固定背景樣式 - 設為基礎層級 0 */
+.fixed-background-video,
+.fixed-background-image {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 0; /* <--- 修改為 0 */
+}
+.fixed-background-video { object-fit: cover; }
+.fixed-background-image { background-position: center; background-size: cover; }
+
+/* --- [!! 關鍵修改 !!] --- */
+/* 頁首 - 確保在背景之上 */
+header {
+    position: sticky; /* 或者 relative 如果不需要 sticky */
+    top: 0;
+    z-index: 50; /* 保持高層級 */
+    /* 其他 header 樣式... */
+    background-color: rgba(17, 24, 39, 0.8); /* 範例：確保 header 有背景 */
+    backdrop-filter: blur(10px);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+/* --- [!! 關鍵修改 !!] --- */
+/* 主要內容區塊 - 確保整體在背景之上 */
+main {
+    position: relative; /* <--- 新增，創建堆疊上下文 */
+    z-index: 10;      /* <--- 新增，高於背景 (0) */
+    /* 注意：main 自身不需要背景色，由內部的 section 提供 */
 }
 
 /* Hero 區塊 */
 .hero-bg {
     position: relative; /* For stacking ::before and .hero-content */
-    overflow: hidden; /* Keep this to contain ::before */
+    overflow: hidden;
+    /* Hero 區塊本身不需要背景色，依賴 fixed background */
 }
-/* 半透明遮罩 */
+/* 半透明遮罩 (現在相對於 main 的 z-index: 10) */
 #hero-section::before {
     content: "";
     position: absolute;
     inset: 0;
     background-color: rgba(17, 24, 39, 0.6); /* bg-gray-900 bg-opacity-60 */
-    z-index: 1; /* Above background (-1), below content (2) */
+    z-index: 1; /* 在 Hero 區塊內部，高於 section (隱含0)，低於 content (2) */
 }
-/* Hero 文字內容 */
+/* Hero 文字內容 (現在相對於 main 的 z-index: 10) */
 #hero-section .hero-content {
     position: relative; /* Needed for z-index */
-    z-index: 2; /* Above mask (1) */
+    z-index: 2; /* 在 Hero 區塊內部，高於遮罩 (1) */
 }
 
-
-/* 主要內容區塊背景 */
-/* 保持移除 main > section 的 position: relative 和 z-index */
+/* 主要內容區塊背景 (這些 section 在 main 的 z-index: 10 裡面) */
 main > section:not(.hero-bg) {
-    background-color: white; /* Default background for sections */
+    /* 不再需要 position 或 z-index */
+    background-color: white; /* Default background */
 }
-/* Specific background colors for certain sections */
 main > section#news,
 main > section#cancellation,
 main > section#fortune,
@@ -49,7 +78,6 @@ main > section#articles,
 main > section#calendar {
     background-color: #f8fafc; /* slate-50 */
 }
-/* Explicitly white sections (redundant maybe, but safe) */
 main > section#about,
 main > section#registration,
 main > section#events {
@@ -58,12 +86,12 @@ main > section#events {
 
 
 /* 參拜資訊區塊樣式 */
-/* #info needs position: relative ONLY if other elements inside it need absolute positioning relative to it. */
-/* Keep z-index: 10 to ensure it's above the fixed background */
 #info {
-    background-color: #111827; color: #d1d5db;
-    position: relative; /* Keep if needed for internal positioning */
-    z-index: 10;
+    position: relative; /* If needed for internal layout */
+    z-index: 10;      /* Ensure it's high (same level as main now) */
+    background-color: #111827;
+    color: #d1d5db;
+    /* 其他 #info 樣式... */
 }
 #info h2 { color: white; }
 #info h3 { color: #fbbf24; }
@@ -75,67 +103,64 @@ main > section#events {
 .info-icon-svg { display: inline-block; width: 1.5em; height: 1.5em; fill: currentColor; }
 .map-button { display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; color: white; border-radius: 0.375rem; transition: background-color 0.3s; font-weight: 600; }
 
-/* Footer */
+/* --- [!! 關鍵修改 !!] --- */
+/* 頁尾 - 確保在背景之上 */
 footer {
-    position: relative; /* Keep if needed for internal positioning */
-    z-index: 10; /* Ensure above fixed background */
+    position: relative; /* <--- 新增，創建堆疊上下文 */
+    z-index: 10;      /* <--- 新增，高於背景 (0) */
     background-color: #1f2937;
+    /* 其他 footer 樣式... */
+    color: #9ca3af; /* 範例 text-slate-400 */
+    padding-top: 2rem; /* py-8 */
+    padding-bottom: 2rem; /* py-8 */
 }
+
+/* --- 以下是其他樣式，保持不變 --- */
 
 /* 區塊標題底線動畫 */
 .section-title::after { content: ''; display: block; width: 50px; height: 3px; background-color: #f59e0b; margin: 1rem auto 0; border-radius: 2px; transform: scaleX(0); transition: transform 0.5s ease-out 0.2s; }
 .scroll-animate.scrolled-in .section-title::after { transform: scaleX(1); }
-
 /* 導覽列連結 hover 效果 */
 .nav-link { position: relative; transition: color 0.3s ease; padding-bottom: 8px; }
 .nav-link::after { content: ''; position: absolute; width: 0; height: 3px; bottom: 0; left: 50%; background-color: #fbbf24; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); transform: translateX(-50%); border-radius: 2px; }
 .nav-link:hover { color: #fbbf24; }
 .nav-link:hover::after { width: 100%; }
-
 /* 卡片 hover 效果 */
 .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
-
 /* Swiper */
 .news-carousel { position: relative; }
 .swiper-slide { padding: 2.5rem; text-align: center; background: #f8fafc; border-radius: 0.5rem; }
 .swiper-pagination-bullet-active { background-color: #f59e0b; }
-
 /* Masonry */
 .masonry-grid { width: 100%; }
 .grid-item { width: calc(33.333% - 1.5rem); margin-bottom: 1.5rem; }
 @media (max-width: 1024px) { .grid-item { width: calc(50% - 1.5rem); } }
 @media (max-width: 768px) { .grid-item { width: 100%; } }
-
 /* Modal Animation */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-
 /* 報名查詢狀態 */
 .status-tag { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; }
 .status-confirmed { background-color: #dcfce7; color: #166534; }
 .status-cancelled { background-color: #f1f5f9; color: #475569; }
-
 /* 相簿卡片 */
 .album-card { position: relative; overflow: hidden; cursor: pointer; }
 .album-card .album-overlay { position: absolute; inset: 0; background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%); transition: background-color 0.3s ease; }
 .album-card:hover .album-overlay { background-color: rgba(0,0,0,0.2); }
 .album-card img { transition: transform 0.4s ease; }
 .album-card:hover img { transform: scale(1.05); }
-
 /* 滾動載入動畫 */
 .scroll-animate { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
 .scroll-animate.scrolled-in { opacity: 1; transform: translateY(0); }
-
 /* 神明介紹卡片 */
 .deity-card { background-color: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); overflow: hidden; display: flex; flex-direction: column; }
 .deity-card img { width: 100%; height: 200px; object-fit: cover; }
 .deity-card-content { padding: 1.5rem; }
 .deity-card-content h3 { font-size: 1.25rem; font-weight: 700; color: #1e293b; }
 .deity-card-content p { margin-top: 0.5rem; font-size: 0.875rem; color: #475569; line-height: 1.6; }
-
 /* 求籤按鈕與 Modal */
 .shake-button { width: 150px; height: 150px; margin: 2rem auto 0; cursor: pointer; transition: transform 0.3s ease; }
 .shake-button:hover { transform: scale(1.05); }
@@ -147,14 +172,12 @@ footer {
 #fortune-poem, #fortune-interpretation { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; line-height: 2; color: #334155; white-space: pre-wrap; margin-bottom: 1.5rem; }
 #fortune-interpretation { font-family: 'Noto Sans TC', sans-serif; font-size: 1rem; line-height: 1.8; }
 #fortune-interpretation::before { content: '【解曰】'; font-weight: 700; color: #1e293b; display: block; margin-bottom: 0.5rem; }
-
 /* 文章區塊樣式 */
 .article-card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; transition: box-shadow 0.3s ease; }
 .article-card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
 .article-card h3 { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
 .article-card .publish-date { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; }
 .article-card p { font-size: 1rem; color: #475569; line-height: 1.7; white-space: pre-wrap; }
-
 /* 按鈕 Hover 效果 */
 button, a.map-button { transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; }
 button:hover, a.map-button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
@@ -165,28 +188,7 @@ button:hover, a.map-button:hover { transform: translateY(-2px); box-shadow: 0 4p
 #close-result-modal-btn:hover { background-color: #d97706 !important; }
 a.map-button.bg-blue-500:hover { background-color: #2563eb !important; }
 a.map-button.bg-gray-800:hover { background-color: #111827 !important; }
-
 /* Tooltip 樣式 */
 .event-tooltip { position: absolute; z-index: 1070; display: none; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #fff; background-color: rgba(0, 0, 0, 0.8); border-radius: 0.25rem; white-space: normal; max-width: 250px; pointer-events: none; }
-
 /* 密碼錯誤樣式 */
 #password-error { color: #dc2626; }
-
-/* --- [!! 最終確認 !!] --- */
-/* 固定背景樣式 */
-.fixed-background-video,
-.fixed-background-image {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -1; /* Place it behind everything */
-}
-.fixed-background-video {
-    object-fit: cover;
-}
-.fixed-background-image {
-    background-position: center center;
-    background-size: cover;
-}
