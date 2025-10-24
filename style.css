@@ -23,24 +23,38 @@ body {
     background-attachment: fixed;
     position: relative;
     z-index: 0;
+    /* [新] 讓字體渲染更平滑 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* [新] 定義所有標題的襯線體 */
-h1, h2, h3, h4, h5, h6, .font-serif {
+/* [新] 定義所有標題的襯線體 (index.html 中用 .font-serif 的 class 來套用) */
+.font-serif {
     font-family: 'Noto Serif TC', serif;
 }
 
 /* --- 2. 背景影片/圖片 --- */
-.body-background-video {
+/* [新] 移除舊的 .body-background-video，改用固定的 #fixed-background-container */
+/* (這個元素由 script.js 的 fetchBackgroundData() 填入內容) */
+#fixed-background-container {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;
-    object-fit: cover;
     z-index: -1;
     /* [新] 讓背景變淡，不干擾前景文字 */
     opacity: 0.1; 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
+/* [新] 確保影片也能套用 */
+#fixed-background-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 
 /* --- 3. 頁首 (Header) --- */
 /* (樣式主要由 index.html 中的 Tailwind class 控制) */
@@ -145,18 +159,22 @@ h1, h2, h3, h4, h5, h6, .font-serif {
     display: flex;
     flex-direction: column;
 }
-.registrable-event-card .flex-grow {
+/* [新] 重構卡片內部結構 */
+.registrable-event-card .card-content {
     padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
-.registrable-event-card .mt-auto {
+.registrable-event-card .card-footer {
     border-top: 1px solid #e2e8f0; /* slate-200 */
-    padding: 1.5rem;
-    padding-top: 1rem;
+    padding: 1rem 1.5rem; /* [新] 調整 Footer Padding */
+    background-color: #fcfcfd; /* [新] 輕微的背景色 */
 }
 .registrable-event-card img { margin-bottom: 0; }
 .registrable-event-card .text-amber-600 { color: #d97706; }
 .registrable-event-card h3 { color: #1e293b; }
-.registrable-event-card p { color: #475569; }
+.registrable-event-card p.flex-grow { color: #475569; }
 
 /* 活動紀實相簿卡片 */
 .album-card { 
@@ -231,10 +249,12 @@ select.form-input {
     background: #ffffff; /* [新] 白色背景 */
     border-radius: 0.75rem; 
     border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); 
 }
 .swiper-slide .text-amber-600 { color: #d97706; }
-.swiper-slide h3 { color: #1e293b; }
+.swiper-slide h3 { color: #1e293b; font-family: 'Noto Serif TC', serif; font-size: 1.25rem; }
 .swiper-slide p { color: #475569; }
+.swiper-pagination { margin-top: 1rem; }
 .swiper-pagination-bullet-active { background-color: #d97706; }
 
 /* 報名查詢卡片 */
@@ -255,7 +275,7 @@ select.form-input {
 /* [新] 吉凶顏色 */
 #fortune-type.bg-red-100 { background-color: #fee2e2; color: #991b1b; }
 #fortune-type.bg-slate-200 { background-color: #e2e8f0; color: #334155; }
-#fortune-type.bg-amber-100 { background-color: #fef3c7; color: #92400e; }
+#fortune-type.bg-amber-100 { background-color: #fef3c7; color: #9240e; }
 #fortune-poem, #fortune-interpretation { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; line-height: 2; color: #334155; white-space: pre-wrap; margin-bottom: 1.5rem; }
 #fortune-interpretation { font-family: 'Noto Sans TC', sans-serif; font-size: 1rem; line-height: 1.8; }
 #fortune-interpretation::before { content: '【解曰】'; font-weight: 700; color: #1e293b; display: block; margin-bottom: 0.5rem; }
@@ -273,6 +293,7 @@ select.form-input {
     background-color: #334155; /* slate-700 */ 
     padding: 1.5rem; 
     border-radius: 0.75rem; 
+    border: 1px solid #475569; /* slate-600 */
 }
 #info .info-card-title { 
     font-size: 1.25rem; 
@@ -298,22 +319,34 @@ select.form-input {
 }
 
 /* --- 10. 雜項 --- */
+/* [新] 按鈕圓角統一 */
+button, .map-button {
+    border-radius: 0.5rem; /* 8px */
+}
+
 /* 按鈕 Hover 效果 */
 button, a.map-button { 
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; 
 }
 button:hover, a.map-button:hover { 
     transform: translateY(-2px); 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* [新] 柔和陰影 */
 }
+/* [新] 調整按鈕顏色 */
 .register-btn { background-color: #d97706; color: white; }
 .register-btn:hover { background-color: #b45309 !important; }
 #find-registration-btn:hover { background-color: #1e293b !important; }
-.confirm-cancel-btn:hover { background-color: #dc2626 !important; }
-#submit-registration-btn:hover { background-color: #b45309 !important; }
-#close-result-modal-btn:hover { background-color: #b45309 !important; }
+.confirm-cancel-btn { background-color: #dc2626; }
+.confirm-cancel-btn:hover { background-color: #b91c1c !important; }
+#submit-registration-btn, #close-result-modal-btn, #password-modal button { 
+    background-color: #d97706; /* amber-600 */
+}
+#submit-registration-btn:hover, #close-result-modal-btn:hover, #password-modal button:hover { 
+    background-color: #b45309 !important; /* amber-700 */
+}
 a.map-button.bg-blue-500:hover { background-color: #2563eb !important; }
 a.map-button.bg-gray-700:hover { background-color: #374151 !important; }
+
 
 /* 滾動載入動畫 */
 .scroll-animate { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
