@@ -1,5 +1,5 @@
 // --- 全域變數 ---
-// ... (其他全域變數保持不變) ...
+// ... (保持不變) ...
 let mobileMenuButton, mobileMenu, header, registrationModal, closeModalBtn, registrationForm,
     modalEventTitle, eventNameInput, submitRegBtn, submitBtnText, submitBtnSpinner,
     idNumberGroup, birthdayGroup, addressGroup, idNumberInput, birthdayInput, addressInput,
@@ -10,11 +10,10 @@ let mobileMenuButton, mobileMenu, header, registrationModal, closeModalBtn, regi
 let passwordModal, closePasswordModalBtn, passwordForm, eventPasswordInput, passwordError,
     currentEventButton;
 
-
 // --- 初始載入 ---
 document.addEventListener('DOMContentLoaded', () => {
     // ... (DOM 元素抓取保持不變) ...
-    mobileMenuButton = document.getElementById('mobile-menu-button');
+     mobileMenuButton = document.getElementById('mobile-menu-button');
     mobileMenu = document.getElementById('mobile-menu');
     header = document.getElementById('header');
     registrationModal = document.getElementById('registration-modal');
@@ -53,15 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
     eventPasswordInput = document.getElementById('eventPasswordInput');
     passwordError = document.getElementById('password-error');
 
-
-    // --- 載入資料和設定 ---
     fetchAllData();
     setupEventListeners();
     setupScrollAnimation();
 });
 
 // --- 事件監聽 ---
-// ... (setupEventListeners 函數保持不變) ...
+// ... (保持不變) ...
 function setupEventListeners() {
     if (mobileMenuButton) mobileMenuButton.addEventListener('click', toggleMobileMenu);
     if (mobileMenu) {
@@ -84,8 +81,8 @@ function setupEventListeners() {
     if (passwordForm) passwordForm.addEventListener('submit', handlePasswordSubmit);
 }
 
-
 // --- 資料載入 ---
+// ... (保持不變) ...
 function fetchAllData() {
     fetchBackgroundData();
     fetchNewsData();
@@ -97,7 +94,7 @@ function fetchAllData() {
 }
 
 // --- UI 相關 ---
-// ... (setupScrollAnimation, toggleMobileMenu, handleHeaderScroll 函數保持不變) ...
+// ... (保持不變) ...
 function setupScrollAnimation() {
      const animatedElements = document.querySelectorAll('.scroll-animate');
      if (!('IntersectionObserver' in window)) {
@@ -122,76 +119,67 @@ function handleHeaderScroll() {
     }
 }
 
-
 // --- 資料獲取與渲染 ---
 
-// [!! 加入詳細偵錯 !!]
+// [!! 關鍵修改 !!] 將背景應用到 Body
 async function fetchBackgroundData() {
-    console.log("[DEBUG] fetchBackgroundData started."); // <-- ADDED
-    const backgroundContainer = document.getElementById('fixed-background-container');
-
-    if (!backgroundContainer) {
-        console.error("[DEBUG] Background container (id=fixed-background-container) not found."); // <-- Changed to error
-        return;
-    }
+    console.log("[DEBUG] fetchBackgroundData started (applying to body).");
+    // 移除舊的背景元素 (如果存在)
+    const oldVideo = document.querySelector('.body-background-video');
+    if (oldVideo) oldVideo.remove();
+    document.body.style.backgroundImage = ''; // 清除 body 的背景圖
 
     try {
-        console.log("[DEBUG] Sending request to /api/get-background..."); // <-- ADDED
+        console.log("[DEBUG] Sending request to /api/get-background...");
         const response = await fetch('/api/get-background');
-        console.log(`[DEBUG] Received response from /api/get-background. Status: ${response.status}`); // <-- ADDED
+        console.log(`[DEBUG] Received response. Status: ${response.status}`);
 
         if (!response.ok) {
-             const errorText = await response.text(); // <-- Try getting raw text first
-             console.error(`[DEBUG] API response not OK. Status: ${response.status}, Body: ${errorText}`); // <-- ADDED
-             // Try parsing as JSON only if getting text didn't throw error
+            const errorText = await response.text();
+            console.error(`[DEBUG] API response not OK. Status: ${response.status}, Body: ${errorText}`);
              let errorMessage = errorText;
-             try {
-                 const errorJson = JSON.parse(errorText);
-                 errorMessage = errorJson.message || errorText;
-             } catch (parseError) {
-                 // Ignore if it's not JSON
-             }
+             try { const errorJson = JSON.parse(errorText); errorMessage = errorJson.message || errorText; } catch (parseError) {}
              throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
         }
 
         const background = await response.json();
-        console.log("[DEBUG] API response parsed successfully:", background); // <-- ADDED
-
-        backgroundContainer.innerHTML = '';
+        console.log("[DEBUG] API response parsed:", background);
 
         if (background.video) {
-            console.log("[DEBUG] Applying video background:", background.video); // <-- ADDED
+            console.log("[DEBUG] Applying video background to body:", background.video);
             let videoEl = document.createElement('video');
-            videoEl.classList.add('fixed-background-video');
+            videoEl.classList.add('body-background-video'); // 使用新 class
             videoEl.autoplay = true;
             videoEl.muted = true;
             videoEl.loop = true;
             videoEl.playsInline = true;
             videoEl.src = background.video;
-            backgroundContainer.prepend(videoEl);
-            console.log("[DEBUG] Video element prepended."); // <-- ADDED
+            // 將 video 元素插入到 body 的最前面
+            document.body.prepend(videoEl);
+            console.log("[DEBUG] Video element prepended to body.");
         }
         else if (background.image) {
-            console.log("[DEBUG] Applying image background:", background.image); // <-- ADDED
-            let imageDiv = document.createElement('div');
-            imageDiv.classList.add('fixed-background-image');
-            imageDiv.style.backgroundImage = `url(${background.image})`;
-            backgroundContainer.prepend(imageDiv);
-             console.log("[DEBUG] Image div prepended."); // <-- ADDED
+            console.log("[DEBUG] Applying image background to body:", background.image);
+            document.body.style.backgroundImage = `url(${background.image})`;
+            // 相關樣式 (size, position, attachment) 會在 CSS 中設定
+             console.log("[DEBUG] Body background image set.");
         }
         else {
-            console.log("[DEBUG] No video or image URL found in API response."); // <-- ADDED
+            console.log("[DEBUG] No video or image URL found.");
         }
-        console.log("[DEBUG] fetchBackgroundData finished successfully."); // <-- ADDED
+        console.log("[DEBUG] fetchBackgroundData finished.");
 
     } catch (error) {
-        // Log the caught error more explicitly
-        console.error("[DEBUG] Error caught in fetchBackgroundData:", error); // <-- Modified
+        console.error("[DEBUG] Error caught in fetchBackgroundData:", error);
     }
 }
 
-
-// ... (其他 fetch 函數保持不變) ...
+// --- 其他 fetch 函數和輔助函數保持不變 ---
+// ... (fetchArticlesData, fetchDeitiesData, fetchNewsData, etc.) ...
+// ... (openAlbumGallery, handleFortuneShake, Modal functions, etc.) ...
+// ... (handleRegistrationSubmit, handleFindRegistration, Calendar functions, etc.) ...
+// --- 省略 ---
+// 載入文章資料
 async function fetchArticlesData() {
     const list = document.getElementById('articles-list');
     const loadingIndicator = document.getElementById('articles-loading');
