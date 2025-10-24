@@ -1,8 +1,15 @@
+/* --- [!! 新增 !!] --- */
+/* 確保根元素有高度，有時會影響 vh 單位計算 */
+html, body {
+    height: 100%;
+    margin: 0; /* 重設預設邊距 */
+    padding: 0; /* 重設預設內距 */
+}
+
 /* 基本設定 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    /* [!! 移除 !!] 不再需要 body 透明 */
-    /* background-color: transparent; */
+    /* 移除 body 背景色設定，依賴 html,body height:100% */
 }
 h1, h2, h3 {
     font-family: 'Noto Serif TC', serif; /* 預設標題字體 */
@@ -13,14 +20,13 @@ h1, h2, h3 {
     /* No styles needed */
 }
 
-/* --- [!! 最終修正 !!] --- */
 /* 固定背景樣式 - 設為基礎層級 0 並強制寬高 */
 .fixed-background-video,
 .fixed-background-image {
     position: fixed;
     top: 0; left: 0;
-    width: 100vw !important;  /* <--- 強制寬度 */
-    height: 100vh !important; /* <--- 強制高度 */
+    width: 100vw !important;  /* 強制寬度 */
+    height: 100vh !important; /* 強制高度 */
     z-index: 0; /* 基礎層級 */
 }
 .fixed-background-video { object-fit: cover; }
@@ -28,7 +34,7 @@ h1, h2, h3 {
 
 /* 頁首 - 確保在背景之上 */
 header {
-    position: sticky; /* 或者 relative 如果不需要 sticky */
+    position: sticky;
     top: 0;
     z-index: 50; /* 高層級 */
     background-color: rgba(17, 24, 39, 0.8);
@@ -55,12 +61,12 @@ main {
     position: absolute;
     inset: 0;
     background-color: rgba(17, 24, 39, 0.6);
-    z-index: 1; /* 在 Hero 內部，高於 section (隱含0) */
+    z-index: 1;
 }
 /* Hero 文字內容 */
 #hero-section .hero-content {
     position: relative;
-    z-index: 2; /* 在 Hero 內部，高於遮罩 (1) */
+    z-index: 2;
 }
 
 /* 主要內容區塊背景 */
@@ -83,8 +89,8 @@ main > section#events {
 
 /* 參拜資訊區塊樣式 */
 #info {
-    position: relative; /* If needed for internal layout */
-    z-index: 10;      /* Ensure it's high (same level as main) */
+    position: relative;
+    z-index: 10;
     background-color: #111827;
     color: #d1d5db;
 }
@@ -100,8 +106,8 @@ main > section#events {
 
 /* 頁尾 - 確保在背景之上 */
 footer {
-    position: relative; /* 創建堆疊上下文 */
-    z-index: 10;      /* 高於背景 (0) */
+    position: relative;
+    z-index: 10;
     background-color: #1f2937;
     color: #9ca3af;
     padding-top: 2rem;
