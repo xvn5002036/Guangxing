@@ -4,30 +4,35 @@ html, body {
     height: 100%;
     margin: 0; /* 重設預設邊距 */
     padding: 0; /* 重設預設內距 */
+    overflow-x: hidden; /* 防止水平滾動條可能影響佈局 */
 }
 
 /* 基本設定 */
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    /* 移除 body 背景色設定，依賴 html,body height:100% */
 }
 h1, h2, h3 {
-    font-family: 'Noto Serif TC', serif; /* 預設標題字體 */
+    font-family: 'Noto Serif TC', serif;
 }
 
-/* 背景容器本身不需要特殊樣式 */
+/* --- [!! 關鍵修改 !!] --- */
+/* 背景容器本身固定並鋪滿螢幕，作為基礎層 */
 #fixed-background-container {
-    /* No styles needed */
+    position: fixed;
+    inset: 0; /* 等同 top: 0; right: 0; bottom: 0; left: 0; */
+    z-index: 0; /* 基礎層級 */
+    /* 不需要寬高，inset: 0 會自動鋪滿 */
 }
 
-/* 固定背景樣式 - 設為基礎層級 0 並強制寬高 */
+/* --- [!! 關鍵修改 !!] --- */
+/* 背景圖片/影片填滿其固定的父容器 */
 .fixed-background-video,
 .fixed-background-image {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw !important;  /* 強制寬度 */
-    height: 100vh !important; /* 強制高度 */
-    z-index: 0; /* 基礎層級 */
+    position: absolute; /* 相對於 #fixed-background-container 定位 */
+    inset: 0; /* 填滿父容器 */
+    width: 100%;  /* 填滿父容器寬度 */
+    height: 100%; /* 填滿父容器高度 */
+    /* 不需要 z-index，它會在父容器內部 */
 }
 .fixed-background-video { object-fit: cover; }
 .fixed-background-image { background-position: center; background-size: cover; }
@@ -52,8 +57,9 @@ main {
 
 /* Hero 區塊 */
 .hero-bg {
-    position: relative; /* For stacking ::before and .hero-content */
+    position: relative;
     overflow: hidden;
+    /* Hero 區塊本身不需要背景色 */
 }
 /* 半透明遮罩 */
 #hero-section::before {
@@ -69,7 +75,7 @@ main {
     z-index: 2;
 }
 
-/* 主要內容區塊背景 */
+/* 主要內容區塊背景 (這些 section 在 main 的 z-index: 10 裡面) */
 main > section:not(.hero-bg) {
     background-color: white; /* Default background */
 }
