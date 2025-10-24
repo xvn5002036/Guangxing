@@ -13,62 +13,58 @@ h1, h2, h3 {
     /* No styles needed */
 }
 
-/* --- [!! 關鍵修改 !!] --- */
-/* 固定背景樣式 - 設為基礎層級 0 */
+/* --- [!! 最終修正 !!] --- */
+/* 固定背景樣式 - 設為基礎層級 0 並強制寬高 */
 .fixed-background-video,
 .fixed-background-image {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    z-index: 0; /* <--- 修改為 0 */
+    top: 0; left: 0;
+    width: 100vw !important;  /* <--- 強制寬度 */
+    height: 100vh !important; /* <--- 強制高度 */
+    z-index: 0; /* 基礎層級 */
 }
 .fixed-background-video { object-fit: cover; }
 .fixed-background-image { background-position: center; background-size: cover; }
 
-/* --- [!! 關鍵修改 !!] --- */
 /* 頁首 - 確保在背景之上 */
 header {
     position: sticky; /* 或者 relative 如果不需要 sticky */
     top: 0;
-    z-index: 50; /* 保持高層級 */
-    /* 其他 header 樣式... */
-    background-color: rgba(17, 24, 39, 0.8); /* 範例：確保 header 有背景 */
+    z-index: 50; /* 高層級 */
+    background-color: rgba(17, 24, 39, 0.8);
     backdrop-filter: blur(10px);
     color: white;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     transition: all 0.3s ease-in-out;
 }
 
-/* --- [!! 關鍵修改 !!] --- */
 /* 主要內容區塊 - 確保整體在背景之上 */
 main {
-    position: relative; /* <--- 新增，創建堆疊上下文 */
-    z-index: 10;      /* <--- 新增，高於背景 (0) */
-    /* 注意：main 自身不需要背景色，由內部的 section 提供 */
+    position: relative; /* 創建堆疊上下文 */
+    z-index: 10;      /* 高於背景 (0) */
 }
 
 /* Hero 區塊 */
 .hero-bg {
     position: relative; /* For stacking ::before and .hero-content */
     overflow: hidden;
-    /* Hero 區塊本身不需要背景色，依賴 fixed background */
 }
-/* 半透明遮罩 (現在相對於 main 的 z-index: 10) */
+/* 半透明遮罩 */
 #hero-section::before {
     content: "";
     position: absolute;
     inset: 0;
-    background-color: rgba(17, 24, 39, 0.6); /* bg-gray-900 bg-opacity-60 */
-    z-index: 1; /* 在 Hero 區塊內部，高於 section (隱含0)，低於 content (2) */
+    background-color: rgba(17, 24, 39, 0.6);
+    z-index: 1; /* 在 Hero 內部，高於 section (隱含0) */
 }
-/* Hero 文字內容 (現在相對於 main 的 z-index: 10) */
+/* Hero 文字內容 */
 #hero-section .hero-content {
-    position: relative; /* Needed for z-index */
-    z-index: 2; /* 在 Hero 區塊內部，高於遮罩 (1) */
+    position: relative;
+    z-index: 2; /* 在 Hero 內部，高於遮罩 (1) */
 }
 
-/* 主要內容區塊背景 (這些 section 在 main 的 z-index: 10 裡面) */
+/* 主要內容區塊背景 */
 main > section:not(.hero-bg) {
-    /* 不再需要 position 或 z-index */
     background-color: white; /* Default background */
 }
 main > section#news,
@@ -88,10 +84,9 @@ main > section#events {
 /* 參拜資訊區塊樣式 */
 #info {
     position: relative; /* If needed for internal layout */
-    z-index: 10;      /* Ensure it's high (same level as main now) */
+    z-index: 10;      /* Ensure it's high (same level as main) */
     background-color: #111827;
     color: #d1d5db;
-    /* 其他 #info 樣式... */
 }
 #info h2 { color: white; }
 #info h3 { color: #fbbf24; }
@@ -103,16 +98,14 @@ main > section#events {
 .info-icon-svg { display: inline-block; width: 1.5em; height: 1.5em; fill: currentColor; }
 .map-button { display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; color: white; border-radius: 0.375rem; transition: background-color 0.3s; font-weight: 600; }
 
-/* --- [!! 關鍵修改 !!] --- */
 /* 頁尾 - 確保在背景之上 */
 footer {
-    position: relative; /* <--- 新增，創建堆疊上下文 */
-    z-index: 10;      /* <--- 新增，高於背景 (0) */
+    position: relative; /* 創建堆疊上下文 */
+    z-index: 10;      /* 高於背景 (0) */
     background-color: #1f2937;
-    /* 其他 footer 樣式... */
-    color: #9ca3af; /* 範例 text-slate-400 */
-    padding-top: 2rem; /* py-8 */
-    padding-bottom: 2rem; /* py-8 */
+    color: #9ca3af;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
 }
 
 /* --- 以下是其他樣式，保持不變 --- */
