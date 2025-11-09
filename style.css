@@ -369,3 +369,65 @@ a.map-button.bg-gray-700:hover { background-color: #374151 !important; }
 
 /* 密碼錯誤 */
 #password-error { color: #dc2626; }
+
+/* === [行事曆手機版優化區塊] === */
+@media (max-width: 768px) {
+    /* 整個行事曆容器間距加大 */
+    .fc {
+        font-size: 0.95rem !important;
+        padding: 0.5rem;
+    }
+
+    /* 日曆標頭：年月與按鈕排列改為上下堆疊 */
+    .fc-header-toolbar {
+        flex-direction: column !important;
+        gap: 0.5rem;
+    }
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* 按鈕美化 */
+    .fc-button {
+        background-color: #fbbf24 !important; /* amber-400 */
+        border: none !important;
+        color: #1e293b !important;
+        border-radius: 0.5rem !important;
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease;
+    }
+    .fc-button:hover {
+        background-color: #f59e0b !important; /* amber-500 */
+        color: white !important;
+    }
+
+    /* 日曆格子間距與字體 */
+    .fc-daygrid-day {
+        min-height: 60px !important;
+    }
+    .fc-daygrid-day-number {
+        font-size: 0.9rem !important;
+        margin-right: 0.25rem;
+    }
+
+    /* 事件顏色與圓角標籤 */
+    .fc-event {
+        background-color: #f59e0b !important;
+        color: white !important;
+        border-radius: 0.4rem !important;
+        padding: 0.1rem 0.3rem !important;
+        font-size: 0.8rem !important;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    /* 今日日期背景淡化 */
+    .fc-day-today {
+        background-color: #fff8e1 !important;
+        border: 1px solid #fde68a !important;
+    }
+}
