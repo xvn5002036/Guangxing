@@ -450,7 +450,7 @@ a.map-button.bg-gray-700:hover { background-color: #374151 !important; }
     /* 事件顏色與圓角標籤 */
     .fc-event {
         background-color: #f59e0b !important;
-        color: white !important;
+        color: #1f2937 !important;
         border-radius: 0.4rem !important;
         padding: 0.1rem 0.3rem !important;
         font-size: 0.8rem !important;
