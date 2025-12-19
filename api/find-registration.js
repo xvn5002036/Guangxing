@@ -17,7 +17,7 @@ const getPropertyText = (properties, name) => {
 };
 
 // Vercel Serverless Function 的主要處理函式
-export default async function handler(req, res) {
+async function handler(req, res) {
     // 設置 CORS 標頭，允許我們的網站前端可以跨來源請求這個 API
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -100,4 +100,6 @@ export default async function handler(req, res) {
         res.status(500).json({ message: '查詢報名時發生內部錯誤，請稍後再試。', details: error.message });
     }
 }
+
+module.exports = handler;
 

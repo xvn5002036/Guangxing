@@ -22,7 +22,7 @@ const getProperty = (properties, name, type) => {
     return null;
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
     // 允許跨來源請求
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -68,3 +68,5 @@ export default async function handler(req, res) {
         res.status(500).json({ message: 'Failed to fetch background settings', details: error.message });
     }
 }
+
+module.exports = handler;

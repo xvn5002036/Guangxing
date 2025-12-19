@@ -28,7 +28,7 @@ const getProperty = (properties, name, type, subType = 'content') => {
 };
 
 
-export default async function handler(req, res) {
+async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*'); // 允許所有來源
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -86,3 +86,5 @@ export default async function handler(req, res) {
         res.status(500).json({ message: 'Failed to fetch registrable events', details: error.message });
     }
 }
+
+module.exports = handler;

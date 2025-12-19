@@ -1,13 +1,13 @@
 // IMPORTANT: This file should be placed in the `api` directory of your project.
 
 // This imports the Notion client library
-import { Client } from "@notionhq/client";
+const { Client } = require("@notionhq/client");
 
 // Initialize the Notion client using the API key from environment variables
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 // This is the main function that will be executed by Vercel
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Check if the request method is GET
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Only GET requests are allowed' });
@@ -63,3 +63,5 @@ export default async function handler(req, res) {
     res.status(500).json({ message: "Failed to fetch data from Notion." });
   }
 }
+
+module.exports = handler;
