@@ -171,10 +171,43 @@ body {
     padding: 1rem 1.5rem; /* [新] 調整 Footer Padding */
     background-color: #fcfcfd; /* [新] 輕微的背景色 */
 }
-.registrable-event-card img { margin-bottom: 0; }
+.registrable-event-card img {
+    margin-bottom: 0;
+    height: 220px;
+    object-fit: cover;
+    width: 100%;
+}
 .registrable-event-card .text-amber-600 { color: #d97706; }
 .registrable-event-card h3 { color: #1e293b; }
 .registrable-event-card p.flex-grow { color: #475569; }
+
+/* 活動報名瀑布流佈局調整 */
+#registrable-events-grid.masonry-grid {
+    position: relative;
+}
+
+#registrable-events-grid .grid-item {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    #registrable-events-grid .grid-item {
+        width: calc(50% - 12px);
+    }
+}
+
+@media (min-width: 1024px) {
+    #registrable-events-grid .grid-item {
+        width: calc(33.333% - 16px);
+    }
+}
+
+@media (min-width: 1280px) {
+    #registrable-events-grid .grid-item {
+        width: calc(25% - 18px);
+    }
+}
 
 /* 活動紀實相簿卡片 */
 .album-card { 
