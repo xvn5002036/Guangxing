@@ -1,5 +1,5 @@
 // api/get-articles.js
-import { Client } from "@notionhq/client";
+const { Client } = require("@notionhq/client");
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.NOTION_ARTICLES_DATABASE_ID; // 使用新的環境變數
@@ -16,9 +16,7 @@ const getProperty = (properties, name, type) => {
     }
     return null;
 };
-
-
-export default async function handler(req, res) {
+async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -65,3 +63,5 @@ export default async function handler(req, res) {
         res.status(500).json({ message: 'Failed to fetch articles', details: error.message });
     }
 }
+
+module.exports = handler;

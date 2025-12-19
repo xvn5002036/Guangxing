@@ -18,7 +18,7 @@ const getProperty = (properties, name, type) => {
     return null;
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -61,3 +61,5 @@ export default async function handler(req, res) {
         res.status(500).json({ message: '求籤時發生錯誤', details: error.message });
     }
 }
+
+module.exports = handler;
