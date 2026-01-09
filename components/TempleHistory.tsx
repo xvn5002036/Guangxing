@@ -1,6 +1,9 @@
 import React from 'react';
+import { useData } from '../context/DataContext';
 
 const TempleHistory: React.FC = () => {
+  const { siteSettings } = useData();
+
   return (
     <section id="history" className="py-24 bg-black relative">
       <div className="container mx-auto px-6">
@@ -34,7 +37,7 @@ const TempleHistory: React.FC = () => {
                     <span className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-mystic-gold"></span>
                     <h3 className="text-2xl font-bold text-white mb-4 font-serif">現代弘法 (今日)</h3>
                     <p className="text-gray-400 leading-relaxed text-justify">
-                        新莊武壇廣行宮不僅是信仰中心，更致力於公益慈善與文化傳承。引入數位科技，設立線上祭祀平台，讓傳統信仰跨越時空，繼續守護每一位虔誠的靈魂。
+                        {siteSettings.templeName}不僅是信仰中心，更致力於公益慈善與文化傳承。引入數位科技，設立線上祭祀平台，讓傳統信仰跨越時空，繼續守護每一位虔誠的靈魂。
                     </p>
                 </div>
             </div>
@@ -42,18 +45,18 @@ const TempleHistory: React.FC = () => {
             {/* Architecture Visuals */}
             <div className="w-full lg:w-1/2 grid grid-cols-2 gap-4">
                 <div className="space-y-4 mt-8">
-                     <img src="https://images.unsplash.com/photo-1542649761-0af3759b9e6f?q=80&w=1000&auto=format&fit=crop" className="w-full h-64 object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-700" alt="Temple Roof" />
+                     <img src={siteSettings.historyImageRoof} className="w-full h-64 object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-700" alt="Temple Roof" />
                      <div className="bg-mystic-charcoal p-4 border-l-2 border-mystic-gold">
-                        <h4 className="text-white font-bold mb-1">燕尾脊</h4>
-                        <p className="text-xs text-gray-500">象徵尊貴地位，飛簷翹角，氣勢非凡。</p>
+                        <h4 className="text-white font-bold mb-1">{siteSettings.historyRoofTitle}</h4>
+                        <p className="text-xs text-gray-500">{siteSettings.historyRoofDesc}</p>
                      </div>
                 </div>
                 <div className="space-y-4">
                      <div className="bg-mystic-charcoal p-4 border-l-2 border-mystic-gold">
-                        <h4 className="text-white font-bold mb-1">龍柱石雕</h4>
-                        <p className="text-xs text-gray-500">匠師精雕細琢，雙龍搶珠，栩栩如生。</p>
+                        <h4 className="text-white font-bold mb-1">{siteSettings.historyStoneTitle}</h4>
+                        <p className="text-xs text-gray-500">{siteSettings.historyStoneDesc}</p>
                      </div>
-                     <img src="https://images.unsplash.com/photo-1596545753969-583d73b3eb38?q=80&w=1000&auto=format&fit=crop" className="w-full h-64 object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-700" alt="Stone Carving" />
+                     <img src={siteSettings.historyImageStone} className="w-full h-64 object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-700" alt="Stone Carving" />
                 </div>
             </div>
 

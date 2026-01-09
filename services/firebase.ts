@@ -1,29 +1,33 @@
-import firebase from "firebase/compat/app";
-import "firebase/compat/analytics";
+import { initializeApp, getApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
+/**
+ * Firebase 設定資訊
+ * 請從 Firebase Console (專案設定 -> 一般 -> 您的應用程式) 複製您的設定並貼上。
+ */
 const firebaseConfig = {
-  apiKey: "AIzaSyCE3slgt232Jjyer2kq5b8PHWD0iDvOpJ0",
-  authDomain: "chi-fu-wang.firebaseapp.com",
-  projectId: "chi-fu-wang",
-  storageBucket: "chi-fu-wang.firebasestorage.app",
-  messagingSenderId: "388080849834",
-  appId: "1:388080849834:web:fb5ecca09d9695f12e91d3",
-  measurementId: "G-BP2CEERBHR"
-  // API Secret for Measurement Protocol (Server-side): uuoY8GkqROi47SPlRKHrgA
-  // For client-side SDK, measurementId is sufficient.
+  apiKey: "請貼上您的_apiKey",
+  authDomain: "請貼上您的_project-id.firebaseapp.com",
+  projectId: "請貼上您的_project-id",
+  storageBucket: "請貼上您的_project-id.firebasestorage.app",
+  messagingSenderId: "請貼上您的_senderId",
+  appId: "請貼上您的_appId"
 };
 
-// Initialize Firebase using Compat SDK to handle potential environment/typing issues
-const app = firebase.initializeApp(firebaseConfig);
-
-// Initialize Services
-// Use modular getFirestore (assuming line 2 didn't error implies it's available)
-export const db = getFirestore(app);
-// Use compat analytics as fallback
-export const analytics = firebase.analytics(app);
-
-// Helper to check if config is set
+// 檢查是否已填寫正確金鑰
 export const isFirebaseConfigured = () => {
-    return true;
+    return firebaseConfig.apiKey && firebaseConfig.apiKey !== "請貼上您的_apiKey";
 };
+
+// 安全地初始化 Firebase
+let app;
+try {
+    if (isFirebaseConfigured()) {
+        app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    }
+} catch (error) {
+    console.error("Firebase 初始化失敗:", error);
+}
+
+// 匯出資料庫實例。若未設定則為 null，DataContext 會處理此狀態。
+export const db = app ? getFirestore(app) : (null as any);

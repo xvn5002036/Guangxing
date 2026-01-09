@@ -91,6 +91,35 @@ export interface FAQItem {
   answer: string;
 }
 
+export interface SiteSettings {
+  templeName: string;
+  address: string;
+  phone: string;
+  
+  // Hero Section
+  heroTitle: string;
+  heroSubtitle: string;
+  heroImage: string; // URL
+
+  // Deity Section
+  deityImage: string; // URL
+  deityTitle: string; 
+  deityIntro: string; // Long text
+  deityBirthday: string;
+  deityBirthdayLabel: string;
+  deityDuty: string;
+  deityDutyLabel: string;
+
+  // History Section Images & Text
+  historyImageRoof: string; // URL
+  historyRoofTitle: string;
+  historyRoofDesc: string;
+  
+  historyImageStone: string; // URL
+  historyStoneTitle: string;
+  historyStoneDesc: string;
+}
+
 // Constants for selectors
 export const LUNAR_HOURS = ["子時 (23-01)", "丑時 (01-03)", "寅時 (03-05)", "卯時 (05-07)", "辰時 (07-09)", "巳時 (09-11)", "午時 (11-13)", "未時 (13-15)", "申時 (15-17)", "酉時 (17-19)", "戌時 (19-21)", "亥時 (21-23)", "吉時 (不限)"];
 

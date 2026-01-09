@@ -33,7 +33,7 @@ const App: React.FC = () => {
             <Header />
             <main className="flex-grow">
                 <Hero />
-                <Almanac />
+                <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
                 <TempleHistory />
                 <DeityInfo />
                 <News />

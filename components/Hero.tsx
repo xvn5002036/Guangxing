@@ -1,13 +1,16 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useData } from '../context/DataContext';
 
 const Hero: React.FC = () => {
+  const { siteSettings } = useData();
+
   return (
     <section id="home" className="relative h-[90vh] w-full overflow-hidden bg-black flex items-center justify-center">
       {/* Background Video/Image with Ken Burns effect - UPDATED IMAGE (Dark, Dramatic Temple Roof/Smoke) */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-50 animate-[pulse-slow_12s_ease-in-out_infinite]"
-        style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1592388796690-3482d8d8091e?q=80&w=2600&auto=format&fit=crop")' }} 
+        style={{ backgroundImage: `url("${siteSettings.heroImage}")` }} 
       ></div>
       
       {/* Dynamic Overlay */}
@@ -25,12 +28,12 @@ const Hero: React.FC = () => {
         </div>
 
         <h1 className="text-6xl md:text-9xl font-bold text-white mb-6 tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] font-calligraphy">
-          代天巡狩
+          {siteSettings.heroTitle}
         </h1>
         
         <div className="flex items-center justify-center gap-4 text-mystic-gold tracking-[0.6em] text-sm md:text-xl font-light uppercase mb-12">
             <span className="h-[1px] w-12 md:w-24 bg-gradient-to-r from-transparent to-mystic-gold"></span>
-            威靈顯赫 · 廣行濟世
+            {siteSettings.heroSubtitle}
             <span className="h-[1px] w-12 md:w-24 bg-gradient-to-l from-transparent to-mystic-gold"></span>
         </div>
 

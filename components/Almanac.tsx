@@ -1,7 +1,11 @@
 import React from 'react';
-import { Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, XCircle, Lock } from 'lucide-react';
 
-const Almanac: React.FC = () => {
+interface AlmanacProps {
+  onOpenAdmin?: () => void;
+}
+
+const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
   // In a real app, this would be calculated or fetched. Hardcoded for demo.
   const today = new Date();
   const dateStr = today.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -58,7 +62,16 @@ const Almanac: React.FC = () => {
             <p className="text-gray-400 text-sm italic font-serif">
                 "心誠則靈，多行善事，<br/>必有後福。"
             </p>
-            <div className="mt-2 h-[1px] w-12 bg-mystic-gold ml-auto"></div>
+            <div className="mt-2 h-[1px] w-12 bg-mystic-gold ml-auto mb-2"></div>
+            {onOpenAdmin && (
+              <button 
+                onClick={onOpenAdmin}
+                className="text-[10px] text-gray-600 hover:text-mystic-gold flex items-center gap-1 justify-end ml-auto transition-colors"
+              >
+                <Lock size={10} />
+                <span>後台管理</span>
+              </button>
+            )}
         </div>
       </div>
     </section>
