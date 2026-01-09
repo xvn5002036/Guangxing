@@ -1,0 +1,61 @@
+import React from 'react';
+import { MapPin, Phone, Clock, AlertCircle, Lock } from 'lucide-react';
+
+interface FooterProps {
+  onOpenAdmin?: () => void;
+}
+
+const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
+  return (
+    <footer id="contact" className="bg-black text-gray-500 py-16 border-t border-white/5">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between gap-12 items-start">
+            
+            <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-white tracking-widest">新莊武壇廣行宮</h3>
+                <p className="text-sm max-w-xs">承襲千年信仰，融合現代科技。在雲端，延續人與神之間的對話。</p>
+                <div className="pt-4 flex gap-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-900 rounded border border-gray-800 text-xs text-gray-400">
+                        <AlertCircle size={12} />
+                        <span>本網站為展示作品，無實際宮廟營運</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-4 text-sm">
+                <div className="flex items-center gap-3">
+                    <MapPin size={16} className="text-mystic-gold" />
+                    <span>242新北市新莊區福營路500號</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Phone size={16} className="text-mystic-gold" />
+                    <span>(02) 2345-6789</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Clock size={16} className="text-mystic-gold" />
+                    <span>每日 05:00 - 21:00</span>
+                </div>
+            </div>
+
+            <div className="text-right">
+                <p className="text-xs text-gray-600 mb-4">
+                    &copy; {new Date().getFullYear()} Xinzhuang Wutan Guangxing Gong.<br/>
+                    All rights reserved.
+                </p>
+                {onOpenAdmin && (
+                  <button 
+                    onClick={onOpenAdmin}
+                    className="flex items-center gap-2 text-xs text-gray-400 hover:text-mystic-gold hover:bg-white/5 ml-auto transition-colors border border-gray-700 px-4 py-2 rounded-sm"
+                  >
+                    <Lock size={12} />
+                    <span>管理員登入 (密碼: admin)</span>
+                  </button>
+                )}
+            </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
