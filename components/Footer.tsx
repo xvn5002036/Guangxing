@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { MapPin, Phone, Clock, AlertCircle, Lock } from 'lucide-react';
+import { MapPin, Phone, Clock, AlertCircle, Lock, MessageCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
 
 interface FooterProps {
@@ -22,6 +23,12 @@ const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
                         <AlertCircle size={12} />
                         <span>本網站為展示作品，無實際宮廟營運</span>
                     </div>
+                </div>
+                <div className="pt-2">
+                    <a href={siteSettings.lineUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-green-900/30 text-green-500 rounded border border-green-900/50 hover:bg-green-800 hover:text-white transition-colors">
+                        <MessageCircle size={16} />
+                        <span className="text-xs font-bold">加入官方 LINE</span>
+                    </a>
                 </div>
             </div>
 

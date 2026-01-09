@@ -330,9 +330,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 <label className="text-xs text-gray-500 uppercase">聯絡電話</label>
                                 <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.phone} onChange={e => setSettingsForm({...settingsForm, phone: e.target.value})} />
                             </div>
-                            <div className="space-y-1 md:col-span-2">
+                            <div className="space-y-1">
                                 <label className="text-xs text-gray-500 uppercase">地址</label>
                                 <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.address} onChange={e => setSettingsForm({...settingsForm, address: e.target.value})} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-green-500 uppercase font-bold">LINE 官方帳號連結</label>
+                                <input className="w-full bg-black border border-green-900/50 p-3 text-green-400 focus:border-green-500 outline-none" value={settingsForm.lineUrl} onChange={e => setSettingsForm({...settingsForm, lineUrl: e.target.value})} placeholder="https://line.me/..." />
                             </div>
                         </div>
                     </div>

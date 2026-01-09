@@ -11,6 +11,7 @@ import Ritual from './components/Ritual';
 import Oracle from './components/Oracle';
 import Talisman from './components/Talisman';
 import Services from './components/Services';
+import LightingWall from './components/LightingWall';
 import Gallery from './components/Gallery';
 import FAQ from './components/FAQ';
 import News from './components/News';
@@ -18,6 +19,7 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
+import VirtualTour from './components/VirtualTour';
 import { DataProvider } from './context/DataContext';
 
 const App: React.FC = () => {
@@ -38,7 +40,9 @@ const App: React.FC = () => {
                 <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
                 <TempleHistory />
                 <Organization />
+                <VirtualTour />
                 <DeityInfo />
+                <LightingWall />
                 <News />
                 <TempleCalendar />
                 <Ritual />

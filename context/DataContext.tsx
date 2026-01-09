@@ -48,6 +48,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   templeName: '新莊武壇廣行宮',
   address: '242新北市新莊區福營路500號',
   phone: '(02) 2345-6789',
+  lineUrl: 'https://line.me/ti/p/@temple_demo',
   heroTitle: '代天巡狩',
   heroSubtitle: '威靈顯赫 · 廣行濟世',
   heroImage: 'https://images.unsplash.com/photo-1592388796690-3482d8d8091e?q=80&w=2600&auto=format&fit=crop',

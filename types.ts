@@ -107,6 +107,7 @@ export interface SiteSettings {
   templeName: string;
   address: string;
   phone: string;
+  lineUrl: string; // New field for LINE Official Account Link
   
   // Hero Section
   heroTitle: string;

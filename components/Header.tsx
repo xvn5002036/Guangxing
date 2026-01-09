@@ -6,6 +6,8 @@ import { NavItem } from '../types';
 const navItems: NavItem[] = [
   { label: '宮廟沿革', href: '#history' },
   { label: '組織架構', href: '#organization' },
+  { label: 'AR 導覽', href: '#ar-tour' },
+  { label: '線上燈牆', href: '#lighting-wall' },
   { label: '行事曆', href: '#calendar' },
   { label: '線上上香', href: '#ritual' },
   { label: '靈籤擲筊', href: '#oracle' },
