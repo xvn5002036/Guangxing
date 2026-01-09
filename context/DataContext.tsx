@@ -1,5 +1,7 @@
+
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings } from '../types';
+import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember } from '../types';
 import { db, isFirebaseConfigured } from '../services/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 
@@ -32,6 +34,16 @@ const INITIAL_SERVICES: ServiceItem[] = [
   { id: 's5', title: "隨喜捐獻", description: "護持宮廟建設，廣結善緣，功德無量。", iconName: "Gift", price: 100, type: 'DONATION' }
 ];
 
+const INITIAL_ORG: OrgMember[] = [
+    { id: 'o1', name: '陳天賜', title: '宮主', category: 'LEADER', image: 'https://images.unsplash.com/photo-1542596594-649edbc13630?q=80&w=300&auto=format&fit=crop' },
+    { id: 'o2', name: '林旺財', title: '總幹事', category: 'EXECUTIVE', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop' },
+    { id: 'o3', name: '張修德', title: '祭典組長', category: 'EXECUTIVE', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=300&auto=format&fit=crop' },
+    { id: 'o4', name: '王淑芬', title: '財務長', category: 'EXECUTIVE', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop' },
+    { id: 'o5', name: '李阿土', title: '庶務執事', category: 'STAFF', image: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?q=80&w=300&auto=format&fit=crop' },
+    { id: 'o6', name: '吳美玲', title: '接待志工', category: 'STAFF', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=300&auto=format&fit=crop' },
+    { id: 'o7', name: '劉金龍', title: '護轎組', category: 'STAFF', image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=300&auto=format&fit=crop' },
+];
+
 const DEFAULT_SETTINGS: SiteSettings = {
   templeName: '新莊武壇廣行宮',
   address: '242新北市新莊區福營路500號',
@@ -60,6 +72,7 @@ interface DataContextType {
   services: ServiceItem[];
   gallery: GalleryItem[];
   registrations: Registration[];
+  orgMembers: OrgMember[];
   siteSettings: SiteSettings;
   
   addNews: (item: Omit<NewsItem, 'id'>) => void;
@@ -79,6 +92,10 @@ interface DataContextType {
   updateGalleryItem: (id: string, item: Partial<GalleryItem>) => void;
   deleteGalleryItem: (id: string) => void;
 
+  addOrgMember: (item: Omit<OrgMember, 'id'>) => void;
+  updateOrgMember: (id: string, item: Partial<OrgMember>) => void;
+  deleteOrgMember: (id: string) => void;
+
   addRegistration: (reg: Omit<Registration, 'id' | 'createdAt'>) => void;
   updateRegistration: (id: string, reg: Partial<Registration>) => void;
   deleteRegistration: (id: string) => void;
@@ -97,6 +114,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [events, setEvents] = useState<TempleEvent[]>(INITIAL_EVENTS);
   const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [orgMembers, setOrgMembers] = useState<OrgMember[]>(INITIAL_ORG);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
 
@@ -123,9 +141,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const q = query(collection(db, 'news'), orderBy('date', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
-             // Optional: seed if empty, or just leave empty. 
-             // We won't auto-seed collections to avoid duplicates on reload, 
-             // but user can "Reset Data" to seed.
+             // Optional: seed if empty
         } else {
             setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsItem)));
         }
@@ -163,7 +179,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => unsubscribe();
   }, []);
 
-  // 6. Sync Registrations
+  // 6. Sync Org Members
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+    const q = query(collection(db, 'org_members'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setOrgMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OrgMember)));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 7. Sync Registrations
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
     const q = query(collection(db, "registrations"), orderBy("createdAt", "desc"));
@@ -210,7 +236,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      await addDoc(collection(db, 'gallery'), item);
   };
   const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
-      // Batch add isn't strictly necessary for small amounts, loop is fine
       items.forEach(item => addDoc(collection(db, 'gallery'), item));
   };
   const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
@@ -218,6 +243,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   const deleteGalleryItem = async (id: string) => {
      await deleteDoc(doc(db, 'gallery', id));
+  };
+
+  const addOrgMember = async (item: Omit<OrgMember, 'id'>) => {
+     await addDoc(collection(db, 'org_members'), item);
+  };
+  const updateOrgMember = async (id: string, item: Partial<OrgMember>) => {
+     await updateDoc(doc(db, 'org_members', id), item);
+  };
+  const deleteOrgMember = async (id: string) => {
+     await deleteDoc(doc(db, 'org_members', id));
   };
 
   const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
@@ -241,36 +276,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // CRITICAL: Update Site Settings in Firestore
   const updateSiteSettings = async (newSettings: Partial<SiteSettings>) => {
     const docRef = doc(db, 'settings', 'general');
-    // Using setDoc with merge: true handles both creation and update
     await setDoc(docRef, newSettings, { merge: true });
   };
   
   const resetData = async () => {
     if(window.confirm('確定要重置所有資料嗎？這將會清空目前資料庫並寫入預設範本資料。(警告：此操作不可逆)')) {
-        // 1. Reset Settings
         await setDoc(doc(db, 'settings', 'general'), DEFAULT_SETTINGS);
 
-        // 2. Clear Collections (Helper function)
-        const clearCollection = async (path: string) => {
-            const q = query(collection(db, path));
-            const snapshot = await getDoc(doc(db, 'dummy', 'dummy')).catch(() => null); // Dummy await to keep logic clean? No, need query snapshot.
-            // Firestore doesn't have "delete collection", must delete docs.
-            // Since we can't await onSnapshot, we use a one-time get in loop is complicated.
-            // Simplified: Just overwrite with Initial Data for now or rely on manual deletion if needed.
-            // A true "Drop Table" is hard in client SDK. We will just ADD default data.
-        };
-
-        // Note: Deleting all docs in a collection from client is expensive/complex.
-        // Instead, we will just re-seed the INITIAL data if the collections are empty,
-        // or user can manually delete items in admin.
-        
         // Seeding logic:
-        // News
         INITIAL_NEWS.forEach(n => addDoc(collection(db, 'news'), n));
-        // Events
         INITIAL_EVENTS.forEach(e => addDoc(collection(db, 'events'), e));
-        // Services
         INITIAL_SERVICES.forEach(s => addDoc(collection(db, 'services'), s));
+        INITIAL_ORG.forEach(o => addDoc(collection(db, 'org_members'), o));
         
         alert('已重置預設資料至資料庫！');
     }
@@ -278,11 +295,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <DataContext.Provider value={{ 
-      news, events, services, gallery, registrations, siteSettings,
+      news, events, services, gallery, registrations, orgMembers, siteSettings,
       addNews, updateNews, deleteNews, 
       addEvent, updateEvent, deleteEvent, 
       addService, updateService, deleteService,
       addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
+      addOrgMember, updateOrgMember, deleteOrgMember,
       addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
       updateSiteSettings,
       resetData

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -5,6 +6,7 @@ import Almanac from './components/Almanac';
 import TempleCalendar from './components/TempleCalendar';
 import DeityInfo from './components/DeityInfo';
 import TempleHistory from './components/TempleHistory';
+import Organization from './components/Organization';
 import Ritual from './components/Ritual';
 import Oracle from './components/Oracle';
 import Talisman from './components/Talisman';
@@ -35,6 +37,7 @@ const App: React.FC = () => {
                 <Hero />
                 <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
                 <TempleHistory />
+                <Organization />
                 <DeityInfo />
                 <News />
                 <TempleCalendar />

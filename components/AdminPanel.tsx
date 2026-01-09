@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, CheckCircle, Clock, Settings, Layout } from 'lucide-react';
+import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network } from 'lucide-react';
 import { GalleryItem, Registration } from '../types';
 
 interface AdminPanelProps {
@@ -14,11 +15,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     services, addService, updateService, deleteService,
     gallery, addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
     registrations, updateRegistration, deleteRegistration,
+    orgMembers, addOrgMember, updateOrgMember, deleteOrgMember,
     siteSettings, updateSiteSettings,
     resetData
   } = useData();
 
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG'>('GENERAL');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -73,6 +75,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
       }); else updateGalleryItem(editingId!, editForm);
     } else if (activeTab === 'REGISTRATIONS') {
       updateRegistration(editingId!, editForm);
+    } else if (activeTab === 'ORG') {
+      if (isAdding) addOrgMember({
+          ...editForm,
+          category: editForm.category || 'STAFF'
+      }); else updateOrgMember(editingId!, editForm);
     }
     setEditingId(null);
     setIsAdding(false);
@@ -89,7 +96,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
   };
 
   const handlePrintReceipt = (reg: Registration) => {
-      // ... (Receipt Printing Logic)
       const printWindow = window.open('', '_blank', 'width=500,height=700');
       if (!printWindow) return;
 
@@ -97,11 +103,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
       const dateStr = `${today.getFullYear()}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getDate().toString().padStart(2,'0')}`;
       const timeStr = `${today.getHours().toString().padStart(2,'0')}:${today.getMinutes().toString().padStart(2,'0')}:${today.getSeconds().toString().padStart(2,'0')}`;
 
-      // (Reusing the HTML template logic from previous context - kept concise here)
-      const html = `<!DOCTYPE html><html><head><title>收據</title></head><body onload="window.print()"><h1>收據: ${reg.name}</h1><p>金額: ${reg.amount}</p></body></html>`; 
-      // Note: In real implementation, keep the full HTML template. 
-      // Since I need to output full file, I will restore the full logic below to avoid regression.
-      
       const fullHtml = `
         <!DOCTYPE html>
         <html>
@@ -257,6 +258,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         <nav className="flex-1 p-4 space-y-2">
           {[
             { id: 'GENERAL', icon: Settings, label: '一般設定' },
+            { id: 'ORG', icon: Network, label: '組織管理' },
             { id: 'NEWS', icon: FileText, label: '最新消息' },
             { id: 'EVENTS', icon: Calendar, label: '行事曆管理' },
             { id: 'SERVICES', icon: Briefcase, label: '服務項目' },
@@ -278,6 +280,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <h2 className="text-2xl font-bold text-white">
             {activeTab === 'GENERAL' ? '一般網站設定 (圖片與文字)' :
+             activeTab === 'ORG' ? '宮廟組織人員管理' :
              activeTab === 'REGISTRATIONS' ? '信眾報名清單' : 
              activeTab === 'NEWS' ? '最新消息管理' : 
              activeTab === 'EVENTS' ? '行事曆管理' : 
@@ -298,7 +301,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                  </>
              )}
             {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
-                <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : { type: 'FESTIVAL' }); }} className="bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600">
+                <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : { type: 'FESTIVAL' }); }} className="bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600">
                 <Plus size={18} /> 新增項目
                 </button>
             )}
@@ -308,6 +311,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         {/* --- GENERAL SETTINGS TAB --- */}
         {activeTab === 'GENERAL' && (
             <div className="bg-mystic-charcoal p-8 border border-white/5 rounded-sm shadow-xl max-w-4xl animate-fade-in-up">
+                {/* ... (Existing General Settings Code) ... */}
                 <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4">
                     <Layout size={20} className="text-mystic-gold" />
                     <h3 className="text-lg font-bold text-white">前台顯示內容設定</h3>
@@ -348,7 +352,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             <div className="space-y-1 md:col-span-2">
                                 <label className="text-xs text-gray-500 uppercase">背景圖片連結 (URL)</label>
                                 <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.heroImage} onChange={e => setSettingsForm({...settingsForm, heroImage: e.target.value})} />
-                                <p className="text-[10px] text-gray-500 mt-1">建議使用高解析度橫式圖片 (Unsplash, Imgur 或 GitHub Raw 連結)</p>
                             </div>
                         </div>
                     </div>
@@ -369,7 +372,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 <label className="text-xs text-gray-500 uppercase">傳奇緣起 (介紹內文)</label>
                                 <textarea rows={6} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none resize-none" value={settingsForm.deityIntro} onChange={e => setSettingsForm({...settingsForm, deityIntro: e.target.value})} />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <label className="text-xs text-gray-500 uppercase">方塊 1：聖誕日期</label>
                                     <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.deityBirthday} onChange={e => setSettingsForm({...settingsForm, deityBirthday: e.target.value})} placeholder="例如：農曆六月十八" />
@@ -446,9 +449,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             </div>
         )}
 
-        {/* --- OTHER TABS CONTENT (Logic preserved from previous version) --- */}
+        {/* --- OTHER TABS CONTENT --- */}
         {activeTab !== 'GENERAL' && (
-            /* ... Original Table and Form Content ... */
             <>
                 {/* GitHub Import Panel */}
                 {showGithubImport && activeTab === 'GALLERY' && (
@@ -467,7 +469,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 {/* Edit/Add Form */}
                 {(editingId || isAdding) && (
                     <div className="bg-mystic-charcoal p-6 mb-8 border border-mystic-gold/30 animate-fade-in-up rounded-sm shadow-xl">
-                        {/* ... (Edit Form UI - Same as before) ... */}
                         <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4"><Info size={20} className="text-mystic-gold" /><h3 className="text-lg font-bold text-white">{isAdding ? '新增內容' : '編輯內容'}</h3></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {activeTab === 'REGISTRATIONS' ? (
@@ -495,6 +496,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">日期</label><input type="date" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.date ? editForm.date.replace(/\./g, '-') : ''} onChange={e => setEditForm({...editForm, date: e.target.value.replace(/-/g, '.')})} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">分類</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.category || '公告'} onChange={e => setEditForm({...editForm, category: e.target.value})}><option value="公告">公告</option><option value="法會">法會</option><option value="慈善">慈善</option></select></div>
                                 </>
+                            ) : activeTab === 'ORG' ? (
+                                <>
+                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">人員姓名</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.name || ''} onChange={e => setEditForm({...editForm, name: e.target.value})} /></div>
+                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">職位名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({...editForm, title: e.target.value})} /></div>
+                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">照片連結</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.image || ''} onChange={e => setEditForm({...editForm, image: e.target.value})} /></div>
+                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">組織層級</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.category || 'STAFF'} onChange={e => setEditForm({...editForm, category: e.target.value})}><option value="LEADER">宮主 (第一層)</option><option value="EXECUTIVE">幹事/委員 (第二層)</option><option value="STAFF">執事/志工 (第三層)</option></select></div>
+                                </>
                             ) : (
                                 <>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({...editForm, title: e.target.value})} /></div>
@@ -517,7 +525,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             <tr><th className="p-4">項目</th><th className="p-4">詳情</th><th className="p-4 text-right">操作</th></tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {/* ... (Rows mapping logic) ... */}
                             {activeTab === 'REGISTRATIONS' && registrations.map(reg => (
                                 <tr key={reg.id} className="hover:bg-white/5">
                                     <td className="p-4"><div className="font-bold text-white">{reg.name}</div><div className="text-xs text-mystic-gold">{reg.serviceTitle}</div></td>
@@ -537,9 +544,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             {activeTab === 'GALLERY' && gallery.map(item => (
                                 <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16}/></button><button onClick={() => deleteGalleryItem(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16}/></button></td></tr>
                             ))}
+                            {activeTab === 'ORG' && orgMembers.map(item => (
+                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16}/></button><button onClick={() => deleteOrgMember(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16}/></button></td></tr>
+                            ))}
                         </tbody>
                     </table>
-                     {((activeTab === 'REGISTRATIONS' && registrations.length === 0) || (activeTab === 'EVENTS' && events.length === 0) || (activeTab === 'GALLERY' && gallery.length === 0) || (activeTab === 'NEWS' && news.length === 0)) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
+                     {((activeTab === 'REGISTRATIONS' && registrations.length === 0) || (activeTab === 'EVENTS' && events.length === 0) || (activeTab === 'GALLERY' && gallery.length === 0) || (activeTab === 'NEWS' && news.length === 0) || (activeTab === 'ORG' && orgMembers.length === 0)) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
                 </div>
             </>
         )}

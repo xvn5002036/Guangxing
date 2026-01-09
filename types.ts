@@ -1,4 +1,5 @@
 
+
 export interface NavItem {
   label: string;
   href: string;
@@ -84,6 +85,17 @@ export interface GalleryItem {
   type: 'IMAGE' | 'VIDEO' | 'YOUTUBE';
   url: string;
   title: string;
+}
+
+export type OrgCategory = 'LEADER' | 'EXECUTIVE' | 'STAFF';
+
+export interface OrgMember {
+  id: string;
+  name: string;
+  title: string;
+  image: string;
+  category: OrgCategory;
+  order?: number;
 }
 
 export interface FAQItem {

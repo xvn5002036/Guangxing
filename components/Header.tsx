@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Home } from 'lucide-react';
 import { NavItem } from '../types';
 
 const navItems: NavItem[] = [
   { label: '宮廟沿革', href: '#history' },
+  { label: '組織架構', href: '#organization' },
   { label: '行事曆', href: '#calendar' },
   { label: '線上上香', href: '#ritual' },
   { label: '靈籤擲筊', href: '#oracle' },
