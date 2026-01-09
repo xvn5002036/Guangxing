@@ -1,9 +1,8 @@
 
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember } from '../types';
 import { db, isFirebaseConfigured } from '../services/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 // Helper to get formatted date for current month
 const getRelativeDate = (day: number) => {
@@ -15,9 +14,9 @@ const getRelativeDate = (day: number) => {
 };
 
 const INITIAL_NEWS: NewsItem[] = [
-  { date: '2024.03.15', title: '【公告】觀世音菩薩出家紀念日法會籌備中', category: '法會' },
-  { date: '2024.03.01', title: '【活動】本宮年度平安燈、太歲燈開放線上受理', category: '公告' },
-  { date: '2024.02.15', title: '【公益】護國宮春季救濟物資發放活動圓滿', category: '慈善' },
+  { id: 'n1', date: '2024.03.15', title: '【公告】觀世音菩薩出家紀念日法會籌備中', category: '法會' },
+  { id: 'n2', date: '2024.03.01', title: '【活動】本宮年度平安燈、太歲燈開放線上受理', category: '公告' },
+  { id: 'n3', date: '2024.02.15', title: '【公益】護國宮春季救濟物資發放活動圓滿', category: '慈善' },
 ];
 
 const INITIAL_EVENTS: TempleEvent[] = [
@@ -110,7 +109,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Use simple state, but initialized with defaults to prevent flicker before Firebase loads
+  // Use simple state, initialized with defaults
   const [news, setNews] = useState<NewsItem[]>(INITIAL_NEWS);
   const [events, setEvents] = useState<TempleEvent[]>(INITIAL_EVENTS);
   const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
@@ -123,7 +122,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 1. Sync Site Settings
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return; // Guard clause for missing DB
     const docRef = doc(db, 'settings', 'general');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -138,12 +137,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 2. Sync News
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return;
     const q = query(collection(db, 'news'), orderBy('date', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (snapshot.empty) {
-             // Optional: seed if empty
-        } else {
+        if (!snapshot.empty) {
             setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsItem)));
         }
     });
@@ -152,7 +149,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 3. Sync Events
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return;
     const q = query(collection(db, 'events'), orderBy('date', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TempleEvent)));
@@ -162,7 +159,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 4. Sync Services
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return;
     const q = query(collection(db, 'services'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceItem)));
@@ -172,7 +169,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 5. Sync Gallery
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return;
     const q = query(collection(db, 'gallery'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setGallery(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryItem)));
@@ -182,7 +179,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 6. Sync Org Members
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return;
     const q = query(collection(db, 'org_members'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setOrgMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OrgMember)));
@@ -192,7 +189,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 7. Sync Registrations
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!db) return;
     const q = query(collection(db, "registrations"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setRegistrations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Registration)));
@@ -201,96 +198,196 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
 
-  // === ACTIONS (WRITE TO FIREBASE) ===
+  // === ACTIONS (WRITE TO FIREBASE OR LOCAL STATE) ===
+  // All actions now check for db existence. If db is null (no API key), they update local state for Demo purposes.
 
   const addNews = async (item: Omit<NewsItem, 'id'>) => {
-     await addDoc(collection(db, 'news'), item);
+     if (db) {
+         await addDoc(collection(db, 'news'), item);
+     } else {
+         const newItem = { ...item, id: `local_${Date.now()}` };
+         setNews(prev => [newItem, ...prev]);
+     }
   };
   const updateNews = async (id: string, item: Partial<NewsItem>) => {
-     await updateDoc(doc(db, 'news', id), item);
+     if (db) {
+         await updateDoc(doc(db, 'news', id), item);
+     } else {
+         setNews(prev => prev.map(n => n.id === id ? { ...n, ...item } : n));
+     }
   };
   const deleteNews = async (id: string) => {
-     await deleteDoc(doc(db, 'news', id));
+     if (db) {
+         await deleteDoc(doc(db, 'news', id));
+     } else {
+         setNews(prev => prev.filter(n => n.id !== id));
+     }
   };
 
   const addEvent = async (item: Omit<TempleEvent, 'id'>) => {
-     await addDoc(collection(db, 'events'), item);
+     if (db) {
+         await addDoc(collection(db, 'events'), item);
+     } else {
+         const newItem = { ...item, id: `local_${Date.now()}` };
+         setEvents(prev => [...prev, newItem].sort((a,b) => a.date.localeCompare(b.date)));
+     }
   };
   const updateEvent = async (id: string, item: Partial<TempleEvent>) => {
-     await updateDoc(doc(db, 'events', id), item);
+     if (db) {
+         await updateDoc(doc(db, 'events', id), item);
+     } else {
+         setEvents(prev => prev.map(e => e.id === id ? { ...e, ...item } : e));
+     }
   };
   const deleteEvent = async (id: string) => {
-     await deleteDoc(doc(db, 'events', id));
+     if (db) {
+         await deleteDoc(doc(db, 'events', id));
+     } else {
+         setEvents(prev => prev.filter(e => e.id !== id));
+     }
   };
 
   const addService = async (item: Omit<ServiceItem, 'id'>) => {
-     await addDoc(collection(db, 'services'), item);
+     if (db) {
+         await addDoc(collection(db, 'services'), item);
+     } else {
+         const newItem = { ...item, id: `local_${Date.now()}` };
+         setServices(prev => [...prev, newItem]);
+     }
   };
   const updateService = async (id: string, item: Partial<ServiceItem>) => {
-     await updateDoc(doc(db, 'services', id), item);
+     if (db) {
+         await updateDoc(doc(db, 'services', id), item);
+     } else {
+         setServices(prev => prev.map(s => s.id === id ? { ...s, ...item } : s));
+     }
   };
   const deleteService = async (id: string) => {
-     await deleteDoc(doc(db, 'services', id));
+     if (db) {
+         await deleteDoc(doc(db, 'services', id));
+     } else {
+         setServices(prev => prev.filter(s => s.id !== id));
+     }
   };
 
   const addGalleryItem = async (item: Omit<GalleryItem, 'id'>) => {
-     await addDoc(collection(db, 'gallery'), item);
+     if (db) {
+         await addDoc(collection(db, 'gallery'), item);
+     } else {
+         const newItem = { ...item, id: `local_${Date.now()}` };
+         setGallery(prev => [...prev, newItem]);
+     }
   };
   const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
-      items.forEach(item => addDoc(collection(db, 'gallery'), item));
+      if (db) {
+          items.forEach(item => addDoc(collection(db, 'gallery'), item));
+      } else {
+          const newItems = items.map((item, i) => ({ ...item, id: `local_${Date.now()}_${i}` }));
+          setGallery(prev => [...prev, ...newItems]);
+      }
   };
   const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
-     await updateDoc(doc(db, 'gallery', id), item);
+     if (db) {
+         await updateDoc(doc(db, 'gallery', id), item);
+     } else {
+         setGallery(prev => prev.map(g => g.id === id ? { ...g, ...item } : g));
+     }
   };
   const deleteGalleryItem = async (id: string) => {
-     await deleteDoc(doc(db, 'gallery', id));
+     if (db) {
+         await deleteDoc(doc(db, 'gallery', id));
+     } else {
+         setGallery(prev => prev.filter(g => g.id !== id));
+     }
   };
 
   const addOrgMember = async (item: Omit<OrgMember, 'id'>) => {
-     await addDoc(collection(db, 'org_members'), item);
+     if (db) {
+         await addDoc(collection(db, 'org_members'), item);
+     } else {
+         const newItem = { ...item, id: `local_${Date.now()}` };
+         setOrgMembers(prev => [...prev, newItem]);
+     }
   };
   const updateOrgMember = async (id: string, item: Partial<OrgMember>) => {
-     await updateDoc(doc(db, 'org_members', id), item);
+     if (db) {
+         await updateDoc(doc(db, 'org_members', id), item);
+     } else {
+         setOrgMembers(prev => prev.map(m => m.id === id ? { ...m, ...item } : m));
+     }
   };
   const deleteOrgMember = async (id: string) => {
-     await deleteDoc(doc(db, 'org_members', id));
+     if (db) {
+         await deleteDoc(doc(db, 'org_members', id));
+     } else {
+         setOrgMembers(prev => prev.filter(m => m.id !== id));
+     }
   };
 
   const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
     const newReg = {
       ...reg,
       createdAt: new Date().toISOString(),
-      status: 'PAID',
+      status: 'PAID' as const,
       isProcessed: false
     };
-    await addDoc(collection(db, "registrations"), newReg);
+    if (db) {
+        await addDoc(collection(db, "registrations"), newReg);
+    } else {
+        // DEMO MODE: Update local state to simulate successful payment
+        const localReg = { ...newReg, id: `local_${Date.now()}` };
+        setRegistrations(prev => [localReg, ...prev]);
+        console.log("Demo Mode: Registration added locally", localReg);
+    }
   };
   const updateRegistration = async (id: string, reg: Partial<Registration>) => {
-     await updateDoc(doc(db, "registrations", id), reg);
+     if (db) {
+         await updateDoc(doc(db, "registrations", id), reg);
+     } else {
+         setRegistrations(prev => prev.map(r => r.id === id ? { ...r, ...reg } : r));
+     }
   };
   const deleteRegistration = async (id: string) => {
-     await deleteDoc(doc(db, "registrations", id));
+     if (db) {
+         await deleteDoc(doc(db, "registrations", id));
+     } else {
+         setRegistrations(prev => prev.filter(r => r.id !== id));
+     }
   };
 
   const getRegistrationsByPhone = (phone: string) => registrations.filter(r => r.phone === phone);
 
-  // CRITICAL: Update Site Settings in Firestore
+  // CRITICAL: Update Site Settings in Firestore or Local
   const updateSiteSettings = async (newSettings: Partial<SiteSettings>) => {
-    const docRef = doc(db, 'settings', 'general');
-    await setDoc(docRef, newSettings, { merge: true });
+    if (db) {
+        const docRef = doc(db, 'settings', 'general');
+        await setDoc(docRef, newSettings, { merge: true });
+    } else {
+        setSiteSettings(prev => ({ ...prev, ...newSettings }));
+    }
   };
   
   const resetData = async () => {
     if(window.confirm('確定要重置所有資料嗎？這將會清空目前資料庫並寫入預設範本資料。(警告：此操作不可逆)')) {
-        await setDoc(doc(db, 'settings', 'general'), DEFAULT_SETTINGS);
-
-        // Seeding logic:
-        INITIAL_NEWS.forEach(n => addDoc(collection(db, 'news'), n));
-        INITIAL_EVENTS.forEach(e => addDoc(collection(db, 'events'), e));
-        INITIAL_SERVICES.forEach(s => addDoc(collection(db, 'services'), s));
-        INITIAL_ORG.forEach(o => addDoc(collection(db, 'org_members'), o));
-        
-        alert('已重置預設資料至資料庫！');
+        if (db) {
+            await setDoc(doc(db, 'settings', 'general'), DEFAULT_SETTINGS);
+            // Seeding logic (Simplified for demo, usually you'd delete old collections first)
+            INITIAL_NEWS.forEach(n => addDoc(collection(db, 'news'), n));
+            INITIAL_EVENTS.forEach(e => addDoc(collection(db, 'events'), e));
+            INITIAL_SERVICES.forEach(s => addDoc(collection(db, 'services'), s));
+            INITIAL_ORG.forEach(o => addDoc(collection(db, 'org_members'), o));
+            alert('已重置預設資料至資料庫！');
+        } else {
+            // Local Reset
+            setSiteSettings(DEFAULT_SETTINGS);
+            setNews(INITIAL_NEWS);
+            setEvents(INITIAL_EVENTS);
+            setServices(INITIAL_SERVICES);
+            setOrgMembers(INITIAL_ORG);
+            setRegistrations([]);
+            setGallery([]);
+            alert('已重置預設資料 (演示模式：重新整理後將失效)');
+        }
     }
   };
 

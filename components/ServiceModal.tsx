@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, CreditCard, CheckCircle, AlertTriangle, Search, User, Phone, MapPin, Calendar, Trash2, Edit, RefreshCw, ChevronDown } from 'lucide-react';
+import { X, CreditCard, CheckCircle, AlertTriangle, Search, User, Phone, MapPin, Calendar, Trash2, Edit, RefreshCw, ChevronDown, Landmark, ChevronLeft } from 'lucide-react';
 import { ServiceItem, Registration, TAIWAN_ADDRESS_DATA, COMMON_ROADS, LUNAR_HOURS } from '../types';
 import { useData } from '../context/DataContext';
 
@@ -19,6 +20,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
   const [foundRegistrations, setFoundRegistrations] = useState<Registration[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Payment States
+  const [paymentMethod, setPaymentMethod] = useState<'CARD' | 'ATM' | null>(null);
+  const [cardInfo, setCardInfo] = useState({ number: '', exp: '', cvc: '', holder: '' });
+  const [atmLast5, setAtmLast5] = useState('');
+
   const [formData, setFormData] = useState({
     id: '',
     name: '',
@@ -76,8 +82,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     setStep(2);
   };
 
-  const handlePayment = () => {
+  const handleProcessPayment = (e: React.FormEvent) => {
+    e.preventDefault();
     setIsProcessing(true);
+    
+    // Simulate API call
     setTimeout(() => {
         const payload = {
           name: formData.name,
@@ -90,7 +99,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
           district: formData.district,
           road: formData.road,
           addressDetail: formData.addressDetail,
-          amount: formData.amount
+          amount: formData.amount,
+          paymentMethod: paymentMethod === 'CARD' ? 'CREDIT_CARD' : 'ATM_TRANSFER',
+          paymentDetails: paymentMethod === 'CARD' ? 'Visa **** 4242' : `ATM 末五碼 ${atmLast5}`
         };
 
         if (formData.id) {
@@ -105,7 +116,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
         }
         setStep(3);
         setIsProcessing(false);
-    }, 1500);
+    }, 2000);
   };
 
   const handleLookup = () => {
@@ -126,12 +137,13 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       city: reg.city,
       district: reg.district,
       road: reg.road,
-      isManualRoad: true, // Allow manual edit of existing
+      isManualRoad: true,
       addressDetail: reg.addressDetail,
       amount: reg.amount
     });
     setMode('REGISTER');
     setStep(1);
+    setPaymentMethod(null);
   };
 
   const handleDelete = (id: string) => {
@@ -144,6 +156,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
   const reset = () => {
     setStep(1);
     setMode('REGISTER');
+    setPaymentMethod(null);
+    setCardInfo({ number: '', exp: '', cvc: '', holder: '' });
+    setAtmLast5('');
     setFormData({
       id: '',
       name: '',
@@ -160,6 +175,21 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       amount: service?.price || 600
     });
     onClose();
+  };
+
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i=0, len=match.length; i<len; i+=4) {
+        parts.push(match.substring(i, i+4));
+    }
+    if (parts.length) {
+        return parts.join(' ');
+    } else {
+        return value;
+    }
   };
 
   const title = initialEventTitle ? `報名：${initialEventTitle}` : service?.title || '線上服務';
@@ -317,34 +347,131 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
                         </div>
                         
                         <button type="submit" className="w-full py-4 bg-mystic-gold text-black font-bold tracking-widest hover:bg-white transition-colors shadow-lg">
-                            {formData.id ? '確認修改內容' : '下一步：確認付款'}
+                            {formData.id ? '確認修改內容' : '下一步：選擇支付方式'}
                         </button>
                     </form>
                 )}
 
                 {step === 2 && (
-                    <div className="text-center space-y-6">
-                        <p className="text-gray-300">請選擇支付方式完成登記</p>
-                        <div className="text-3xl font-bold text-mystic-gold font-serif">NT$ {formData.amount}</div>
-                        
-                        <div className="bg-red-900/20 border border-red-500/30 p-4 rounded text-sm text-red-400 text-left">
-                            <div className="flex items-center gap-2 font-bold mb-1 text-red-300">
-                                <AlertTriangle size={16} />
-                                <span>測試模式</span>
-                            </div>
-                            <p className="opacity-80">點擊下方按鈕將模擬付款成功流程，不會扣取真實費用。</p>
+                    <div className="space-y-6">
+                        {/* Payment Method Selection */}
+                        <div className="text-center mb-6">
+                             <div className="flex items-center justify-center gap-2 mb-2">
+                                <button onClick={() => { setStep(1); setPaymentMethod(null); }} className="text-gray-500 hover:text-white flex items-center gap-1 text-sm absolute left-6">
+                                    <ChevronLeft size={16} /> 返回
+                                </button>
+                                <span className="text-gray-300">應付金額</span>
+                             </div>
+                             <div className="text-4xl font-bold text-mystic-gold font-serif">NT$ {formData.amount}</div>
                         </div>
 
-                        <div className="space-y-3">
-                            <button onClick={handlePayment} disabled={isProcessing} className="w-full p-4 border border-white/10 flex items-center justify-center gap-3 hover:bg-white/5 transition-colors text-white group disabled:opacity-50">
-                                {isProcessing ? <RefreshCw className="animate-spin" size={20}/> : <CreditCard size={20} className="text-gray-400 group-hover:text-mystic-gold" />}
-                                <span>{isProcessing ? '處理中...' : '信用卡支付 (模擬)'}</span>
-                            </button>
-                            <button onClick={handlePayment} disabled={isProcessing} className="w-full p-4 border border-white/10 flex items-center justify-center gap-3 hover:bg-white/5 transition-colors text-white group disabled:opacity-50">
-                                <span className="font-bold text-gray-400 group-hover:text-mystic-gold">ATM</span> 
-                                <span>虛擬轉帳 (模擬)</span>
-                            </button>
-                        </div>
+                        {!paymentMethod ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button 
+                                    onClick={() => setPaymentMethod('CARD')}
+                                    className="p-6 bg-black/40 border border-white/10 hover:border-mystic-gold hover:bg-mystic-gold/10 transition-all group flex flex-col items-center gap-3"
+                                >
+                                    <CreditCard size={32} className="text-gray-400 group-hover:text-mystic-gold" />
+                                    <span className="font-bold text-white group-hover:text-mystic-gold">信用卡供養</span>
+                                    <span className="text-xs text-gray-500">支援 Visa, MasterCard, JCB</span>
+                                </button>
+                                <button 
+                                    onClick={() => setPaymentMethod('ATM')}
+                                    className="p-6 bg-black/40 border border-white/10 hover:border-mystic-gold hover:bg-mystic-gold/10 transition-all group flex flex-col items-center gap-3"
+                                >
+                                    <Landmark size={32} className="text-gray-400 group-hover:text-mystic-gold" />
+                                    <span className="font-bold text-white group-hover:text-mystic-gold">ATM 轉帳護持</span>
+                                    <span className="text-xs text-gray-500">實體/網路銀行轉帳</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleProcessPayment} className="animate-fade-in">
+                                {paymentMethod === 'CARD' ? (
+                                    <div className="space-y-4 bg-black/40 p-6 border border-white/10 rounded-sm">
+                                        <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                                            <h4 className="text-white font-bold flex items-center gap-2"><CreditCard size={18} /> 信用卡資訊</h4>
+                                            <div className="flex gap-2">
+                                                <div className="w-8 h-5 bg-gray-700 rounded"></div>
+                                                <div className="w-8 h-5 bg-gray-700 rounded"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500 block mb-1">卡號</label>
+                                            <input required type="text" placeholder="0000 0000 0000 0000" maxLength={19}
+                                                className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none tracking-widest"
+                                                value={cardInfo.number} onChange={e => setCardInfo({...cardInfo, number: formatCardNumber(e.target.value)})}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs text-gray-500 block mb-1">有效期限 (MM/YY)</label>
+                                                <input required type="text" placeholder="MM/YY" maxLength={5}
+                                                    className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none text-center"
+                                                    value={cardInfo.exp} onChange={e => setCardInfo({...cardInfo, exp: e.target.value})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-500 block mb-1">安全碼 (CVC)</label>
+                                                <input required type="password" placeholder="123" maxLength={3}
+                                                    className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none text-center"
+                                                    value={cardInfo.cvc} onChange={e => setCardInfo({...cardInfo, cvc: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500 block mb-1">持卡人姓名</label>
+                                            <input required type="text" placeholder="NAME ON CARD"
+                                                className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none uppercase"
+                                                value={cardInfo.holder} onChange={e => setCardInfo({...cardInfo, holder: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6 bg-black/40 p-6 border border-white/10 rounded-sm">
+                                        <h4 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-2"><Landmark size={18} /> 匯款資訊</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-400">銀行代號</span>
+                                                <span className="text-white font-mono">808 (玉山銀行)</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-400">匯款帳號</span>
+                                                <span className="text-mystic-gold font-mono font-bold text-lg">1234-5678-90123</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-400">戶名</span>
+                                                <span className="text-white">新莊武壇廣行宮</span>
+                                            </div>
+                                        </div>
+                                        <div className="border-t border-white/10 pt-4">
+                                            <label className="text-xs text-gray-500 block mb-2">請輸入您轉帳帳號的後五碼</label>
+                                            <input required type="text" placeholder="例如：54321" maxLength={5}
+                                                className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none text-center tracking-widest text-lg font-bold"
+                                                value={atmLast5} onChange={e => setAtmLast5(e.target.value.replace(/[^0-9]/g, ''))}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-6 flex flex-col gap-3">
+                                    <button 
+                                        type="submit" 
+                                        disabled={isProcessing}
+                                        className="w-full py-4 bg-mystic-gold text-black font-bold tracking-widest hover:bg-white transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {isProcessing ? <RefreshCw className="animate-spin" size={20} /> : (paymentMethod === 'CARD' ? '確認支付' : '已完成轉帳，送出資料')}
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setPaymentMethod(null)}
+                                        disabled={isProcessing}
+                                        className="w-full py-3 text-gray-400 hover:text-white transition-colors text-sm"
+                                    >
+                                        更換支付方式
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 )}
 
@@ -353,9 +480,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
                         <div className="w-20 h-20 bg-green-900/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                             <CheckCircle size={40} />
                         </div>
-                        <h4 className="text-2xl font-bold text-white mb-2">{formData.id ? '修改成功' : '報名圓滿'}</h4>
-                        <p className="text-gray-400 mb-8 max-w-xs mx-auto">
-                            感謝您的支持！疏文已紀錄於系統，將於吉時稟報王爺。祝您闔家平安。
+                        <h4 className="text-2xl font-bold text-white mb-2">{formData.id ? '修改成功' : '功德圓滿'}</h4>
+                        <p className="text-gray-400 mb-8 max-w-xs mx-auto leading-relaxed">
+                            感謝您的護持！<br/>
+                            {paymentMethod === 'ATM' ? '對帳完成後，系統將自動寄發確認簡訊。' : '刷卡成功，疏文已紀錄於系統。'}
+                            <br/>祝您闔家平安。
                         </p>
                         <button onClick={reset} className="px-8 py-3 bg-mystic-gold text-black font-bold tracking-widest hover:bg-white transition-colors">
                             關閉視窗

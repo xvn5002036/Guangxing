@@ -1,5 +1,4 @@
 
-
 export interface NavItem {
   label: string;
   href: string;
@@ -38,6 +37,8 @@ export interface Registration {
   status: 'PAID' | 'PENDING' | 'CANCELLED';
   isProcessed?: boolean; // New field for administrative handling status
   createdAt: string;
+  paymentMethod?: string; // Added for payment flow
+  paymentDetails?: string; // Added for payment flow
 }
 
 export enum LoadingState {

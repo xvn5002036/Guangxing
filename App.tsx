@@ -19,7 +19,6 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
-import VirtualTour from './components/VirtualTour';
 import { DataProvider } from './context/DataContext';
 
 const App: React.FC = () => {
@@ -40,7 +39,6 @@ const App: React.FC = () => {
                 <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
                 <TempleHistory />
                 <Organization />
-                <VirtualTour />
                 <DeityInfo />
                 <LightingWall />
                 <News />
