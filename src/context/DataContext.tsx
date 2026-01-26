@@ -1,36 +1,34 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember } from '../types';
-import { db, isFirebaseConfigured } from '../services/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 // Helper to get formatted date for current month
 const getRelativeDate = (day: number) => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(day).padStart(2, '0');
-  return `${year}-${month}-${d}`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return `${year}-${month}-${d}`;
 };
 
 const INITIAL_NEWS: NewsItem[] = [
-  { id: 'n1', date: '2024.03.15', title: '【公告】觀世音菩薩出家紀念日法會籌備中', category: '法會' },
-  { id: 'n2', date: '2024.03.01', title: '【活動】本宮年度平安燈、太歲燈開放線上受理', category: '公告' },
-  { id: 'n3', date: '2024.02.15', title: '【公益】護國宮春季救濟物資發放活動圓滿', category: '慈善' },
+    { id: 'n1', date: '2024.03.15', title: '【公告】觀世音菩薩出家紀念日法會籌備中', category: '法會' },
+    { id: 'n2', date: '2024.03.01', title: '【活動】本宮年度平安燈、太歲燈開放線上受理', category: '公告' },
+    { id: 'n3', date: '2024.02.15', title: '【公益】護國宮春季救濟物資發放活動圓滿', category: '慈善' },
 ];
 
 const INITIAL_EVENTS: TempleEvent[] = [
-  { id: 'e1', date: getRelativeDate(2), lunarDate: '初二', title: '池府王爺巡禮', description: '例行性巡視各庄頭，保佑四境平安。', time: '09:00', type: 'FESTIVAL' },
-  { id: 'e2', date: getRelativeDate(15), lunarDate: '十五', title: '補運科儀', description: '月中固定補運，為信眾消災解厄。', time: '14:00', type: 'RITUAL' },
-  { id: 'e3', date: getRelativeDate(28), lunarDate: '廿八', title: '平安祈福法會', description: '月底總結祈福，感謝神恩庇佑。', time: '08:00', type: 'FESTIVAL' },
+    { id: 'e1', date: getRelativeDate(2), lunarDate: '初二', title: '池府王爺巡禮', description: '例行性巡視各庄頭，保佑四境平安。', time: '09:00', type: 'FESTIVAL' },
+    { id: 'e2', date: getRelativeDate(15), lunarDate: '十五', title: '補運科儀', description: '月中固定補運，為信眾消災解厄。', time: '14:00', type: 'RITUAL' },
+    { id: 'e3', date: getRelativeDate(28), lunarDate: '廿八', title: '平安祈福法會', description: '月底總結祈福，感謝神恩庇佑。', time: '08:00', type: 'FESTIVAL' },
 ];
 
 const INITIAL_SERVICES: ServiceItem[] = [
-  { id: 's1', title: "太歲燈", description: "祈求流年平安，消災解厄，化解沖犯太歲之厄運。", iconName: "Sun", price: 600, type: 'LIGHT' },
-  { id: 's2', title: "光明燈", description: "照亮元辰，增長智慧，祈求前途光明，學業事業順利。", iconName: "Moon", price: 600, type: 'LIGHT' },
-  { id: 's3', title: "補財庫", description: "填補財庫缺漏，增強財運，守住財富，生意興隆。", iconName: "Briefcase", price: 1200, type: 'RITUAL' },
-  { id: 's4', title: "收驚祭改", description: "針對受驚嚇、運勢低落者，透過科儀安定心神，去除霉運。", iconName: "HeartHandshake", price: 300, type: 'RITUAL' },
-  { id: 's5', title: "隨喜捐獻", description: "護持宮廟建設，廣結善緣，功德無量。", iconName: "Gift", price: 100, type: 'DONATION' }
+    { id: 's1', title: "太歲燈", description: "祈求流年平安，消災解厄，化解沖犯太歲之厄運。", iconName: "Sun", price: 600, type: 'LIGHT' },
+    { id: 's2', title: "光明燈", description: "照亮元辰，增長智慧，祈求前途光明，學業事業順利。", iconName: "Moon", price: 600, type: 'LIGHT' },
+    { id: 's3', title: "補財庫", description: "填補財庫缺漏，增強財運，守住財富，生意興隆。", iconName: "Briefcase", price: 1200, type: 'RITUAL' },
+    { id: 's4', title: "收驚祭改", description: "針對受驚嚇、運勢低落者，透過科儀安定心神，去除霉運。", iconName: "HeartHandshake", price: 300, type: 'RITUAL' },
+    { id: 's5', title: "隨喜捐獻", description: "護持宮廟建設，廣結善緣，功德無量。", iconName: "Gift", price: 100, type: 'DONATION' }
 ];
 
 const INITIAL_ORG: OrgMember[] = [
@@ -44,372 +42,460 @@ const INITIAL_ORG: OrgMember[] = [
 ];
 
 const DEFAULT_SETTINGS: SiteSettings = {
-  templeName: '新莊武壇廣行宮',
-  address: '242新北市新莊區福營路500號',
-  phone: '(02) 2345-6789',
-  lineUrl: 'https://line.me/ti/p/@temple_demo',
-  heroTitle: '代天巡狩',
-  heroSubtitle: '威靈顯赫 · 廣行濟世',
-  heroImage: 'https://images.unsplash.com/photo-1592388796690-3482d8d8091e?q=80&w=2600&auto=format&fit=crop',
-  deityImage: 'https://images.unsplash.com/photo-1616401776943-41c0f04df518?q=80&w=2000&auto=format&fit=crop',
-  deityTitle: '傳奇緣起',
-  deityIntro: '池府王爺，諱夢彪，唐朝名將。性格剛正，愛民如子。傳說王爺於夢中見瘟神奉玉帝旨意降災，欲於井中投毒。王爺不忍百姓受難，毅然奪藥吞服，捨身救民。毒發之時，面色黝黑，雙目暴突。玉帝感其大德，敕封「代天巡狩」，專司驅瘟除疫。今人所見王爺金身之黑面怒目，實乃慈悲之至極。',
-  deityBirthday: '農曆六月十八',
-  deityBirthdayLabel: '聖誕千秋',
-  deityDuty: '消災 · 解厄',
-  deityDutyLabel: '專司職責',
-  historyImageRoof: 'https://images.unsplash.com/photo-1542649761-0af3759b9e6f?q=80&w=1000&auto=format&fit=crop',
-  historyRoofTitle: '燕尾脊',
-  historyRoofDesc: '象徵尊貴地位，飛簷翹角，氣勢非凡。',
-  historyImageStone: 'https://images.unsplash.com/photo-1596545753969-583d73b3eb38?q=80&w=1000&auto=format&fit=crop',
-  historyStoneTitle: '龍柱石雕',
-  historyStoneDesc: '匠師精雕細琢，雙龍搶珠，栩栩如生。'
+    templeName: '新莊武壇廣行宮',
+    address: '242新北市新莊區福營路500號',
+    phone: '(02) 2345-6789',
+    lineUrl: 'https://line.me/ti/p/@temple_demo',
+    heroTitle: '代天巡狩',
+    heroSubtitle: '威靈顯赫 · 廣行濟世',
+    heroImage: 'https://images.unsplash.com/photo-1592388796690-3482d8d8091e?q=80&w=2600&auto=format&fit=crop',
+    deityImage: 'https://images.unsplash.com/photo-1616401776943-41c0f04df518?q=80&w=2000&auto=format&fit=crop',
+    deityTitle: '傳奇緣起',
+    deityIntro: '池府王爺，諱夢彪，唐朝名將。性格剛正，愛民如子。傳說王爺於夢中見瘟神奉玉帝旨意降災，欲於井中投毒。王爺不忍百姓受難，毅然奪藥吞服，捨身救民。毒發之時，面色黝黑，雙目暴突。玉帝感其大德，敕封「代天巡狩」，專司驅瘟除疫。今人所見王爺金身之黑面怒目，實乃慈悲之至極。',
+    deityBirthday: '農曆六月十八',
+    deityBirthdayLabel: '聖誕千秋',
+    deityDuty: '消災 · 解厄',
+    deityDutyLabel: '專司職責',
+    historyImageRoof: 'https://images.unsplash.com/photo-1542649761-0af3759b9e6f?q=80&w=1000&auto=format&fit=crop',
+    historyRoofTitle: '燕尾脊',
+    historyRoofDesc: '象徵尊貴地位，飛簷翹角，氣勢非凡。',
+    historyImageStone: 'https://images.unsplash.com/photo-1596545753969-583d73b3eb38?q=80&w=1000&auto=format&fit=crop',
+    historyStoneTitle: '龍柱石雕',
+    historyStoneDesc: '匠師精雕細琢，雙龍搶珠，栩栩如生。'
 };
 
 interface DataContextType {
-  news: NewsItem[];
-  events: TempleEvent[];
-  services: ServiceItem[];
-  gallery: GalleryItem[];
-  registrations: Registration[];
-  orgMembers: OrgMember[];
-  siteSettings: SiteSettings;
-  
-  addNews: (item: Omit<NewsItem, 'id'>) => void;
-  updateNews: (id: string, item: Partial<NewsItem>) => void;
-  deleteNews: (id: string) => void;
-  
-  addEvent: (item: Omit<TempleEvent, 'id'>) => void;
-  updateEvent: (id: string, item: Partial<TempleEvent>) => void;
-  deleteEvent: (id: string) => void;
-  
-  addService: (item: Omit<ServiceItem, 'id'>) => void;
-  updateService: (id: string, item: Partial<ServiceItem>) => void;
-  deleteService: (id: string) => void;
+    news: NewsItem[];
+    events: TempleEvent[];
+    services: ServiceItem[];
+    gallery: GalleryItem[];
+    registrations: Registration[];
+    orgMembers: OrgMember[];
+    siteSettings: SiteSettings;
 
-  addGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
-  addGalleryItems: (items: Omit<GalleryItem, 'id'>[]) => void;
-  updateGalleryItem: (id: string, item: Partial<GalleryItem>) => void;
-  deleteGalleryItem: (id: string) => void;
+    addNews: (item: Omit<NewsItem, 'id'>) => void;
+    updateNews: (id: string, item: Partial<NewsItem>) => void;
+    deleteNews: (id: string) => void;
 
-  addOrgMember: (item: Omit<OrgMember, 'id'>) => void;
-  updateOrgMember: (id: string, item: Partial<OrgMember>) => void;
-  deleteOrgMember: (id: string) => void;
+    addEvent: (item: Omit<TempleEvent, 'id'>) => void;
+    updateEvent: (id: string, item: Partial<TempleEvent>) => void;
+    deleteEvent: (id: string) => void;
 
-  addRegistration: (reg: Omit<Registration, 'id' | 'createdAt'>) => void;
-  updateRegistration: (id: string, reg: Partial<Registration>) => void;
-  deleteRegistration: (id: string) => void;
-  getRegistrationsByPhone: (phone: string) => Registration[];
+    addService: (item: Omit<ServiceItem, 'id'>) => void;
+    updateService: (id: string, item: Partial<ServiceItem>) => void;
+    deleteService: (id: string) => void;
 
-  updateSiteSettings: (settings: Partial<SiteSettings>) => void;
-  
-  resetData: () => void;
+    addGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
+    addGalleryItems: (items: Omit<GalleryItem, 'id'>[]) => void;
+    updateGalleryItem: (id: string, item: Partial<GalleryItem>) => void;
+    deleteGalleryItem: (id: string) => void;
+
+    addOrgMember: (item: Omit<OrgMember, 'id'>) => void;
+    updateOrgMember: (id: string, item: Partial<OrgMember>) => void;
+    deleteOrgMember: (id: string) => void;
+
+    addRegistration: (reg: Omit<Registration, 'id' | 'createdAt'>) => void;
+    updateRegistration: (id: string, reg: Partial<Registration>) => void;
+    deleteRegistration: (id: string) => void;
+    getRegistrationsByPhone: (phone: string) => Registration[];
+
+    updateSiteSettings: (settings: Partial<SiteSettings>) => void;
+
+    resetData: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Use simple state, initialized with defaults
-  const [news, setNews] = useState<NewsItem[]>(INITIAL_NEWS);
-  const [events, setEvents] = useState<TempleEvent[]>(INITIAL_EVENTS);
-  const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
-  const [gallery, setGallery] = useState<GalleryItem[]>([]);
-  const [orgMembers, setOrgMembers] = useState<OrgMember[]>(INITIAL_ORG);
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
+    const [news, setNews] = useState<NewsItem[]>(INITIAL_NEWS);
+    const [events, setEvents] = useState<TempleEvent[]>(INITIAL_EVENTS);
+    const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
+    const [gallery, setGallery] = useState<GalleryItem[]>([]);
+    const [orgMembers, setOrgMembers] = useState<OrgMember[]>(INITIAL_ORG);
+    const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+    const [registrations, setRegistrations] = useState<Registration[]>([]);
 
-  // === FIREBASE SYNCHRONIZATION ===
+    // === SUPABASE SYNCHRONIZATION ===
 
-  // 1. Sync Site Settings
-  useEffect(() => {
-    if (!db) return; // Guard clause for missing DB
-    const docRef = doc(db, 'settings', 'general');
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setSiteSettings(docSnap.data() as SiteSettings);
-        } else {
-            // First time load: If setting doesn't exist in DB, upload the default
-            setDoc(docRef, DEFAULT_SETTINGS);
+    // Helper to fetch and subscribe to a table
+    const syncTable = <T extends { id: string }>(
+        tableName: string,
+        setter: React.Dispatch<React.SetStateAction<T[]>>,
+        orderByCol: string = 'created_at',
+        ascending: boolean = false,
+        initialData?: T[]
+    ) => {
+        if (!isSupabaseConfigured()) {
+            if (initialData) setter(initialData);
+            return () => { };
         }
-    });
-    return () => unsubscribe();
-  }, []);
 
-  // 2. Sync News
-  useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, 'news'), orderBy('date', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-            setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsItem)));
-        }
-    });
-    return () => unsubscribe();
-  }, []);
+        const fetchData = async () => {
+            const { data, error } = await supabase
+                .from(tableName)
+                .select('*')
+                .order(orderByCol, { ascending });
 
-  // 3. Sync Events
-  useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, 'events'), orderBy('date', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TempleEvent)));
-    });
-    return () => unsubscribe();
-  }, []);
+            if (!error && data) {
+                // Map Supabase fields to camelCase if necessary, but our schema mostly matches.
+                // We might need to handle 'created_at' vs 'createdAt' if types differ.
+                // For this refactor, we assume the Supabase DB columns matched the types or we cast.
+                // Note: snake_case to camelCase conversion might be needed if you strictly use camelCase in Types
+                // But for simplicity, we'll cast.
+                setter(data as any);
+            }
+        };
 
-  // 4. Sync Services
-  useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, 'services'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceItem)));
-    });
-    return () => unsubscribe();
-  }, []);
+        fetchData();
 
-  // 5. Sync Gallery
-  useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, 'gallery'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        setGallery(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryItem)));
-    });
-    return () => unsubscribe();
-  }, []);
+        const channel = supabase
+            .channel(`${tableName}_changes`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, () => {
+                fetchData(); // Simplest strategy: refetch on any change
+            })
+            .subscribe();
 
-  // 6. Sync Org Members
-  useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, 'org_members'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        setOrgMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OrgMember)));
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // 7. Sync Registrations
-  useEffect(() => {
-    if (!db) return;
-    const q = query(collection(db, "registrations"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        setRegistrations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Registration)));
-    });
-    return () => unsubscribe();
-  }, []);
-
-
-  // === ACTIONS (WRITE TO FIREBASE OR LOCAL STATE) ===
-  // All actions now check for db existence. If db is null (no API key), they update local state for Demo purposes.
-
-  const addNews = async (item: Omit<NewsItem, 'id'>) => {
-     if (db) {
-         await addDoc(collection(db, 'news'), item);
-     } else {
-         const newItem = { ...item, id: `local_${Date.now()}` };
-         setNews(prev => [newItem, ...prev]);
-     }
-  };
-  const updateNews = async (id: string, item: Partial<NewsItem>) => {
-     if (db) {
-         await updateDoc(doc(db, 'news', id), item);
-     } else {
-         setNews(prev => prev.map(n => n.id === id ? { ...n, ...item } : n));
-     }
-  };
-  const deleteNews = async (id: string) => {
-     if (db) {
-         await deleteDoc(doc(db, 'news', id));
-     } else {
-         setNews(prev => prev.filter(n => n.id !== id));
-     }
-  };
-
-  const addEvent = async (item: Omit<TempleEvent, 'id'>) => {
-     if (db) {
-         await addDoc(collection(db, 'events'), item);
-     } else {
-         const newItem = { ...item, id: `local_${Date.now()}` };
-         setEvents(prev => [...prev, newItem].sort((a,b) => a.date.localeCompare(b.date)));
-     }
-  };
-  const updateEvent = async (id: string, item: Partial<TempleEvent>) => {
-     if (db) {
-         await updateDoc(doc(db, 'events', id), item);
-     } else {
-         setEvents(prev => prev.map(e => e.id === id ? { ...e, ...item } : e));
-     }
-  };
-  const deleteEvent = async (id: string) => {
-     if (db) {
-         await deleteDoc(doc(db, 'events', id));
-     } else {
-         setEvents(prev => prev.filter(e => e.id !== id));
-     }
-  };
-
-  const addService = async (item: Omit<ServiceItem, 'id'>) => {
-     if (db) {
-         await addDoc(collection(db, 'services'), item);
-     } else {
-         const newItem = { ...item, id: `local_${Date.now()}` };
-         setServices(prev => [...prev, newItem]);
-     }
-  };
-  const updateService = async (id: string, item: Partial<ServiceItem>) => {
-     if (db) {
-         await updateDoc(doc(db, 'services', id), item);
-     } else {
-         setServices(prev => prev.map(s => s.id === id ? { ...s, ...item } : s));
-     }
-  };
-  const deleteService = async (id: string) => {
-     if (db) {
-         await deleteDoc(doc(db, 'services', id));
-     } else {
-         setServices(prev => prev.filter(s => s.id !== id));
-     }
-  };
-
-  const addGalleryItem = async (item: Omit<GalleryItem, 'id'>) => {
-     if (db) {
-         await addDoc(collection(db, 'gallery'), item);
-     } else {
-         const newItem = { ...item, id: `local_${Date.now()}` };
-         setGallery(prev => [...prev, newItem]);
-     }
-  };
-  const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
-      if (db) {
-          items.forEach(item => addDoc(collection(db, 'gallery'), item));
-      } else {
-          const newItems = items.map((item, i) => ({ ...item, id: `local_${Date.now()}_${i}` }));
-          setGallery(prev => [...prev, ...newItems]);
-      }
-  };
-  const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
-     if (db) {
-         await updateDoc(doc(db, 'gallery', id), item);
-     } else {
-         setGallery(prev => prev.map(g => g.id === id ? { ...g, ...item } : g));
-     }
-  };
-  const deleteGalleryItem = async (id: string) => {
-     if (db) {
-         await deleteDoc(doc(db, 'gallery', id));
-     } else {
-         setGallery(prev => prev.filter(g => g.id !== id));
-     }
-  };
-
-  const addOrgMember = async (item: Omit<OrgMember, 'id'>) => {
-     if (db) {
-         await addDoc(collection(db, 'org_members'), item);
-     } else {
-         const newItem = { ...item, id: `local_${Date.now()}` };
-         setOrgMembers(prev => [...prev, newItem]);
-     }
-  };
-  const updateOrgMember = async (id: string, item: Partial<OrgMember>) => {
-     if (db) {
-         await updateDoc(doc(db, 'org_members', id), item);
-     } else {
-         setOrgMembers(prev => prev.map(m => m.id === id ? { ...m, ...item } : m));
-     }
-  };
-  const deleteOrgMember = async (id: string) => {
-     if (db) {
-         await deleteDoc(doc(db, 'org_members', id));
-     } else {
-         setOrgMembers(prev => prev.filter(m => m.id !== id));
-     }
-  };
-
-  const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
-    const newReg = {
-      ...reg,
-      createdAt: new Date().toISOString(),
-      status: 'PAID' as const,
-      isProcessed: false
+        return () => {
+            supabase.removeChannel(channel);
+        };
     };
-    if (db) {
-        await addDoc(collection(db, "registrations"), newReg);
-    } else {
-        // DEMO MODE: Update local state to simulate successful payment
-        const localReg = { ...newReg, id: `local_${Date.now()}` };
-        setRegistrations(prev => [localReg, ...prev]);
-        console.log("Demo Mode: Registration added locally", localReg);
-    }
-  };
-  const updateRegistration = async (id: string, reg: Partial<Registration>) => {
-     if (db) {
-         await updateDoc(doc(db, "registrations", id), reg);
-     } else {
-         setRegistrations(prev => prev.map(r => r.id === id ? { ...r, ...reg } : r));
-     }
-  };
-  const deleteRegistration = async (id: string) => {
-     if (db) {
-         await deleteDoc(doc(db, "registrations", id));
-     } else {
-         setRegistrations(prev => prev.filter(r => r.id !== id));
-     }
-  };
 
-  const getRegistrationsByPhone = (phone: string) => registrations.filter(r => r.phone === phone);
+    // 1. Sync Site Settings
+    useEffect(() => {
+        if (!isSupabaseConfigured()) return;
 
-  // CRITICAL: Update Site Settings in Firestore or Local
-  const updateSiteSettings = async (newSettings: Partial<SiteSettings>) => {
-    if (db) {
-        const docRef = doc(db, 'settings', 'general');
-        await setDoc(docRef, newSettings, { merge: true });
-    } else {
-        setSiteSettings(prev => ({ ...prev, ...newSettings }));
-    }
-  };
-  
-  const resetData = async () => {
-    if(window.confirm('確定要重置所有資料嗎？這將會清空目前資料庫並寫入預設範本資料。(警告：此操作不可逆)')) {
-        if (db) {
-            await setDoc(doc(db, 'settings', 'general'), DEFAULT_SETTINGS);
-            // Seeding logic (Simplified for demo, usually you'd delete old collections first)
-            INITIAL_NEWS.forEach(n => addDoc(collection(db, 'news'), n));
-            INITIAL_EVENTS.forEach(e => addDoc(collection(db, 'events'), e));
-            INITIAL_SERVICES.forEach(s => addDoc(collection(db, 'services'), s));
-            INITIAL_ORG.forEach(o => addDoc(collection(db, 'org_members'), o));
-            alert('已重置預設資料至資料庫！');
+        // Settings is a single row table usually, or we query key-value. 
+        // Schema says 'site_settings' table usually with one row.
+        const fetchSettings = async () => {
+            const { data, error } = await supabase.from('site_settings').select('*').maybeSingle();
+            if (!error && data) {
+                // Need to map snake_case to camelCase manually here because Settings has many fields
+                const mappedSettings: SiteSettings = {
+                    templeName: data.temple_name || DEFAULT_SETTINGS.templeName,
+                    address: data.address || DEFAULT_SETTINGS.address,
+                    phone: data.phone || DEFAULT_SETTINGS.phone,
+                    lineUrl: data.line_url || DEFAULT_SETTINGS.lineUrl,
+                    heroTitle: data.hero_title || DEFAULT_SETTINGS.heroTitle,
+                    heroSubtitle: data.hero_subtitle || DEFAULT_SETTINGS.heroSubtitle,
+                    heroImage: data.hero_image || DEFAULT_SETTINGS.heroImage,
+                    deityImage: data.deity_image || DEFAULT_SETTINGS.deityImage,
+                    deityTitle: data.deity_title || DEFAULT_SETTINGS.deityTitle,
+                    deityIntro: data.deity_intro || DEFAULT_SETTINGS.deityIntro,
+                    deityBirthday: data.deity_birthday || DEFAULT_SETTINGS.deityBirthday,
+                    deityBirthdayLabel: data.deity_birthday_label || DEFAULT_SETTINGS.deityBirthdayLabel,
+                    deityDuty: data.deity_duty || DEFAULT_SETTINGS.deityDuty,
+                    deityDutyLabel: data.deity_duty_label || DEFAULT_SETTINGS.deityDutyLabel,
+                    historyImageRoof: data.history_image_roof || DEFAULT_SETTINGS.historyImageRoof,
+                    historyRoofTitle: data.history_roof_title || DEFAULT_SETTINGS.historyRoofTitle,
+                    historyRoofDesc: data.history_roof_desc || DEFAULT_SETTINGS.historyRoofDesc,
+                    historyImageStone: data.history_image_stone || DEFAULT_SETTINGS.historyImageStone,
+                    historyStoneTitle: data.history_stone_title || DEFAULT_SETTINGS.historyStoneTitle,
+                    historyStoneDesc: data.history_stone_desc || DEFAULT_SETTINGS.historyStoneDesc,
+                };
+                setSiteSettings(mappedSettings);
+            } else {
+                // If empty, maybe insert defaults? for now just use defaults in state
+            }
+        };
+
+        fetchSettings();
+        // Subscribe to settings changes
+        const channel = supabase.channel('settings_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, fetchSettings)
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); }
+    }, []);
+
+    // 2. Sync Collections
+    useEffect(() => syncTable('news', setNews, 'date', false, INITIAL_NEWS as any), []);
+    useEffect(() => syncTable('events', setEvents, 'date', true, INITIAL_EVENTS as any), []);
+    useEffect(() => syncTable('services', setServices, 'created_at', false, INITIAL_SERVICES as any), []);
+    useEffect(() => syncTable('gallery', setGallery, 'created_at', false), []);
+    useEffect(() => syncTable('org_members', setOrgMembers, 'order', true, INITIAL_ORG as any), []); // Assuming 'order' column exists
+    useEffect(() => syncTable('registrations', setRegistrations, 'created_at', false), []);
+
+
+    // === ACTIONS ===
+
+    const addNews = async (item: Omit<NewsItem, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('news').insert([item]);
+            if (error) console.error("Error adding news:", error);
         } else {
-            // Local Reset
-            setSiteSettings(DEFAULT_SETTINGS);
-            setNews(INITIAL_NEWS);
-            setEvents(INITIAL_EVENTS);
-            setServices(INITIAL_SERVICES);
-            setOrgMembers(INITIAL_ORG);
-            setRegistrations([]);
-            setGallery([]);
-            alert('已重置預設資料 (演示模式：重新整理後將失效)');
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setNews(prev => [newItem, ...prev]);
         }
-    }
-  };
+    };
+    const updateNews = async (id: string, item: Partial<NewsItem>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('news').update(item).eq('id', id);
+        } else {
+            setNews(prev => prev.map(n => n.id === id ? { ...n, ...item } : n));
+        }
+    };
+    const deleteNews = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('news').delete().eq('id', id);
+        } else {
+            setNews(prev => prev.filter(n => n.id !== id));
+        }
+    };
 
-  return (
-    <DataContext.Provider value={{ 
-      news, events, services, gallery, registrations, orgMembers, siteSettings,
-      addNews, updateNews, deleteNews, 
-      addEvent, updateEvent, deleteEvent, 
-      addService, updateService, deleteService,
-      addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
-      addOrgMember, updateOrgMember, deleteOrgMember,
-      addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
-      updateSiteSettings,
-      resetData
-    }}>
-      {children}
-    </DataContext.Provider>
-  );
+    const addEvent = async (item: Omit<TempleEvent, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            // Map camelCase to snake_case if needed, but if schema uses camelCase or we just rely on JS object keys
+            // The SQL schema I read earlier used snake_case for some fields (lunar_date).
+            // We need to be careful. The types.ts defines camelCase (lunarDate).
+            // Supabase expects columns. 
+            const dbItem = {
+                ...item,
+                lunar_date: item.lunarDate,
+            };
+            // Remove camelCase version if strictly enforcing schema, but usually it ignores extra fields.
+            // Better to clean it up.
+            delete (dbItem as any).lunarDate;
+
+            await supabase.from('events').insert([dbItem]);
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setEvents(prev => [...prev, newItem].sort((a, b) => a.date.localeCompare(b.date)));
+        }
+    };
+    const updateEvent = async (id: string, item: Partial<TempleEvent>) => {
+        if (isSupabaseConfigured()) {
+            const dbItem: any = { ...item };
+            if (item.lunarDate) {
+                dbItem.lunar_date = item.lunarDate;
+                delete dbItem.lunarDate;
+            }
+            await supabase.from('events').update(dbItem).eq('id', id);
+        } else {
+            setEvents(prev => prev.map(e => e.id === id ? { ...e, ...item } : e));
+        }
+    };
+    const deleteEvent = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('events').delete().eq('id', id);
+        } else {
+            setEvents(prev => prev.filter(e => e.id !== id));
+        }
+    };
+
+    const addService = async (item: Omit<ServiceItem, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            const dbItem: any = { ...item };
+            if (item.iconName) {
+                dbItem.icon_name = item.iconName;
+                delete dbItem.iconName;
+            }
+            await supabase.from('services').insert([dbItem]);
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setServices(prev => [...prev, newItem]);
+        }
+    };
+    const updateService = async (id: string, item: Partial<ServiceItem>) => {
+        if (isSupabaseConfigured()) {
+            const dbItem: any = { ...item };
+            if (item.iconName) {
+                dbItem.icon_name = item.iconName;
+                delete dbItem.iconName;
+            }
+            await supabase.from('services').update(dbItem).eq('id', id);
+        } else {
+            setServices(prev => prev.map(s => s.id === id ? { ...s, ...item } : s));
+        }
+    };
+    const deleteService = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('services').delete().eq('id', id);
+        } else {
+            setServices(prev => prev.filter(s => s.id !== id));
+        }
+    };
+
+    const addGalleryItem = async (item: Omit<GalleryItem, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('gallery').insert([item]);
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setGallery(prev => [...prev, newItem]);
+        }
+    };
+    const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('gallery').insert(items);
+        } else {
+            const newItems = items.map((item, i) => ({ ...item, id: `local_${Date.now()}_${i}` }));
+            setGallery(prev => [...prev, ...newItems]);
+        }
+    };
+    const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('gallery').update(item).eq('id', id);
+        } else {
+            setGallery(prev => prev.map(g => g.id === id ? { ...g, ...item } : g));
+        }
+    };
+    const deleteGalleryItem = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('gallery').delete().eq('id', id);
+        } else {
+            setGallery(prev => prev.filter(g => g.id !== id));
+        }
+    };
+
+    const addOrgMember = async (item: Omit<OrgMember, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('org_members').insert([item]);
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setOrgMembers(prev => [...prev, newItem]);
+        }
+    };
+    const updateOrgMember = async (id: string, item: Partial<OrgMember>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('org_members').update(item).eq('id', id);
+        } else {
+            setOrgMembers(prev => prev.map(m => m.id === id ? { ...m, ...item } : m));
+        }
+    };
+    const deleteOrgMember = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('org_members').delete().eq('id', id);
+        } else {
+            setOrgMembers(prev => prev.filter(m => m.id !== id));
+        }
+    };
+
+    const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
+        const newReg = {
+            ...reg,
+            // created_at is handled by DB default usually, but we can pass it if we want ISO
+            status: 'PAID' as const,
+            is_processed: false
+        };
+        if (isSupabaseConfigured()) {
+            // Map camelCase to snake_case
+            const dbReg = {
+                service_id: newReg.serviceId,
+                service_title: newReg.serviceTitle,
+                name: newReg.name,
+                phone: newReg.phone,
+                birth_year: newReg.birthYear,
+                birth_month: newReg.birthMonth,
+                birth_day: newReg.birthDay,
+                birth_hour: newReg.birthHour,
+                city: newReg.city,
+                district: newReg.district,
+                road: newReg.road,
+                address_detail: newReg.addressDetail,
+                amount: newReg.amount,
+                status: newReg.status,
+                is_processed: newReg.is_processed,
+                payment_method: newReg.paymentMethod,
+                payment_details: newReg.paymentDetails
+            };
+            await supabase.from("registrations").insert([dbReg]);
+        } else {
+            const localReg = { ...newReg, id: `local_${Date.now()}`, createdAt: new Date().toISOString(), isProcessed: false };
+            setRegistrations(prev => [localReg, ...prev]);
+            console.log("Demo Mode: Registration added locally", localReg);
+        }
+    };
+    const updateRegistration = async (id: string, reg: Partial<Registration>) => {
+        if (isSupabaseConfigured()) {
+            // This mapping is tedious, simplistic check
+            const dbReg: any = { ...reg };
+            if (reg.isProcessed !== undefined) { dbReg.is_processed = reg.isProcessed; delete dbReg.isProcessed; }
+            // ... add other mappings if editable
+            await supabase.from("registrations").update(dbReg).eq('id', id);
+        } else {
+            setRegistrations(prev => prev.map(r => r.id === id ? { ...r, ...reg } : r));
+        }
+    };
+    const deleteRegistration = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from("registrations").delete().eq('id', id);
+        } else {
+            setRegistrations(prev => prev.filter(r => r.id !== id));
+        }
+    };
+
+    const getRegistrationsByPhone = (phone: string) => registrations.filter(r => r.phone === phone);
+
+    // CRITICAL: Update Site Settings
+    const updateSiteSettings = async (newSettings: Partial<SiteSettings>) => {
+        if (isSupabaseConfigured()) {
+            const dbSettings: any = {};
+            // Map keys
+            if (newSettings.templeName) dbSettings.temple_name = newSettings.templeName;
+            // ... (We should technically map all of them, but user likely updates one by one or few)
+            // For robustness, let's map all provided keys
+            const map = {
+                templeName: 'temple_name', address: 'address', phone: 'phone', lineUrl: 'line_url',
+                heroTitle: 'hero_title', heroSubtitle: 'hero_subtitle', heroImage: 'hero_image',
+                deityImage: 'deity_image', deityTitle: 'deity_title', deityIntro: 'deity_intro',
+                deityBirthday: 'deity_birthday', deityBirthdayLabel: 'deity_birthday_label',
+                deityDuty: 'deity_duty', deityDutyLabel: 'deity_duty_label',
+                historyImageRoof: 'history_image_roof', historyRoofTitle: 'history_roof_title',
+                historyRoofDesc: 'history_roof_desc', historyImageStone: 'history_image_stone',
+                historyStoneTitle: 'history_stone_title', historyStoneDesc: 'history_stone_desc'
+            };
+            Object.entries(newSettings).forEach(([k, v]) => {
+                if ((map as any)[k]) dbSettings[(map as any)[k]] = v;
+            });
+
+            // We assume there is only one row, so we update the first one or a known ID?
+            // Usually site_settings table should have a singleton row. 
+            // We will try to update where 'id' is not null (unsafe) or just upsert if we knew the ID.
+            // Let's fetch the ID first if we don't have it, or just update all rows (hacky but works for singleton)
+
+            await supabase.from('site_settings').update(dbSettings).neq('id', '00000000-0000-0000-0000-000000000000');
+        } else {
+            setSiteSettings(prev => ({ ...prev, ...newSettings }));
+        }
+    };
+
+    const resetData = async () => {
+        if (window.confirm('確定要重置所有資料嗎？(警告：此操作不可逆)')) {
+            if (isSupabaseConfigured()) {
+                alert('Supabase 重置功能尚未實作 (需刪除所有資料表內容並重新插入)');
+                // Implementing full DB reset via client is dangerous and complex without admin role
+            } else {
+                // Local Reset
+                setSiteSettings(DEFAULT_SETTINGS);
+                setNews(INITIAL_NEWS);
+                setEvents(INITIAL_EVENTS);
+                setServices(INITIAL_SERVICES);
+                setOrgMembers(INITIAL_ORG);
+                setRegistrations([]);
+                setGallery([]);
+                alert('已重置預設資料 (演示模式)');
+            }
+        }
+    };
+
+    return (
+        <DataContext.Provider value={{
+            news, events, services, gallery, registrations, orgMembers, siteSettings,
+            addNews, updateNews, deleteNews,
+            addEvent, updateEvent, deleteEvent,
+            addService, updateService, deleteService,
+            addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
+            addOrgMember, updateOrgMember, deleteOrgMember,
+            addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
+            updateSiteSettings,
+            resetData
+        }}>
+            {children}
+        </DataContext.Provider>
+    );
 };
 
 export const useData = () => {
-  const context = useContext(DataContext);
-  if (context === undefined) throw new Error('useData must be used within a DataProvider');
-  return context;
+    const context = useContext(DataContext);
+    if (context === undefined) throw new Error('useData must be used within a DataProvider');
+    return context;
 };

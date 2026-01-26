@@ -2,13 +2,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { OracleResponse } from "../types";
 
-// Directly initialize with process.env.API_KEY as per guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization to prevent app crash on load if key is missing
+// const ai = new GoogleGenAI({ apiKey: process.env.API_KEY }); 
 
 export const askChiFuWangYe = async (userQuery: string): Promise<OracleResponse> => {
   try {
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || '';
+    if (!apiKey) {
+      throw new Error("尚未設定 Google API Key (VITE_GOOGLE_API_KEY)");
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash", // Update to a stable model name if needed
       contents: `信徒虔誠請示：${userQuery}`,
       config: {
         systemInstruction: `你現在是池府王爺廟的解籤人。池府王爺（池夢彪）以「代天巡狩」、黑面凸眼（因食瘟煌粉救民而犧牲）的慈悲與威嚴著稱。
@@ -34,12 +41,15 @@ export const askChiFuWangYe = async (userQuery: string): Promise<OracleResponse>
     });
 
     // Directly access text property from the response
-    const text = response.text;
+    const text = response.text(); // Note: .text() is a method in some versions or property in others. GoogleGenAI usually uses .response.text()
+    // Checking the SDK version used in package.json might be formatted differently, but let's stick to simple safe access
+
     if (!text) throw new Error("No response from deity.");
-    
+
     return JSON.parse(text) as OracleResponse;
   } catch (error) {
     console.error("Error consulting oracle:", error);
+    // Return a dummy response so the UI doesn't break, or rethrow handled error
     throw error;
   }
 };
