@@ -121,24 +121,29 @@ alter table public.org_members enable row level security;
 alter table public.faqs enable row level security;
 alter table public.site_settings enable row level security;
 
--- Create Policies
+-- Create Policies (FINAL VERSION: FULL ACCESS ENABLED)
 
--- Allow public read access to most tables
-create policy "Allow public read access" on public.services for select using (true);
-create policy "Allow public read access" on public.news for select using (true);
-create policy "Allow public read access" on public.events for select using (true);
-create policy "Allow public read access" on public.gallery for select using (true);
-create policy "Allow public read access" on public.org_members for select using (true);
-create policy "Allow public read access" on public.faqs for select using (true);
-create policy "Allow public read access" on public.site_settings for select using (true);
+-- 1. Services: Full Access (Read + Write)
+create policy "Allow public all access" on public.services for all using (true) with check (true);
 
--- Registrations: Allow public insert (for users to register)
--- Only allow users to view their own registrations if you implement auth later, 
--- but for now, we might want to restrict read access to admins only.
-create policy "Allow public insert" on public.registrations for insert with check (true);
+-- 2. News: Full Access
+create policy "Allow public all access" on public.news for all using (true) with check (true);
 
--- Define a policy for admins/service role to have full access
--- Note: 'service_role' key bypasses RLS by default, but if you use authenticated users:
--- create policy "Enable full access for authenticated users with role admin" on public.services for all using (auth.role() = 'authenticated');
--- For simplicity in this script, we rely on the service_role key for admin operations or dashboard usage.
+-- 3. Events: Full Access
+create policy "Allow public all access" on public.events for all using (true) with check (true);
+
+-- 4. Gallery: Full Access
+create policy "Allow public all access" on public.gallery for all using (true) with check (true);
+
+-- 5. Org Members: Full Access
+create policy "Allow public all access" on public.org_members for all using (true) with check (true);
+
+-- 6. FAQs: Full Access
+create policy "Allow public all access" on public.faqs for all using (true) with check (true);
+
+-- 7. Site Settings: Full Access
+create policy "Allow public all access" on public.site_settings for all using (true) with check (true);
+
+-- 8. Registrations: Full Access
+create policy "Allow public all access" on public.registrations for all using (true) with check (true);
 

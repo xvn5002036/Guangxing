@@ -452,7 +452,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // We will try to update where 'id' is not null (unsafe) or just upsert if we knew the ID.
             // Let's fetch the ID first if we don't have it, or just update all rows (hacky but works for singleton)
 
-            await supabase.from('site_settings').update(dbSettings).neq('id', '00000000-0000-0000-0000-000000000000');
+            // Perform robust Upsert: Check if row exists, then Update or Insert
+            const { data: existing } = await supabase.from('site_settings').select('id').maybeSingle();
+
+            if (existing) {
+                await supabase.from('site_settings').update(dbSettings).eq('id', existing.id);
+            } else {
+                await supabase.from('site_settings').insert([dbSettings]);
+            }
         } else {
             setSiteSettings(prev => ({ ...prev, ...newSettings }));
         }
