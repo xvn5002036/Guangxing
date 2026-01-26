@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember } from '../types';
-import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { db, isFirebaseConfigured } from '../services/firebase';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 // Helper to get formatted date for current month
 const getRelativeDate = (day: number) => {
@@ -117,182 +118,207 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
 
-  // === SUPABASE SYNCHRONIZATION ===
-  const isConnected = isSupabaseConfigured();
+  // === FIREBASE SYNCHRONIZATION ===
 
-  const fetchAllData = async () => {
-    if (!isConnected || !supabase) return;
-
-    // Settings
-    const { data: settingsData } = await supabase.from('settings').select('*').eq('id', 'general').single();
-    if (settingsData) setSiteSettings(settingsData as SiteSettings);
-    else await supabase.from('settings').upsert({ id: 'general', ...DEFAULT_SETTINGS });
-
-    // News
-    const { data: newsData } = await supabase.from('news').select('*').order('date', { ascending: false });
-    if (newsData) setNews(newsData as NewsItem[]);
-
-    // Events
-    const { data: eventsData } = await supabase.from('events').select('*').order('date', { ascending: true });
-    if (eventsData) setEvents(eventsData as TempleEvent[]);
-
-    // Services
-    const { data: servicesData } = await supabase.from('services').select('*');
-    if (servicesData) setServices(servicesData as ServiceItem[]);
-
-    // Gallery
-    const { data: galleryData } = await supabase.from('gallery').select('*');
-    if (galleryData) setGallery(galleryData as GalleryItem[]);
-
-    // Org
-    const { data: orgData } = await supabase.from('org_members').select('*');
-    if (orgData) setOrgMembers(orgData as OrgMember[]);
-
-    // Registrations
-    const { data: regData } = await supabase.from('registrations').select('*').order('createdAt', { ascending: false });
-    if (regData) setRegistrations(regData as Registration[]);
-  };
-
+  // 1. Sync Site Settings
   useEffect(() => {
-    if (!isConnected || !supabase) return;
-
-    fetchAllData();
-
-    // Set up Realtime Subscriptions
-    const channels = ['settings', 'news', 'events', 'services', 'gallery', 'org_members', 'registrations'].map(table => {
-        return supabase.channel(`public:${table}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: table }, () => {
-                fetchAllData(); // Re-fetch on any change for simplicity
-            })
-            .subscribe();
+    if (!db) return; // Guard clause for missing DB
+    const docRef = doc(db, 'settings', 'general');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setSiteSettings(docSnap.data() as SiteSettings);
+        } else {
+            // First time load: If setting doesn't exist in DB, upload the default
+            setDoc(docRef, DEFAULT_SETTINGS);
+        }
     });
+    return () => unsubscribe();
+  }, []);
 
-    return () => {
-        channels.forEach(channel => supabase.removeChannel(channel));
-    };
-  }, [isConnected]);
+  // 2. Sync News
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, 'news'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+            setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsItem)));
+        }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 3. Sync Events
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, 'events'), orderBy('date', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TempleEvent)));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 4. Sync Services
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, 'services'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceItem)));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 5. Sync Gallery
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, 'gallery'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setGallery(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryItem)));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 6. Sync Org Members
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, 'org_members'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setOrgMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OrgMember)));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 7. Sync Registrations
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, "registrations"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setRegistrations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Registration)));
+    });
+    return () => unsubscribe();
+  }, []);
 
 
-  // === ACTIONS (WRITE TO SUPABASE OR LOCAL STATE) ===
+  // === ACTIONS (WRITE TO FIREBASE OR LOCAL STATE) ===
+  // All actions now check for db existence. If db is null (no API key), they update local state for Demo purposes.
 
   const addNews = async (item: Omit<NewsItem, 'id'>) => {
-     if (isConnected && supabase) {
-         await supabase.from('news').insert(item);
+     if (db) {
+         await addDoc(collection(db, 'news'), item);
      } else {
          const newItem = { ...item, id: `local_${Date.now()}` };
          setNews(prev => [newItem, ...prev]);
      }
   };
   const updateNews = async (id: string, item: Partial<NewsItem>) => {
-     if (isConnected && supabase) {
-         await supabase.from('news').update(item).eq('id', id);
+     if (db) {
+         await updateDoc(doc(db, 'news', id), item);
      } else {
          setNews(prev => prev.map(n => n.id === id ? { ...n, ...item } : n));
      }
   };
   const deleteNews = async (id: string) => {
-     if (isConnected && supabase) {
-         await supabase.from('news').delete().eq('id', id);
+     if (db) {
+         await deleteDoc(doc(db, 'news', id));
      } else {
          setNews(prev => prev.filter(n => n.id !== id));
      }
   };
 
   const addEvent = async (item: Omit<TempleEvent, 'id'>) => {
-     if (isConnected && supabase) {
-         await supabase.from('events').insert(item);
+     if (db) {
+         await addDoc(collection(db, 'events'), item);
      } else {
          const newItem = { ...item, id: `local_${Date.now()}` };
          setEvents(prev => [...prev, newItem].sort((a,b) => a.date.localeCompare(b.date)));
      }
   };
   const updateEvent = async (id: string, item: Partial<TempleEvent>) => {
-     if (isConnected && supabase) {
-         await supabase.from('events').update(item).eq('id', id);
+     if (db) {
+         await updateDoc(doc(db, 'events', id), item);
      } else {
          setEvents(prev => prev.map(e => e.id === id ? { ...e, ...item } : e));
      }
   };
   const deleteEvent = async (id: string) => {
-     if (isConnected && supabase) {
-         await supabase.from('events').delete().eq('id', id);
+     if (db) {
+         await deleteDoc(doc(db, 'events', id));
      } else {
          setEvents(prev => prev.filter(e => e.id !== id));
      }
   };
 
   const addService = async (item: Omit<ServiceItem, 'id'>) => {
-     if (isConnected && supabase) {
-         await supabase.from('services').insert(item);
+     if (db) {
+         await addDoc(collection(db, 'services'), item);
      } else {
          const newItem = { ...item, id: `local_${Date.now()}` };
          setServices(prev => [...prev, newItem]);
      }
   };
   const updateService = async (id: string, item: Partial<ServiceItem>) => {
-     if (isConnected && supabase) {
-         await supabase.from('services').update(item).eq('id', id);
+     if (db) {
+         await updateDoc(doc(db, 'services', id), item);
      } else {
          setServices(prev => prev.map(s => s.id === id ? { ...s, ...item } : s));
      }
   };
   const deleteService = async (id: string) => {
-     if (isConnected && supabase) {
-         await supabase.from('services').delete().eq('id', id);
+     if (db) {
+         await deleteDoc(doc(db, 'services', id));
      } else {
          setServices(prev => prev.filter(s => s.id !== id));
      }
   };
 
   const addGalleryItem = async (item: Omit<GalleryItem, 'id'>) => {
-     if (isConnected && supabase) {
-         await supabase.from('gallery').insert(item);
+     if (db) {
+         await addDoc(collection(db, 'gallery'), item);
      } else {
          const newItem = { ...item, id: `local_${Date.now()}` };
          setGallery(prev => [...prev, newItem]);
      }
   };
   const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
-      if (isConnected && supabase) {
-          await supabase.from('gallery').insert(items);
+      if (db) {
+          items.forEach(item => addDoc(collection(db, 'gallery'), item));
       } else {
           const newItems = items.map((item, i) => ({ ...item, id: `local_${Date.now()}_${i}` }));
           setGallery(prev => [...prev, ...newItems]);
       }
   };
   const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
-     if (isConnected && supabase) {
-         await supabase.from('gallery').update(item).eq('id', id);
+     if (db) {
+         await updateDoc(doc(db, 'gallery', id), item);
      } else {
          setGallery(prev => prev.map(g => g.id === id ? { ...g, ...item } : g));
      }
   };
   const deleteGalleryItem = async (id: string) => {
-     if (isConnected && supabase) {
-         await supabase.from('gallery').delete().eq('id', id);
+     if (db) {
+         await deleteDoc(doc(db, 'gallery', id));
      } else {
          setGallery(prev => prev.filter(g => g.id !== id));
      }
   };
 
   const addOrgMember = async (item: Omit<OrgMember, 'id'>) => {
-     if (isConnected && supabase) {
-         await supabase.from('org_members').insert(item);
+     if (db) {
+         await addDoc(collection(db, 'org_members'), item);
      } else {
          const newItem = { ...item, id: `local_${Date.now()}` };
          setOrgMembers(prev => [...prev, newItem]);
      }
   };
   const updateOrgMember = async (id: string, item: Partial<OrgMember>) => {
-     if (isConnected && supabase) {
-         await supabase.from('org_members').update(item).eq('id', id);
+     if (db) {
+         await updateDoc(doc(db, 'org_members', id), item);
      } else {
          setOrgMembers(prev => prev.map(m => m.id === id ? { ...m, ...item } : m));
      }
   };
   const deleteOrgMember = async (id: string) => {
-     if (isConnected && supabase) {
-         await supabase.from('org_members').delete().eq('id', id);
+     if (db) {
+         await deleteDoc(doc(db, 'org_members', id));
      } else {
          setOrgMembers(prev => prev.filter(m => m.id !== id));
      }
@@ -305,23 +331,25 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       status: 'PAID' as const,
       isProcessed: false
     };
-    if (isConnected && supabase) {
-        await supabase.from('registrations').insert(newReg);
+    if (db) {
+        await addDoc(collection(db, "registrations"), newReg);
     } else {
+        // DEMO MODE: Update local state to simulate successful payment
         const localReg = { ...newReg, id: `local_${Date.now()}` };
         setRegistrations(prev => [localReg, ...prev]);
+        console.log("Demo Mode: Registration added locally", localReg);
     }
   };
   const updateRegistration = async (id: string, reg: Partial<Registration>) => {
-     if (isConnected && supabase) {
-         await supabase.from('registrations').update(reg).eq('id', id);
+     if (db) {
+         await updateDoc(doc(db, "registrations", id), reg);
      } else {
          setRegistrations(prev => prev.map(r => r.id === id ? { ...r, ...reg } : r));
      }
   };
   const deleteRegistration = async (id: string) => {
-     if (isConnected && supabase) {
-         await supabase.from('registrations').delete().eq('id', id);
+     if (db) {
+         await deleteDoc(doc(db, "registrations", id));
      } else {
          setRegistrations(prev => prev.filter(r => r.id !== id));
      }
@@ -329,27 +357,37 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const getRegistrationsByPhone = (phone: string) => registrations.filter(r => r.phone === phone);
 
+  // CRITICAL: Update Site Settings in Firestore or Local
   const updateSiteSettings = async (newSettings: Partial<SiteSettings>) => {
-    if (isConnected && supabase) {
-        // Assume 'general' is the ID for global settings
-        const { error } = await supabase.from('settings').update(newSettings).eq('id', 'general');
-        if (error) console.error("Error updating settings", error);
+    if (db) {
+        const docRef = doc(db, 'settings', 'general');
+        await setDoc(docRef, newSettings, { merge: true });
     } else {
         setSiteSettings(prev => ({ ...prev, ...newSettings }));
     }
   };
   
   const resetData = async () => {
-    if(window.confirm('確定要重置所有資料嗎？(演示模式：重新整理後將失效)')) {
-        // Local Reset only for safety unless backend logic is added
-        setSiteSettings(DEFAULT_SETTINGS);
-        setNews(INITIAL_NEWS);
-        setEvents(INITIAL_EVENTS);
-        setServices(INITIAL_SERVICES);
-        setOrgMembers(INITIAL_ORG);
-        setRegistrations([]);
-        setGallery([]);
-        alert('已重置預設資料！');
+    if(window.confirm('確定要重置所有資料嗎？這將會清空目前資料庫並寫入預設範本資料。(警告：此操作不可逆)')) {
+        if (db) {
+            await setDoc(doc(db, 'settings', 'general'), DEFAULT_SETTINGS);
+            // Seeding logic (Simplified for demo, usually you'd delete old collections first)
+            INITIAL_NEWS.forEach(n => addDoc(collection(db, 'news'), n));
+            INITIAL_EVENTS.forEach(e => addDoc(collection(db, 'events'), e));
+            INITIAL_SERVICES.forEach(s => addDoc(collection(db, 'services'), s));
+            INITIAL_ORG.forEach(o => addDoc(collection(db, 'org_members'), o));
+            alert('已重置預設資料至資料庫！');
+        } else {
+            // Local Reset
+            setSiteSettings(DEFAULT_SETTINGS);
+            setNews(INITIAL_NEWS);
+            setEvents(INITIAL_EVENTS);
+            setServices(INITIAL_SERVICES);
+            setOrgMembers(INITIAL_ORG);
+            setRegistrations([]);
+            setGallery([]);
+            alert('已重置預設資料 (演示模式：重新整理後將失效)');
+        }
     }
   };
 

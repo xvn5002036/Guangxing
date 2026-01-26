@@ -25,20 +25,9 @@ const VirtualTour: React.FC = () => {
     setSpiritFound(false);
     setBlessing('');
     try {
-        let stream;
-        try {
-            // First try with environment facing mode (Rear Camera)
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } 
-            });
-        } catch (e) {
-            console.warn("Environment camera not found, trying default user camera...", e);
-            // Fallback to any available video device (e.g. Webcam)
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: true 
-            });
-        }
-
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" } // Prefer back camera
+        });
         if (videoRef.current) {
             videoRef.current.srcObject = stream;
         }
