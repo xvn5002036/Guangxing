@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW" class="scroll-smooth">
   <head>
@@ -17,6 +18,7 @@
                 gold: '#C5A059',
                 amber: '#FFD700',
                 red: '#8B0000',
+                crimson: '#660000',
                 paper: '#F2E8C9',
               }
             },
@@ -35,14 +37,8 @@
               'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
             },
             keyframes: {
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-15px)' },
-              },
-              smoke: {
-                '0%': { opacity: 0.3, transform: 'translateY(0) scale(1)' },
-                '100%': { opacity: 0.7, transform: 'translateY(-20px) scale(1.1)' },
-              },
+              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-15px)' } },
+              smoke: { '0%': { opacity: 0.3, transform: 'translateY(0) scale(1)' }, '100%': { opacity: 0.7, transform: 'translateY(-20px) scale(1.1)' } },
               toss: {
                 '0%': { transform: 'translateY(0) rotateX(0) rotateZ(0) scale(1)' },
                 '25%': { transform: 'translateY(-100px) rotateX(180deg) rotateZ(45deg) scale(1.1)' },
@@ -50,14 +46,8 @@
                 '75%': { transform: 'translateY(-50px) rotateX(540deg) rotateZ(135deg) scale(1.05)' },
                 '100%': { transform: 'translateY(0) rotateX(720deg) rotateZ(180deg) scale(1)' },
               },
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              fadeInUp: {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              }
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
             }
           }
         }
@@ -72,38 +62,20 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react/": "https://esm.sh/react@^19.2.3/",
     "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "firebase/app": "https://esm.sh/firebase@10.13.0/app",
-    "firebase/firestore": "https://esm.sh/firebase@10.13.0/firestore",
-    "firebase/": "https://esm.sh/firebase@^12.7.0/"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7",
+    "firebase/": "https://esm.sh/firebase@^12.8.0/"
   }
 }
 </script>
     <style>
-      .vertical-rl {
-        writing-mode: vertical-rl;
-        text-orientation: upright;
-      }
-      .talisman-bg {
-        background-image: url('https://www.transparenttextures.com/patterns/rice-paper.png');
-      }
-      .wood-grain {
-        filter: url(#wood-filter);
-      }
+      .vertical-rl { writing-mode: vertical-rl; text-orientation: upright; }
+      .talisman-bg { background-image: url('https://www.transparenttextures.com/patterns/rice-paper.png'); }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(197, 160, 89, 0.3); border-radius: 10px; }
     </style>
   </head>
   <body class="bg-mystic-dark text-gray-200 font-serif selection:bg-mystic-gold selection:text-black overflow-x-hidden">
     <div id="root"></div>
-    <!-- Global SVG Filters for Wood Texture -->
-    <svg style="visibility: hidden; position: absolute;" width="0" height="0" xmlns="http://www.w3.org/2000/svg" version="1.1">
-        <defs>
-            <filter id="wood-filter">
-                <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise" />
-                <feDiffuseLighting in="noise" lighting-color="#dcb" surfaceScale="2">
-                    <feDistantLight azimuth="45" elevation="60" />
-                </feDiffuseLighting>
-                <feComposite operator="in" in2="SourceGraphic"/>
-            </filter>
-        </defs>
-    </svg>
   </body>
 </html>

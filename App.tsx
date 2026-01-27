@@ -19,6 +19,8 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
+import SupabaseSetupWizard from './components/SupabaseSetupWizard';
+import VirtualTour from './components/VirtualTour';
 import { DataProvider } from './context/DataContext';
 
 const App: React.FC = () => {
@@ -28,6 +30,7 @@ const App: React.FC = () => {
     <DataProvider>
       <div className="min-h-screen flex flex-col bg-mystic-dark relative">
         <BackgroundEffects />
+        <SupabaseSetupWizard />
         
         {isAdminOpen ? (
           <AdminPanel onClose={() => setIsAdminOpen(false)} />
@@ -42,6 +45,7 @@ const App: React.FC = () => {
                 <DeityInfo />
                 <LightingWall />
                 <News />
+                <VirtualTour />
                 <TempleCalendar />
                 <Ritual />
                 <Talisman />
