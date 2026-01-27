@@ -39,6 +39,7 @@ export interface Registration {
   createdAt: string;
   paymentMethod?: string;
   paymentDetails?: string;
+  bankLastFive?: string;
   userId?: string; // Optional because old records won't have it
 }
 

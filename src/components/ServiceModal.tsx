@@ -136,6 +136,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
         amount: formData.amount,
         paymentMethod: paymentMethod === 'CARD' ? 'CREDIT_CARD' : 'ATM_TRANSFER',
         paymentDetails: paymentMethod === 'CARD' ? 'Visa **** 4242' : `ATM 末五碼 ${atmLast5}`,
+        bankLastFive: paymentMethod === 'ATM' ? atmLast5 : undefined,
         userId: user?.id, // Link to current user
       };
 

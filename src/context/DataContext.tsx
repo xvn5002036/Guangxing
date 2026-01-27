@@ -458,7 +458,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 status: newReg.status,
                 is_processed: newReg.is_processed,
                 payment_method: newReg.paymentMethod,
-                payment_details: newReg.paymentDetails
+                payment_details: newReg.paymentDetails,
+                bank_last_five: newReg.bankLastFive
             };
             await supabase.from("registrations").insert([dbReg]);
         } else {
