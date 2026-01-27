@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember } from '../types';
+import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember, FAQItem } from '../types';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 // Helper to get formatted date for current month
@@ -41,6 +41,13 @@ const INITIAL_ORG: OrgMember[] = [
     { id: 'o7', name: '劉金龍', title: '護轎組', category: 'STAFF', image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=300&auto=format&fit=crop' },
 ];
 
+const INITIAL_FAQS: FAQItem[] = [
+    { id: 'f1', question: '請問參拜的順序為何？', answer: '請先至天公爐參拜玉皇上帝，再入正殿參拜主神池府王爺，隨後參拜龍邊（左側）陪祀神明，最後參拜虎邊（右側）陪祀神明。' },
+    { id: 'f2', question: '如何辦理點燈服務？', answer: '您可以使用本網站的「線上服務」進行登記與繳費，或親臨本宮服務台辦理。每盞燈位均有神明庇佑，名額有限。' },
+    { id: 'f3', question: '擲筊求籤有什麼禁忌嗎？', answer: '請示前請先洗手淨心，清楚稟報姓名、生辰、住址與所求之事。一事一籤，切勿一事多求。若遇笑筊或陰筊，請重新誠心稟報。' },
+    { id: 'f4', question: '還願的方式有哪些？', answer: '依據您當時許願的內容為主。一般可準備鮮花素果、添香油錢、或協助宮廟事務志工。' },
+];
+
 const DEFAULT_SETTINGS: SiteSettings = {
     templeName: '新莊武壇廣行宮',
     address: '242新北市新莊區福營路500號',
@@ -71,6 +78,7 @@ interface DataContextType {
     gallery: GalleryItem[];
     registrations: Registration[];
     orgMembers: OrgMember[];
+    faqs: FAQItem[];
     siteSettings: SiteSettings;
 
     // Auth
@@ -98,7 +106,12 @@ interface DataContextType {
 
     addOrgMember: (item: Omit<OrgMember, 'id'>) => void;
     updateOrgMember: (id: string, item: Partial<OrgMember>) => void;
+
     deleteOrgMember: (id: string) => void;
+
+    addFaq: (item: Omit<FAQItem, 'id'>) => void;
+    updateFaq: (id: string, item: Partial<FAQItem>) => void;
+    deleteFaq: (id: string) => void;
 
     addRegistration: (reg: Omit<Registration, 'id' | 'createdAt'>) => void;
     updateRegistration: (id: string, reg: Partial<Registration>) => void;
@@ -118,6 +131,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
     const [gallery, setGallery] = useState<GalleryItem[]>([]);
     const [orgMembers, setOrgMembers] = useState<OrgMember[]>(INITIAL_ORG);
+    const [faqs, setFaqs] = useState<FAQItem[]>(INITIAL_FAQS);
     const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
     const [registrations, setRegistrations] = useState<Registration[]>([]);
 
@@ -226,6 +240,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('gallery', setGallery, 'created_at', false), []);
     useEffect(() => syncTable('org_members', setOrgMembers, 'order', true, INITIAL_ORG as any), []); // Assuming 'order' column exists
     useEffect(() => syncTable('registrations', setRegistrations, 'created_at', false), []);
+    useEffect(() => syncTable('faqs', setFaqs, 'created_at', false, INITIAL_FAQS as any), []);
 
 
     // === ACTIONS ===
@@ -381,6 +396,30 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+
+    const addFaq = async (item: Omit<FAQItem, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('faqs').insert([item]);
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setFaqs(prev => [...prev, newItem]);
+        }
+    };
+    const updateFaq = async (id: string, item: Partial<FAQItem>) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('faqs').update(item).eq('id', id);
+        } else {
+            setFaqs(prev => prev.map(f => f.id === id ? { ...f, ...item } : f));
+        }
+    };
+    const deleteFaq = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('faqs').delete().eq('id', id);
+        } else {
+            setFaqs(prev => prev.filter(f => f.id !== id));
+        }
+    };
+
     const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
         const newReg = {
             ...reg,
@@ -488,7 +527,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setNews(INITIAL_NEWS);
                 setEvents(INITIAL_EVENTS);
                 setServices(INITIAL_SERVICES);
+
                 setOrgMembers(INITIAL_ORG);
+                setFaqs(INITIAL_FAQS);
                 setRegistrations([]);
                 setGallery([]);
                 alert('已重置預設資料 (演示模式)');
@@ -571,7 +612,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return (
         <DataContext.Provider value={{
-            news, events, services, gallery, registrations, orgMembers, siteSettings,
+            news, events, services, gallery, registrations, orgMembers, faqs, siteSettings,
             // Auth
             user, userProfile, signOut, fetchUserProfile,
             addNews, updateNews, deleteNews,
@@ -579,7 +620,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addService, updateService, deleteService,
             addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
             addOrgMember, updateOrgMember, deleteOrgMember,
+            addFaq, updateFaq, deleteFaq,
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
+
             updateSiteSettings,
             resetData
         }}>

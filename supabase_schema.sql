@@ -1,7 +1,47 @@
--- Enable UUID extension
+-- ==========================================
+-- 1. EXTENSIONS & UTILITIES
+-- ==========================================
 create extension if not exists "uuid-ossp";
 
--- 1. Services Table
+-- Helper Function: Check if current user is admin
+-- NOTE: Uses secure search_path to prevent search_path hijacking
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from profiles
+    where id = auth.uid()
+    and role = 'admin'
+  );
+$$;
+
+-- ==========================================
+-- 2. TABLE DEFINITIONS
+-- ==========================================
+
+-- 2.1 Profiles (Extends Auth Users)
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  full_name text,
+  role text check (role in ('admin', 'user')) default 'user',
+  phone text,
+  birth_year text,
+  birth_month text,
+  birth_day text,
+  birth_hour text,
+  city text,
+  district text,
+  address text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 2.2 Services (Lighting, Rituals, etc.)
 create table public.services (
   id uuid primary key default uuid_generate_v4(),
   title text not null,
@@ -12,10 +52,10 @@ create table public.services (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 2. Registrations Table
+-- 2.3 Registrations (User orders)
 create table public.registrations (
   id uuid primary key default uuid_generate_v4(),
-  user_id uuid references auth.users(id), -- Link to Auth User
+  user_id uuid references auth.users(id), -- Optional: Link to Auth User
   service_id uuid references public.services(id),
   service_title text not null,
   name text not null,
@@ -36,17 +76,17 @@ create table public.registrations (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. News Table
+-- 2.4 News (Announcements)
 create table public.news (
   id uuid primary key default uuid_generate_v4(),
   date date not null,
   title text not null,
   category text,
-  content text, -- Added content field which might be useful
+  content text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 4. Events Table (TempleEvent)
+-- 2.5 Events (Calendar)
 create table public.events (
   id uuid primary key default uuid_generate_v4(),
   date date not null,
@@ -58,7 +98,7 @@ create table public.events (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 5. Gallery Table
+-- 2.6 Gallery (Photos/Videos)
 create table public.gallery (
   id uuid primary key default uuid_generate_v4(),
   type text check (type in ('IMAGE', 'VIDEO', 'YOUTUBE')),
@@ -67,7 +107,7 @@ create table public.gallery (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 6. Organization Members Table
+-- 2.7 Organization Members
 create table public.org_members (
   id uuid primary key default uuid_generate_v4(),
   name text not null,
@@ -78,15 +118,16 @@ create table public.org_members (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 7. FAQs Table
+-- 2.8 FAQs (Common Questions)
 create table public.faqs (
   id uuid primary key default uuid_generate_v4(),
   question text not null,
   answer text not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
 );
 
--- 8. Site Settings Table (Designed to hold a single row)
+-- 2.9 Site Settings (Singleton Configuration)
 create table public.site_settings (
   id uuid primary key default uuid_generate_v4(),
   temple_name text default '新莊武壇廣行宮',
@@ -112,7 +153,12 @@ create table public.site_settings (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Enable Row Level Security (RLS)
+-- ==========================================
+-- 3. ROW LEVEL SECURITY (RLS) & POLICIES
+-- ==========================================
+
+-- Enable RLS on all tables
+alter table public.profiles enable row level security;
 alter table public.services enable row level security;
 alter table public.registrations enable row level security;
 alter table public.news enable row level security;
@@ -122,35 +168,62 @@ alter table public.org_members enable row level security;
 alter table public.faqs enable row level security;
 alter table public.site_settings enable row level security;
 
--- Create Policies (FINAL VERSION: FULL ACCESS ENABLED)
+-- 3.1 Profiles Policies
+create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
+create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+create policy "Admins can view all profiles" on public.profiles for select using (public.is_admin());
 
--- 1. Services: Full Access (Read + Write)
-create policy "Allow public all access" on public.services for all using (true) with check (true);
+-- 3.2 Public Read, Admin Write (Common Pattern)
+-- Helper macro logic applied manually below
 
--- 2. News: Full Access
-create policy "Allow public all access" on public.news for all using (true) with check (true);
+-- Services
+create policy "Public can view services" on public.services for select using (true);
+create policy "Admins can manage services" on public.services for all using (public.is_admin());
 
--- 3. Events: Full Access
-create policy "Allow public all access" on public.events for all using (true) with check (true);
+-- News
+create policy "Public can view news" on public.news for select using (true);
+create policy "Admins can manage news" on public.news for all using (public.is_admin());
 
--- 4. Gallery: Full Access
-create policy "Allow public all access" on public.gallery for all using (true) with check (true);
+-- Events
+create policy "Public can view events" on public.events for select using (true);
+create policy "Admins can manage events" on public.events for all using (public.is_admin());
 
--- 5. Org Members: Full Access
-create policy "Allow public all access" on public.org_members for all using (true) with check (true);
+-- Gallery
+create policy "Public can view gallery" on public.gallery for select using (true);
+create policy "Admins can manage gallery" on public.gallery for all using (public.is_admin());
 
--- 6. FAQs: Full Access
-create policy "Allow public all access" on public.faqs for all using (true) with check (true);
+-- Org Members
+create policy "Public can view members" on public.org_members for select using (true);
+create policy "Admins can manage members" on public.org_members for all using (public.is_admin());
 
--- 7. Site Settings: Full Access
-create policy "Allow public all access" on public.site_settings for all using (true) with check (true);
+-- FAQs
+create policy "Public can view faqs" on public.faqs for select using (true);
+create policy "Admins can manage faqs" on public.faqs for all using (public.is_admin());
 
--- 8. Registrations: Full Access
-create policy "Allow public all access" on public.registrations for all using (true) with check (true);
+-- Site Settings
+create policy "Public can view settings" on public.site_settings for select using (true);
+create policy "Admins can manage settings" on public.site_settings for all using (public.is_admin());
+
+-- 3.3 Registrations (Special Logic: User Own + Admin All)
+create policy "Users can view own registrations" on public.registrations 
+  for select using (auth.uid() = user_id or public.is_admin());
+
+create policy "Users can insert own registrations" on public.registrations 
+  for insert with check (auth.uid() = user_id or public.is_admin()); -- Allow admins to register for others too
+
+create policy "Admins can update registrations" on public.registrations 
+  for update using (public.is_admin());
+
+create policy "Admins can delete registrations" on public.registrations 
+  for delete using (public.is_admin());
 
 
--- 9. Realtime Configuration
--- Enable Realtime for all tables to allow the frontend to listen for changes
+-- ==========================================
+-- 4. REALTIME & TRIGGERS
+-- ==========================================
+
+-- 4.1 Enable Realtime for Frontend
+alter publication supabase_realtime add table profiles;
 alter publication supabase_realtime add table services;
 alter publication supabase_realtime add table news;
 alter publication supabase_realtime add table events;
@@ -160,114 +233,23 @@ alter publication supabase_realtime add table registrations;
 alter publication supabase_realtime add table site_settings;
 alter publication supabase_realtime add table faqs;
 
--- 10. Profiles Table (Extends Supabase Auth)
-create table public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email text,
-  full_name text,
-  phone text,
-  birth_year text,
-  birth_month text,
-  birth_day text,
-  birth_hour text,
-  city text,
-  district text,
-  address text,
-  updated_at timestamp with time zone default timezone('utc'::text, now()),
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  role text check (role in ('admin', 'user')) default 'user'
-);
-
-alter table public.profiles enable row level security;
-
--- Users can view their own profile
-create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
-
--- 1. Fix: Set explicit search path for security definer function
-create or replace function public.is_admin()
-returns boolean
-language sql
-security definer
-set search_path = public -- Secure search path
-as $$
-  select exists (
-    select 1
-    from profiles
-    where id = auth.uid()
-    and role = 'admin'
-  );
-$$;
-
--- Admins can view all profiles (Updated to use helper function)
-create policy "Admins can view all profiles" on public.profiles for select using (
-  public.is_admin()
-);
-
--- 2. Security: Update policies to be restrictive (Public Read, Admin Write)
-
--- Services Table
-create policy "Public can view services" on public.services for select using (true);
-create policy "Admins can insert services" on public.services for insert with check (is_admin());
-create policy "Admins can update services" on public.services for update using (is_admin());
-create policy "Admins can delete services" on public.services for delete using (is_admin());
-
--- Registrations Table
--- Users can manage their own, Admins can manage all
-drop policy if exists "Allow public insert" on public.registrations;
-drop policy if exists "Allow public update" on public.registrations;
-drop policy if exists "Allow public delete" on public.registrations;
-drop policy if exists "User can view own registrations" on public.registrations;
-
-create policy "Users can view own registrations" on public.registrations 
-  for select using (auth.uid() = user_id or is_admin());
-  
-create policy "Users can insert own registrations" on public.registrations 
-  for insert with check (auth.uid() = user_id or is_admin());
-  
-create policy "Admins can update registrations" on public.registrations 
-  for update using (is_admin());
-  
-create policy "Admins can delete registrations" on public.registrations 
-  for delete using (is_admin());
-
-
--- News Table
-create policy "Public can view news" on public.news for select using (true);
-create policy "Admins can manage news" on public.news for all using (is_admin());
-
--- Events Table
-create policy "Public can view events" on public.events for select using (true);
-create policy "Admins can manage events" on public.events for all using (is_admin());
-
--- Gallery Table
-create policy "Public can view gallery" on public.gallery for select using (true);
-create policy "Admins can manage gallery" on public.gallery for all using (is_admin());
-
--- Org Members Table
-create policy "Public can view members" on public.org_members for select using (true);
-create policy "Admins can manage members" on public.org_members for all using (is_admin());
-
--- Site Settings Table
-create policy "Public can view settings" on public.site_settings for select using (true);
-create policy "Admins can manage settings" on public.site_settings for all using (is_admin());
-
-
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
-create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
-
-alter publication supabase_realtime add table profiles;
-
--- 11. Trigger for New User Profile (Automates profile creation)
+-- 4.2 Auto-Create Profile Trigger
 create or replace function public.handle_new_user() 
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, full_name)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name');
+  insert into public.profiles (id, email, full_name, role)
+  values (
+    new.id, 
+    new.email, 
+    new.raw_user_meta_data->>'full_name',
+    'user' -- Default role
+  );
   return new;
 end;
 $$ language plpgsql security definer;
 
--- Trigger to execute the function
+-- Drop trigger if exists to avoid error on replay
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
