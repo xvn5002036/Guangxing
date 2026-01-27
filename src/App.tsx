@@ -21,6 +21,8 @@ import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
 import MemberCenter from './components/MemberCenter';
 import { DataProvider } from './context/DataContext';
+import { isSupabaseConfigured } from './services/supabase';
+import SupabaseSetupWizard from './components/SupabaseSetupWizard';
 
 const App: React.FC = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -28,6 +30,7 @@ const App: React.FC = () => {
 
   return (
     <DataProvider>
+      <SupabaseSetupWizard />
       <div className="min-h-screen flex flex-col bg-mystic-dark relative">
         <BackgroundEffects />
 
@@ -35,12 +38,12 @@ const App: React.FC = () => {
           <AdminPanel onClose={() => setIsAdminOpen(false)} />
         ) : view === 'MEMBER' ? (
           <>
-            <Header onNavigateToMember={() => setView('MEMBER')} />
+            <Header onNavigateToMember={() => setView('MEMBER')} onOpenAdmin={() => setIsAdminOpen(true)} />
             <MemberCenter onBack={() => setView('HOME')} />
           </>
         ) : (
           <div className="relative z-10">
-            <Header onNavigateToMember={() => setView('MEMBER')} />
+            <Header onNavigateToMember={() => setView('MEMBER')} onOpenAdmin={() => setIsAdminOpen(true)} />
             <main className="flex-grow">
               <Hero />
               <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
