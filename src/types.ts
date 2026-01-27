@@ -134,6 +134,14 @@ export interface SiteSettings {
   historyImageStone: string; // URL
   historyStoneTitle: string;
   historyStoneDesc: string;
+
+  // Timeline Content (The large descriptions on the left)
+  historyTitle1: string;
+  historyDesc1: string;
+  historyTitle2: string;
+  historyDesc2: string;
+  historyTitle3: string;
+  historyDesc3: string;
 }
 
 export interface UserProfile {

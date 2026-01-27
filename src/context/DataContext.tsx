@@ -68,7 +68,13 @@ const DEFAULT_SETTINGS: SiteSettings = {
     historyRoofDesc: '象徵尊貴地位，飛簷翹角，氣勢非凡。',
     historyImageStone: 'https://images.unsplash.com/photo-1596545753969-583d73b3eb38?q=80&w=1000&auto=format&fit=crop',
     historyStoneTitle: '龍柱石雕',
-    historyStoneDesc: '匠師精雕細琢，雙龍搶珠，栩栩如生。'
+    historyStoneDesc: '匠師精雕細琢，雙龍搶珠，栩栩如生。',
+    historyTitle1: '草創時期 (清乾隆年間)',
+    historyDesc1: '本宮源起於清乾隆年間，先民渡海來台，為求平安渡過黑水溝，隨身奉請池府王爺金身。初時僅以茅草搭建簡易神壇供奉，然神威顯赫，庇佑庄頭五穀豐登，信眾日增。',
+    historyTitle2: '建廟大業 (民國六十年)',
+    historyDesc2: '隨著地方繁榮，舊壇已不敷使用。地方仕紳與信眾集資購地，依循古法地理勘輿，擇定現址動土興建。歷時三年，大殿巍峨聳立，燕尾飛簷，剪黏交趾，展現傳統工藝之美。',
+    historyTitle3: '現代弘法 (今日)',
+    historyDesc3: '不僅是信仰中心，更致力於公益慈善與文化傳承。引入數位科技，設立線上祭祀平台，讓傳統信仰跨越時空，繼續守護每一位虔誠的靈魂。'
 };
 
 interface DataContextType {
@@ -217,6 +223,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     historyImageStone: data.history_image_stone || DEFAULT_SETTINGS.historyImageStone,
                     historyStoneTitle: data.history_stone_title || DEFAULT_SETTINGS.historyStoneTitle,
                     historyStoneDesc: data.history_stone_desc || DEFAULT_SETTINGS.historyStoneDesc,
+                    historyTitle1: data.history_title1 || DEFAULT_SETTINGS.historyTitle1,
+                    historyDesc1: data.history_desc1 || DEFAULT_SETTINGS.historyDesc1,
+                    historyTitle2: data.history_title2 || DEFAULT_SETTINGS.historyTitle2,
+                    historyDesc2: data.history_desc2 || DEFAULT_SETTINGS.historyDesc2,
+                    historyTitle3: data.history_title3 || DEFAULT_SETTINGS.historyTitle3,
+                    historyDesc3: data.history_desc3 || DEFAULT_SETTINGS.historyDesc3,
                 };
                 setSiteSettings(mappedSettings);
             } else {
@@ -492,7 +504,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 deityDuty: 'deity_duty', deityDutyLabel: 'deity_duty_label',
                 historyImageRoof: 'history_image_roof', historyRoofTitle: 'history_roof_title',
                 historyRoofDesc: 'history_roof_desc', historyImageStone: 'history_image_stone',
-                historyStoneTitle: 'history_stone_title', historyStoneDesc: 'history_stone_desc'
+                historyStoneTitle: 'history_stone_title', historyStoneDesc: 'history_stone_desc',
+                historyTitle1: 'history_title1', historyDesc1: 'history_desc1',
+                historyTitle2: 'history_title2', historyDesc2: 'history_desc2',
+                historyTitle3: 'history_title3', historyDesc3: 'history_desc3'
             };
             Object.entries(newSettings).forEach(([k, v]) => {
                 if ((map as any)[k]) dbSettings[(map as any)[k]] = v;

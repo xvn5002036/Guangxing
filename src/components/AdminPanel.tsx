@@ -559,6 +559,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Timeline Sections */}
+                                <div className="mt-6 space-y-6">
+                                    <div className="border border-white/5 p-4 rounded bg-black/20">
+                                        <h5 className="text-xs font-bold text-gray-400 mb-3 border-b border-white/5 pb-2">沿革時間軸 1 (草創)</h5>
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-500 uppercase">標題</label>
+                                                <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.historyTitle1} onChange={e => setSettingsForm({ ...settingsForm, historyTitle1: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-500 uppercase">內容</label>
+                                                <textarea rows={3} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none resize-none" value={settingsForm.historyDesc1} onChange={e => setSettingsForm({ ...settingsForm, historyDesc1: e.target.value })} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border border-white/5 p-4 rounded bg-black/20">
+                                        <h5 className="text-xs font-bold text-gray-400 mb-3 border-b border-white/5 pb-2">沿革時間軸 2 (建廟)</h5>
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-500 uppercase">標題</label>
+                                                <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.historyTitle2} onChange={e => setSettingsForm({ ...settingsForm, historyTitle2: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-500 uppercase">內容</label>
+                                                <textarea rows={3} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none resize-none" value={settingsForm.historyDesc2} onChange={e => setSettingsForm({ ...settingsForm, historyDesc2: e.target.value })} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border border-white/5 p-4 rounded bg-black/20">
+                                        <h5 className="text-xs font-bold text-gray-400 mb-3 border-b border-white/5 pb-2">沿革時間軸 3 (現代)</h5>
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-500 uppercase">標題</label>
+                                                <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.historyTitle3} onChange={e => setSettingsForm({ ...settingsForm, historyTitle3: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-500 uppercase">內容</label>
+                                                <textarea rows={3} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none resize-none" value={settingsForm.historyDesc3} onChange={e => setSettingsForm({ ...settingsForm, historyDesc3: e.target.value })} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
