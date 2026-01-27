@@ -15,25 +15,25 @@ const BackgroundEffects: React.FC = () => {
     canvas.height = height;
 
     const particles: { x: number; y: number; size: number; speedY: number; opacity: number }[] = [];
-    const particleCount = 50;
+    const particleCount = 100; // Increased from 50
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 2 + 0.5,
+        size: Math.random() * 3 + 1, // Increased size range (was 0.5-2.5)
         speedY: Math.random() * 0.3 + 0.1,
-        opacity: Math.random() * 0.5 + 0.1
+        opacity: Math.random() * 0.6 + 0.3 // Increased opacity (was 0.1-0.6)
       });
     }
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
-      
+
       particles.forEach(p => {
         p.y -= p.speedY;
         if (p.y < 0) p.y = height;
-        
+
         ctx.fillStyle = `rgba(197, 160, 89, ${p.opacity})`; // Mystic Gold color
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -57,9 +57,9 @@ const BackgroundEffects: React.FC = () => {
   }, []);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-0"
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-50 mix-blend-screen"
     />
   );
 };

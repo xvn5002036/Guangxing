@@ -73,6 +73,12 @@ interface DataContextType {
     orgMembers: OrgMember[];
     siteSettings: SiteSettings;
 
+    // Auth
+    user: any;
+    userProfile: any; // Using any to avoid import cycles or complex type mapping
+    signOut: () => Promise<void>;
+    fetchUserProfile: (userId: string) => Promise<void>;
+
     addNews: (item: Omit<NewsItem, 'id'>) => void;
     updateNews: (id: string, item: Partial<NewsItem>) => void;
     deleteNews: (id: string) => void;
@@ -490,9 +496,84 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    // === AUTHENTICATION ===
+    const [user, setUser] = useState<any>(null); // Supabase User
+    const [userProfile, setUserProfile] = useState<any>(null); // Should be UserProfile type, but use any to avoid mismatches for agile dev
+
+    // Check Auth State
+    useEffect(() => {
+        if (!isSupabaseConfigured()) return;
+
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setUser(session?.user ?? null);
+            if (session?.user) {
+                fetchUserProfile(session.user.id);
+            }
+        });
+
+        // Listen for changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+            if (session?.user) {
+                fetchUserProfile(session.user.id);
+            } else {
+                setUserProfile(null);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const fetchUserProfile = async (userId: string) => {
+        if (!isSupabaseConfigured()) return;
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Error fetching profile:', error);
+            // Handling case where auth user exists but profile row doesn't (if trigger failed or manual fix needed)
+        } else if (data) {
+            // Map snake_case to camelCase
+            const profile: any = {
+                id: data.id,
+                email: data.email,
+                fullName: data.full_name,
+                phone: data.phone,
+                birthYear: data.birth_year,
+                birthMonth: data.birth_month,
+                birthDay: data.birth_day,
+                birthHour: data.birth_hour,
+                city: data.city,
+                district: data.district,
+                address: data.address,
+                createdAt: data.created_at
+            };
+            setUserProfile(profile);
+        }
+    };
+
+    const signOut = async () => {
+        if (isSupabaseConfigured()) {
+            await supabase.auth.signOut();
+            alert('您已成功登出');
+        } else {
+            setUser(null);
+            setUserProfile(null);
+        }
+    };
+
+
     return (
         <DataContext.Provider value={{
             news, events, services, gallery, registrations, orgMembers, siteSettings,
+            // Auth
+            user, userProfile, signOut, fetchUserProfile,
             addNews, updateNews, deleteNews,
             addEvent, updateEvent, deleteEvent,
             addService, updateService, deleteService,

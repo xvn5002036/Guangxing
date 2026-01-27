@@ -37,8 +37,9 @@ export interface Registration {
   status: 'PAID' | 'PENDING' | 'CANCELLED';
   isProcessed?: boolean; // New field for administrative handling status
   createdAt: string;
-  paymentMethod?: string; // Added for payment flow
-  paymentDetails?: string; // Added for payment flow
+  paymentMethod?: string;
+  paymentDetails?: string;
+  userId?: string; // Optional because old records won't have it
 }
 
 export enum LoadingState {
@@ -68,17 +69,17 @@ export interface TalismanConfig {
   type: TalismanType;
   name: string;
   label: string;
-  script: string; 
+  script: string;
 }
 
 export interface TempleEvent {
   id: string;
-  date: string;       
-  lunarDate: string;  
+  date: string;
+  lunarDate: string;
   title: string;
   description: string;
   time: string;
-  type: 'FESTIVAL' | 'RITUAL' | 'SERVICE'; 
+  type: 'FESTIVAL' | 'RITUAL' | 'SERVICE';
 }
 
 export interface GalleryItem {
@@ -109,7 +110,7 @@ export interface SiteSettings {
   address: string;
   phone: string;
   lineUrl: string; // New field for LINE Official Account Link
-  
+
   // Hero Section
   heroTitle: string;
   heroSubtitle: string;
@@ -117,7 +118,7 @@ export interface SiteSettings {
 
   // Deity Section
   deityImage: string; // URL
-  deityTitle: string; 
+  deityTitle: string;
   deityIntro: string; // Long text
   deityBirthday: string;
   deityBirthdayLabel: string;
@@ -128,10 +129,25 @@ export interface SiteSettings {
   historyImageRoof: string; // URL
   historyRoofTitle: string;
   historyRoofDesc: string;
-  
+
   historyImageStone: string; // URL
   historyStoneTitle: string;
   historyStoneDesc: string;
+}
+
+export interface UserProfile {
+  id: string; // references auth.users.id
+  email: string;
+  fullName: string;
+  phone: string;
+  birthYear: string;
+  birthMonth: string;
+  birthDay: string;
+  birthHour: string;
+  city: string;
+  district: string;
+  address: string;
+  createdAt: string;
 }
 
 // Constants for selectors

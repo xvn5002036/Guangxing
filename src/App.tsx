@@ -19,10 +19,12 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
+import MemberCenter from './components/MemberCenter';
 import { DataProvider } from './context/DataContext';
 
 const App: React.FC = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [view, setView] = useState<'HOME' | 'MEMBER'>('HOME');
 
   return (
     <DataProvider>
@@ -31,9 +33,14 @@ const App: React.FC = () => {
 
         {isAdminOpen ? (
           <AdminPanel onClose={() => setIsAdminOpen(false)} />
+        ) : view === 'MEMBER' ? (
+          <>
+            <Header onNavigateToMember={() => setView('MEMBER')} />
+            <MemberCenter onBack={() => setView('HOME')} />
+          </>
         ) : (
           <div className="relative z-10">
-            <Header />
+            <Header onNavigateToMember={() => setView('MEMBER')} />
             <main className="flex-grow">
               <Hero />
               <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />

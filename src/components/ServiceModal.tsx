@@ -13,7 +13,7 @@ interface ServiceModalProps {
 }
 
 const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, initialEventTitle }) => {
-  const { addRegistration, getRegistrationsByPhone, updateRegistration, deleteRegistration } = useData();
+  const { addRegistration, getRegistrationsByPhone, updateRegistration, deleteRegistration, userProfile, user } = useData();
 
   const [mode, setMode] = useState<'REGISTER' | 'LOOKUP'>('REGISTER');
   const [step, setStep] = useState(1);
@@ -52,6 +52,39 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       setFormData(prev => ({ ...prev, amount: service.price || 600 }));
     }
   }, [service]);
+
+  // Auto-fill from User Profile
+  useEffect(() => {
+    if (isOpen && userProfile && mode === 'REGISTER' && !formData.id) {
+      // Normalize Data Formats
+
+      // Year: "1987" -> "民國76"
+      let normalizedYear = userProfile.birthYear || formData.birthYear;
+      if (userProfile.birthYear) {
+        const y = parseInt(userProfile.birthYear);
+        if (!isNaN(y) && y > 1911) {
+          normalizedYear = `民國${y - 1911}`;
+        }
+      }
+
+      // Month/Day: "05" -> "5"
+      const normalizedMonth = userProfile.birthMonth ? String(parseInt(userProfile.birthMonth)) : formData.birthMonth;
+      const normalizedDay = userProfile.birthDay ? String(parseInt(userProfile.birthDay)) : formData.birthDay;
+
+      setFormData(prev => ({
+        ...prev,
+        name: userProfile.fullName || prev.name,
+        phone: userProfile.phone || prev.phone,
+        birthYear: normalizedYear,
+        birthMonth: normalizedMonth,
+        birthDay: normalizedDay,
+        birthHour: userProfile.birthHour || prev.birthHour,
+        city: userProfile.city || prev.city,
+        district: userProfile.district || prev.district,
+        addressDetail: userProfile.address || prev.addressDetail,
+      }));
+    }
+  }, [isOpen, userProfile, mode, formData.id]);
 
   // Reset district when city changes
   const handleCityChange = (city: string) => {
@@ -102,7 +135,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
         addressDetail: formData.addressDetail,
         amount: formData.amount,
         paymentMethod: paymentMethod === 'CARD' ? 'CREDIT_CARD' : 'ATM_TRANSFER',
-        paymentDetails: paymentMethod === 'CARD' ? 'Visa **** 4242' : `ATM 末五碼 ${atmLast5}`
+        paymentDetails: paymentMethod === 'CARD' ? 'Visa **** 4242' : `ATM 末五碼 ${atmLast5}`,
+        userId: user?.id, // Link to current user
       };
 
       if (formData.id) {

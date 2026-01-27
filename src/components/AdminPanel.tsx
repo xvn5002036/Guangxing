@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
+import { supabase } from '../services/supabase'; // Import Supabase Client
 import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network } from 'lucide-react';
 import { GalleryItem, Registration } from '../types';
 
@@ -21,8 +22,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     } = useData();
 
     const [activeTab, setActiveTab] = useState<'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG'>('GENERAL');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loginError, setLoginError] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const { user, userProfile, fetchUserProfile } = useData(); // Get global user state
+
+    // New local state to force UI update immediately after login verification
+    const [forceDashboard, setForceDashboard] = useState(false);
+
+    // Admin UI States
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>({});
     const [isAdding, setIsAdding] = useState(false);
@@ -44,10 +53,77 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setSettingsForm(siteSettings);
     }, [siteSettings, activeTab]);
 
-    const handleLogin = (e: React.FormEvent) => {
+    // Derived state for determining if we should show the dashboard
+    // We trust the Context (isAdmin) OR our local override (forceDashboard)
+    const isAdmin = (user && userProfile?.role === 'admin') || forceDashboard;
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'admin') setIsAuthenticated(true);
-        else alert('密碼錯誤 (預設密碼: admin)');
+        setIsLoggingIn(true);
+        setLoginError(null);
+        console.log("Starting login process...", { email });
+
+        try {
+            // Create a timeout promise
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Login timed out')), 10000)
+            );
+
+            // Race the auth request against the timeout
+            const { data, error } = await Promise.race([
+                supabase.auth.signInWithPassword({ email, password }),
+                timeoutPromise
+            ]) as any;
+
+            if (error) throw error;
+
+            console.log("Supabase Auth Successful", data);
+            // Auth successful, wait for DataContext to update userProfile and check role
+            // We force a fetch here to ensure UI updates immediately
+            await fetchUserProfile(data.user.id);
+
+            // We can do a quick one-off check here to give immediate feedback
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .single();
+
+            if (profileError || profileData?.role !== 'admin') {
+                console.warn("Login denied: Profile check failed", { profileError, role: profileData?.role });
+
+                let detail = '';
+                if (profileError) detail = `資料庫錯誤: ${profileError.message} (${profileError.code})`;
+                else if (!profileData) detail = '找不到會員資料 (ID 不匹配?)';
+                else detail = `角色權限: ${profileData.role || '無'} (需要: admin)`;
+
+                await supabase.auth.signOut();
+                throw new Error(`登入失敗 (檢查階段):\n${detail}`);
+            } else {
+                console.log("Login authorized! Role is admin.");
+                // SUCCESS: Force local state to switch UI immediately
+                setForceDashboard(true);
+            }
+
+        } catch (err: any) {
+            console.error("Login Error:", err);
+            // Translate common errors
+            let msg = err.message;
+            if (msg === 'Invalid login credentials') msg = '帳號或密碼錯誤';
+            else if (msg.includes('Login timed out')) msg = '登入連線逾時，請檢查網路';
+
+            setLoginError(msg);
+
+            // Only alert for non-credential errors to avoid annoyance
+            if (msg !== '帳號或密碼錯誤' && !msg.includes('權限')) {
+                alert(`登入發生意外錯誤：\n${msg}`);
+            } else if (msg.includes('權限')) {
+                alert(msg); // Alert for permission issues is helpful
+            }
+
+        } finally {
+            setIsLoggingIn(false);
+        }
     };
 
     const handleEdit = (item: any) => {
@@ -233,16 +309,52 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         }
     };
 
-    if (!isAuthenticated) return (
+    if (!isAdmin) return (
         <div className="fixed inset-0 z-[100] bg-black">
             <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-white"><X size={32} /></button>
             <div className="flex flex-col items-center justify-center h-full">
-                <div className="bg-mystic-charcoal p-8 rounded-sm border border-mystic-gold/30 w-full max-w-md">
-                    <h2 className="text-2xl font-bold text-white mb-6 text-center">後台管理系統</h2>
+                <div className="bg-mystic-charcoal p-8 rounded-sm border border-mystic-gold/30 w-full max-w-md shadow-2xl animate-fade-in-up">
+                    <h2 className="text-2xl font-bold text-white mb-6 text-center tracking-widest">後台管理系統</h2>
+
                     <form onSubmit={handleLogin} className="space-y-4">
-                        <input type="password" placeholder="請輸入密碼" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={password} onChange={e => setPassword(e.target.value)} />
-                        <button type="submit" className="w-full bg-mystic-gold text-black font-bold py-3 hover:bg-white transition-colors">登入系統</button>
-                        <p className="text-xs text-center text-gray-500 mt-4">預設密碼: admin</p>
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase block mb-1">管理員帳號 (Email)</label>
+                            <input
+                                type="email"
+                                required
+                                placeholder="admin@example.com"
+                                className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase block mb-1">登入密碼</label>
+                            <input
+                                type="password"
+                                required
+                                placeholder="請輸入密碼"
+                                className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                            />
+                        </div>
+
+                        {loginError && (
+                            <div className="bg-red-900/20 border border-red-500/50 text-red-400 p-3 text-sm flex items-center gap-2 rounded">
+                                <Info size={16} />
+                                {loginError}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoggingIn}
+                            className="w-full bg-mystic-gold text-black font-bold py-3 hover:bg-white transition-colors disabled:opacity-50 flex justify-center gap-2"
+                        >
+                            {isLoggingIn && <Loader2 className="animate-spin" size={20} />}
+                            {isLoggingIn ? '驗證權限中...' : '登入系統'}
+                        </button>
                     </form>
                 </div>
             </div>
