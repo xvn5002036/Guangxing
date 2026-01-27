@@ -73,6 +73,7 @@ create table public.registrations (
   is_processed boolean default false,
   payment_method text,
   payment_details text,
+  bank_last_five text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

@@ -693,12 +693,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
-                                    <tr><th className="p-4">項目</th><th className="p-4">詳情</th><th className="p-4 text-right">操作</th></tr>
+                                    <tr><th className="p-4">項目</th><th className="p-4">匯款後五碼</th><th className="p-4">詳情</th><th className="p-4 text-right">操作</th></tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {activeTab === 'REGISTRATIONS' && registrations.map(reg => (
                                         <tr key={reg.id} className="hover:bg-white/5">
                                             <td className="p-4"><div className="font-bold text-white">{reg.name}</div><div className="text-xs text-gray-400">{reg.phone}</div><div className="text-xs text-mystic-gold">{reg.serviceTitle}</div></td>
+                                            <td className="p-4 text-gray-300 font-mono">{reg.bankLastFive || '-'}</td>
                                             <td className="p-4"><button onClick={() => handleToggleStatus(reg)} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${reg.isProcessed ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>{reg.isProcessed ? '已圓滿' : '未辦理'}</button></td>
                                             <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handlePrintReceipt(reg)} className="p-2 bg-gray-700 rounded"><Printer size={16} /></button><button onClick={() => handleEdit(reg)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteRegistration(reg.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
                                         </tr>

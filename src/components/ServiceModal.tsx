@@ -134,9 +134,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
         road: formData.road,
         addressDetail: formData.addressDetail,
         amount: formData.amount,
-        paymentMethod: paymentMethod === 'CARD' ? 'CREDIT_CARD' : 'ATM_TRANSFER',
-        paymentDetails: paymentMethod === 'CARD' ? 'Visa **** 4242' : `ATM 末五碼 ${atmLast5}`,
-        bankLastFive: paymentMethod === 'ATM' ? atmLast5 : undefined,
+        paymentMethod: 'ATM_TRANSFER',
+        paymentDetails: `ATM 末五碼 ${atmLast5}`,
+        bankLastFive: atmLast5,
         userId: user?.id, // Link to current user
       };
 
@@ -444,18 +444,10 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
                   </div>
 
                   {!paymentMethod ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <button
-                        onClick={() => setPaymentMethod('CARD')}
-                        className="p-6 bg-black/40 border border-white/10 hover:border-mystic-gold hover:bg-mystic-gold/10 transition-all group flex flex-col items-center gap-3"
-                      >
-                        <CreditCard size={32} className="text-gray-400 group-hover:text-mystic-gold" />
-                        <span className="font-bold text-white group-hover:text-mystic-gold">信用卡供養</span>
-                        <span className="text-xs text-gray-500">支援 Visa, MasterCard, JCB</span>
-                      </button>
+                    <div className="flex justify-center">
                       <button
                         onClick={() => setPaymentMethod('ATM')}
-                        className="p-6 bg-black/40 border border-white/10 hover:border-mystic-gold hover:bg-mystic-gold/10 transition-all group flex flex-col items-center gap-3"
+                        className="w-full max-w-sm p-6 bg-black/40 border border-white/10 hover:border-mystic-gold hover:bg-mystic-gold/10 transition-all group flex flex-col items-center gap-3"
                       >
                         <Landmark size={32} className="text-gray-400 group-hover:text-mystic-gold" />
                         <span className="font-bold text-white group-hover:text-mystic-gold">ATM 轉帳護持</span>

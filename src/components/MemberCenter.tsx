@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { User, Package, Calendar, MapPin, LogOut, ChevronRight } from 'lucide-react';
+import { User, Package, Calendar, MapPin, LogOut, ChevronRight, Printer } from 'lucide-react';
 import AuthModal from './AuthModal';
 
 interface MemberCenterProps {
@@ -22,6 +22,64 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
         (userProfile?.phone && r.phone === userProfile.phone) ||
         (r as any).userId === user?.id // Future proofing if we add userId to Registration type
     );
+
+    const handlePrintReceipt = (order: any) => {
+        const printWindow = window.open('', '_blank', 'width=500,height=700');
+        if (!printWindow) return;
+
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getDate().toString().padStart(2, '0')}`;
+        const timeStr = `${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}:${today.getSeconds().toString().padStart(2, '0')}`;
+
+        const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>收據預覽 - ${order.name}</title>
+            <style>
+                @page { size: auto; margin: 0mm; }
+                body { font-family: 'Courier New', Courier, monospace; background-color: #555; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+                .preview-container { background-color: white; width: 80mm; padding: 5mm; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; position: relative; }
+                .header { text-align: center; margin-bottom: 15px; }
+                .title { font-size: 20px; font-weight: bold; letter-spacing: 2px; border-bottom: 2px solid #000; padding-bottom: 5px; display: inline-block; }
+                .subtitle { font-size: 14px; margin-top: 5px; font-weight: bold; }
+                .divider { border-top: 1px dashed #000; margin: 10px 0; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+                .table-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 2px; }
+                .item-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; font-weight: bold; }
+                .total-section { text-align: right; margin-top: 15px; font-size: 20px; font-weight: bold; border-top: 2px solid #000; padding-top: 5px; }
+                .footer { text-align: center; font-size: 11px; margin-top: 20px; color: #333; line-height: 1.4; }
+                .note { border: 1px solid #000; padding: 5px; margin-bottom: 10px; font-size: 10px; }
+                .actions-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 50px; display: flex; gap: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+                .btn { padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: transform 0.1s; }
+                .btn:active { transform: scale(0.95); }
+                .btn-print { background-color: #C5A059; color: black; }
+                .btn-close { background-color: #444; color: white; }
+                @media print { body { background-color: white; padding: 0; margin: 0; display: block; } .preview-container { width: 100%; max-width: none; box-shadow: none; margin: 0; padding: 0; } .no-print { display: none !important; } }
+            </style>
+        </head>
+        <body>
+            <div class="preview-container">
+                <div class="header"><div class="title">新莊武壇廣行宮</div><div class="subtitle">各項服務收款收據</div></div>
+                <div class="info-row"><span>單號：${order.id.substring(order.id.length - 6)}</span><span>機台：WEB-MBR</span></div>
+                <div class="info-row"><span>日期：${dateStr}</span><span>時間：${timeStr}</span></div>
+                <div class="info-row"><span>信眾：${order.name}</span><span>電話：${order.phone}</span></div>
+                <div class="divider"></div>
+                <div class="table-header"><span>項目名稱</span><span>金額</span></div>
+                <div class="item-row"><span>${order.serviceTitle}</span><span>NT$ ${order.amount}</span></div>
+                <div class="divider"></div>
+                <div class="total-section">總計 NT$ ${order.amount}</div>
+                <div class="info-row" style="margin-top: 10px;"><span>支付方式：</span><span>現金/轉帳</span></div>
+                <div class="footer"><div class="note">此為宮廟內部收據<br/>僅供證明，不得作為兌獎或報稅憑證</div><p>感謝您的護持，功德無量。</p><p>經手人：(線上列印)</p></div>
+            </div>
+            <div class="actions-bar no-print"><button class="btn btn-print" onclick="window.print()">🖨️ 確認列印</button><button class="btn btn-close" onclick="window.close()">關閉視窗</button></div>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(fullHtml);
+        printWindow.document.close();
+    };
 
     if (!user) {
         return (
@@ -146,11 +204,14 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <span className="text-mystic-gold font-bold text-lg">{order.serviceTitle}</span>
-                                                        <span className={`text-[10px] px-2 py-0.5 rounded border ${order.status === 'PAID' ? 'border-green-500/30 text-green-400 bg-green-500/10' :
-                                                                order.status === 'PENDING' ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10' :
-                                                                    'border-red-500/30 text-red-400 bg-red-500/10'
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded border ${order.status === 'PAID'
+                                                            ? (order.isProcessed ? 'border-green-500/30 text-green-400 bg-green-500/10' : 'border-blue-500/30 text-blue-400 bg-blue-500/10') :
+                                                            order.status === 'PENDING' ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10' :
+                                                                'border-red-500/30 text-red-400 bg-red-500/10'
                                                             }`}>
-                                                            {order.status === 'PAID' ? '已付款/已受理' : order.status === 'PENDING' ? '待付款/處理中' : '已取消'}
+                                                            {order.status === 'PAID'
+                                                                ? (order.isProcessed ? '已圓滿' : '已付款/辦理中')
+                                                                : order.status === 'PENDING' ? '待付款/處理中' : '已取消'}
                                                         </span>
                                                     </div>
                                                     <div className="text-sm text-gray-400">
@@ -161,7 +222,16 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className="text-xl font-serif text-white">NT$ {order.amount}</div>
+                                                    <div className="text-xl font-serif text-white mb-2">NT$ {order.amount}</div>
+                                                    {order.isProcessed && (
+                                                        <button
+                                                            onClick={() => handlePrintReceipt(order)}
+                                                            className="text-xs flex items-center gap-1 bg-mystic-gold/20 text-mystic-gold px-3 py-1.5 rounded hover:bg-mystic-gold hover:text-black transition-colors ml-auto"
+                                                        >
+                                                            <Printer size={14} />
+                                                            列印收據
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
