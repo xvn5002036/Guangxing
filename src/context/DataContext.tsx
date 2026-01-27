@@ -137,12 +137,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .order(orderByCol, { ascending });
 
             if (!error && data) {
-                // Map Supabase fields to camelCase if necessary, but our schema mostly matches.
-                // We might need to handle 'created_at' vs 'createdAt' if types differ.
-                // For this refactor, we assume the Supabase DB columns matched the types or we cast.
-                // Note: snake_case to camelCase conversion might be needed if you strictly use camelCase in Types
-                // But for simplicity, we'll cast.
-                setter(data as any);
+                // Auto-map snake_case to camelCase keys
+                const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
+                const mapKeys = (o: any) => {
+                    const newO: any = {};
+                    for (const key in o) {
+                        newO[toCamel(key)] = o[key];
+                    }
+                    return newO;
+                };
+
+                const mappedData = data.map(mapKeys);
+                setter(mappedData as any);
             }
         };
 

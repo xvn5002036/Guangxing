@@ -147,3 +147,14 @@ create policy "Allow public all access" on public.site_settings for all using (t
 -- 8. Registrations: Full Access
 create policy "Allow public all access" on public.registrations for all using (true) with check (true);
 
+
+-- 9. Realtime Configuration
+-- Enable Realtime for all tables to allow the frontend to listen for changes
+alter publication supabase_realtime add table services;
+alter publication supabase_realtime add table news;
+alter publication supabase_realtime add table events;
+alter publication supabase_realtime add table gallery;
+alter publication supabase_realtime add table org_members;
+alter publication supabase_realtime add table registrations;
+alter publication supabase_realtime add table site_settings;
+alter publication supabase_realtime add table faqs;

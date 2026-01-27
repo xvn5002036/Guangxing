@@ -8,7 +8,7 @@ import DeityInfo from './components/DeityInfo';
 import TempleHistory from './components/TempleHistory';
 import Organization from './components/Organization';
 import Ritual from './components/Ritual';
-import Oracle from './components/Oracle';
+// import Oracle from './components/Oracle';
 import Talisman from './components/Talisman';
 import Services from './components/Services';
 import LightingWall from './components/LightingWall';
@@ -28,28 +28,27 @@ const App: React.FC = () => {
     <DataProvider>
       <div className="min-h-screen flex flex-col bg-mystic-dark relative">
         <BackgroundEffects />
-        
+
         {isAdminOpen ? (
           <AdminPanel onClose={() => setIsAdminOpen(false)} />
         ) : (
           <div className="relative z-10">
             <Header />
             <main className="flex-grow">
-                <Hero />
-                <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
-                <TempleHistory />
-                <Organization />
-                <DeityInfo />
-                <LightingWall />
-                <News />
-                <TempleCalendar />
-                <Ritual />
-                <Talisman />
-                <Oracle />
-                <Services />
-                <Gallery />
-                <FAQ />
-                <Contact />
+              <Hero />
+              <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
+              <TempleHistory />
+              <Organization />
+              <DeityInfo />
+              <LightingWall />
+              <News />
+              <TempleCalendar />
+              <Ritual />
+              <Talisman />
+              <Services />
+              <Gallery />
+              <FAQ />
+              <Contact />
             </main>
             <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
           </div>
