@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AuthModal from './AuthModal';
-import { User, LogIn, Menu, X } from 'lucide-react';
+import { User, LogIn, Menu, X, Lock } from 'lucide-react';
 import { NavItem } from '../types';
 import { useData } from '../context/DataContext';
 
@@ -19,9 +19,10 @@ const navItems: NavItem[] = [
 
 interface HeaderProps {
   onNavigateToMember: () => void;
+  onOpenAdmin?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNavigateToMember }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onOpenAdmin }) => {
   const { siteSettings, user } = useData();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -150,6 +151,19 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember }) => {
                     <span className="hidden md:inline">登入</span>
                   </>
                 )}
+              </button>
+
+              {/* Admin Button */}
+              <button
+                // @ts-ignore
+                onClick={onOpenAdmin}
+                className={`hidden md:flex items-center gap-2 text-xs tracking-widest font-bold py-2 px-4 border rounded-full transition-all duration-300 
+                ${isScrolled || isMenuOpen
+                    ? 'border-mystic-gold text-mystic-gold hover:bg-mystic-gold hover:text-black'
+                    : 'border-white/50 text-white hover:bg-white/10 hover:border-white'}`}
+                title="管理員登入"
+              >
+                <Lock size={14} />
               </button>
 
               {/* Menu Button - Visible on ALL screens. Z-70 keeps it above the overlay */}
