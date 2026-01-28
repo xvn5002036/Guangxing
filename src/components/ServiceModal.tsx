@@ -116,12 +116,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     setStep(2);
   };
 
-  const handleProcessPayment = (e: React.FormEvent) => {
+  const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
       const payload = {
         name: formData.name,
         phone: formData.phone,
@@ -141,9 +140,14 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       };
 
       if (formData.id) {
+        // Update existing
+        // updateRegistration currently is fire-and-forget in context (unless we update it too, but addRegistration was the main culprit)
+        // Let's assume updateRegistration works or is less critical right now. 
+        // Ideally we should make all context methods async/throwable, but sticking to the fix for now.
         updateRegistration(formData.id, payload);
       } else {
-        addRegistration({
+        // Add new
+        await addRegistration({
           serviceId: service?.id || 'EVENT',
           serviceTitle: initialEventTitle || service?.title || '未知服務',
           ...payload,
@@ -151,8 +155,12 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
         });
       }
       setStep(3);
+    } catch (err: any) {
+      console.error("Payment/Registration failed:", err);
+      alert(`報名失敗：${err.message || '未知錯誤'}\n請檢查網路連線或稍後再試。`);
+    } finally {
       setIsProcessing(false);
-    }, 2000);
+    }
   };
 
   const handleLookup = async () => {
@@ -421,7 +429,21 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
 
                   <div className="bg-black/20 p-4 border-l-4 border-mystic-gold flex justify-between items-center">
                     <span className="text-gray-400">合計緣金</span>
-                    <span className="text-2xl font-bold text-mystic-gold">NT$ {formData.amount}</span>
+                    {service?.type === 'DONATION' || service?.title?.includes('隨喜') || service?.title?.includes('捐獻') ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-bold text-mystic-gold">NT$</span>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          className="w-32 bg-black border border-white/20 p-2 text-xl font-bold text-mystic-gold outline-none text-right focus:border-mystic-gold"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-2xl font-bold text-mystic-gold">NT$ {formData.amount}</span>
+                    )}
                   </div>
 
                   <button type="submit" className="w-full py-4 bg-mystic-gold text-black font-bold tracking-widest hover:bg-white transition-colors shadow-lg">

@@ -435,14 +435,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
         const newReg = {
             ...reg,
-            // created_at is handled by DB default usually, but we can pass it if we want ISO
             status: 'PAID' as const,
             is_processed: false
         };
         if (isSupabaseConfigured()) {
             // Map camelCase to snake_case
             const dbReg = {
-                service_id: newReg.serviceId,
+                // If serviceId is 'EVENT' (from generic event registration), set to null to avoid UUID error
+                service_id: (newReg.serviceId === 'EVENT' || !newReg.serviceId) ? null : newReg.serviceId,
                 service_title: newReg.serviceTitle,
                 name: newReg.name,
                 phone: newReg.phone,
@@ -461,7 +461,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 payment_details: newReg.paymentDetails,
                 bank_last_five: newReg.bankLastFive
             };
-            await supabase.from("registrations").insert([dbReg]);
+            const { error } = await supabase.from("registrations").insert([dbReg]);
+            if (error) {
+                console.error("Error adding registration:", error);
+                throw error; // Throw error so UI knows it failed
+            }
         } else {
             const localReg = { ...newReg, id: `local_${Date.now()}`, createdAt: new Date().toISOString(), isProcessed: false };
             setRegistrations(prev => [localReg, ...prev]);

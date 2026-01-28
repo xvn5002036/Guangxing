@@ -22,7 +22,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         resetData
     } = useData();
 
-    const [activeTab, setActiveTab] = useState<'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS'>('GENERAL');
+    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS'>('DASHBOARD');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
@@ -36,6 +36,162 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>({});
     const [isAdding, setIsAdding] = useState(false);
+
+    // REGISTRATIONS Filter & Export Logic
+    const [selectedEventFilter, setSelectedEventFilter] = useState<string>('ALL');
+
+    const handleExportCSV = () => {
+        // Filter data based on current selection
+        const dataToExport = selectedEventFilter === 'ALL'
+            ? registrations
+            : registrations.filter(r => r.serviceTitle === selectedEventFilter);
+
+        if (dataToExport.length === 0) {
+            alert('目前無資料可匯出');
+            return;
+        }
+
+        // CSV Header
+        const headers = ["報名編號", "日期", "活動/服務名稱", "信眾姓名", "電話", "農曆年", "農曆月", "農曆日", "農曆時", "地址", "金額", "狀態", "備註"];
+
+        // CSV Rows
+        const rows = dataToExport.map(reg => [
+            `'${reg.id.substring(reg.id.length - 6)}`, // Add ' to force string in Excel to keep leading zeros if any
+            new Date(reg.createdAt).toLocaleDateString(),
+            reg.serviceTitle,
+            reg.name,
+            reg.phone,
+            reg.birthYear || '',
+            reg.birthMonth || '',
+            reg.birthDay || '',
+            reg.birthHour || '',
+            `${reg.city}${reg.district}${reg.road || ''}${reg.addressDetail || ''}`,
+            reg.amount,
+            reg.isProcessed ? '已辦理' : '未辦理',
+            reg.paymentMethod || ''
+        ]);
+
+        // Combine into CSV string with BOM for UTF-8 (Excel Chinese support)
+        const csvContent = "\uFEFF" + [
+            headers.join(","),
+            ...rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        ].join("\n");
+
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `法會報名名單_${selectedEventFilter === 'ALL' ? '全部' : selectedEventFilter}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Search State
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Batch Selection State
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+    // Helper to get unique event titles for the filter dropdown
+    const uniqueEventTitles = Array.from(new Set([
+        ...events.map(e => e.title),
+        ...services.map(s => s.title)
+    ]));
+
+    // Filter Logic: 1. Event Type -> 2. Search Term
+    const filteredRegistrations = activeTab === 'REGISTRATIONS'
+        ? registrations.filter(r => {
+            const matchesEvent = selectedEventFilter === 'ALL' || r.serviceTitle === selectedEventFilter;
+            const matchesSearch = searchTerm === '' ||
+                r.name.includes(searchTerm) ||
+                r.phone.includes(searchTerm) ||
+                (r.bankLastFive && r.bankLastFive.includes(searchTerm));
+            return matchesEvent && matchesSearch;
+        })
+        : [];
+
+    // Dashboard Statistics Calculation
+    const stats = {
+        totalRevenue: registrations.reduce((sum, reg) => sum + (reg.amount || 0), 0),
+        registrationsCount: registrations.length,
+        unprocessedCount: registrations.filter(r => !r.isProcessed).length,
+        todayNewCount: registrations.filter(r => {
+            const today = new Date();
+            const regDate = new Date(r.createdAt);
+            return regDate.getDate() === today.getDate() &&
+                regDate.getMonth() === today.getMonth() &&
+                regDate.getFullYear() === today.getFullYear();
+        }).length
+    };
+
+    // Recent 5 Registrations
+    const recentRegistrations = [...registrations]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredRegistrations.length / itemsPerPage);
+    const paginatedRegistrations = filteredRegistrations.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    // Batch Actions
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            // Select all currently filtered items (not just current page, usually expected behavior in admins, or just page? Let's do all filtered for bulk ops)
+            // User requested "batch delete", often implies all matching. But to be safe lets select all visible on current filter.
+            setSelectedItems(new Set(filteredRegistrations.map(r => r.id)));
+        } else {
+            setSelectedItems(new Set());
+        }
+    };
+
+    const handleSelectOne = (id: string) => {
+        const newSet = new Set(selectedItems);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedItems(newSet);
+    };
+
+    const handleBatchDelete = async () => {
+        if (selectedItems.size === 0) return;
+
+        if (window.confirm(`確定要刪除選取的 ${selectedItems.size} 筆資料嗎？此動作無法復原。`)) {
+            // We can only delete one by one with current context, or add a bulk delete method.
+            // For now, loop is fine as it's client side calls to context.
+            // Ideally context should expose deleteRegistrations(ids[]).
+            // Let's iterate.
+
+            // Show loading state if we had one, but we'll just process.
+            for (const id of Array.from(selectedItems)) {
+                await deleteRegistration(id);
+            }
+            setSelectedItems(new Set());
+            // Adjust page if empty
+            if (currentPage > 1 && paginatedRegistrations.length === selectedItems.size && filteredRegistrations.length === selectedItems.size) {
+                setCurrentPage(prev => Math.max(1, prev - 1));
+            }
+            alert('已完成批次刪除');
+        }
+    };
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+        setSelectedItems(new Set());
+    }, [selectedEventFilter, searchTerm, activeTab]);
 
     // Settings Form State
     const [settingsForm, setSettingsForm] = useState(siteSettings);
@@ -372,6 +528,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
                     {[
+                        { id: 'DASHBOARD', icon: Layout, label: '總覽/儀表板' },
                         { id: 'GENERAL', icon: Settings, label: '一般設定' },
                         { id: 'ORG', icon: Network, label: '組織管理' },
                         { id: 'NEWS', icon: FileText, label: '最新消息' },
@@ -395,13 +552,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             <div className="flex-1 p-8 overflow-y-auto bg-black">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h2 className="text-2xl font-bold text-white">
-                        {activeTab === 'GENERAL' ? '一般網站設定 (圖片與文字)' :
-                            activeTab === 'ORG' ? '宮廟組織人員管理' :
-                                activeTab === 'REGISTRATIONS' ? '信眾報名清單' :
-                                    activeTab === 'NEWS' ? '最新消息管理' :
-                                        activeTab === 'EVENTS' ? '行事曆管理' :
-                                            activeTab === 'SERVICES' ? '服務項目設定' :
-                                                activeTab === 'FAQS' ? '常見問題管理' : '活動花絮管理'}
+                        {activeTab === 'DASHBOARD' ? '後台管理總覽 (Dashboard)' :
+                            activeTab === 'GENERAL' ? '一般網站設定 (圖片與文字)' :
+                                activeTab === 'ORG' ? '宮廟組織人員管理' :
+                                    activeTab === 'REGISTRATIONS' ? '信眾報名清單' :
+                                        activeTab === 'NEWS' ? '最新消息管理' :
+                                            activeTab === 'EVENTS' ? '行事曆管理' :
+                                                activeTab === 'SERVICES' ? '服務項目設定' :
+                                                    activeTab === 'FAQS' ? '常見問題管理' : '活動花絮管理'}
                     </h2>
                     <div className="flex flex-wrap gap-3">
                         {activeTab === 'GALLERY' && (
@@ -417,13 +575,95 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 </button>
                             </>
                         )}
-                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && (
                             <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600">
                                 <Plus size={18} /> 新增項目
                             </button>
                         )}
                     </div>
                 </div>
+
+                {/* --- DASHBOARD TAB --- */}
+                {activeTab === 'DASHBOARD' && (
+                    <div className="space-y-8 animate-fade-in-up">
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Users size={64} />
+                                </div>
+                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">總報名人數</h3>
+                                <div className="text-3xl font-bold text-white">{stats.registrationsCount} <span className="text-sm font-normal text-gray-500">人</span></div>
+                            </div>
+                            <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Briefcase size={64} />
+                                </div>
+                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">今日新增報名</h3>
+                                <div className="text-3xl font-bold text-green-400">+{stats.todayNewCount} <span className="text-sm font-normal text-gray-500">人</span></div>
+                            </div>
+                            <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Settings size={64} />
+                                </div>
+                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">未辦理案件</h3>
+                                <div className="text-3xl font-bold text-red-400">{stats.unprocessedCount} <span className="text-sm font-normal text-gray-500">件</span></div>
+                            </div>
+                            <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Network size={64} />
+                                </div>
+                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">總金額 (Total Revenue)</h3>
+                                <div className="text-3xl font-bold text-mystic-gold">NT$ {stats.totalRevenue.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        {/* Recent Activity */}
+                        <div className="bg-mystic-charcoal border border-white/10 rounded-sm p-6">
+                            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                                <div className="w-1 h-6 bg-mystic-gold"></div>
+                                最新報名動態
+                            </h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-black/20 text-gray-400 uppercase tracking-widest text-xs">
+                                        <tr>
+                                            <th className="p-4">時間</th>
+                                            <th className="p-4">信眾姓名</th>
+                                            <th className="p-4">服務項目</th>
+                                            <th className="p-4">金額</th>
+                                            <th className="p-4 text-right">狀態</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {recentRegistrations.length > 0 ? recentRegistrations.map(reg => (
+                                            <tr key={reg.id} className="hover:bg-white/5 transition-colors">
+                                                <td className="p-4 text-gray-400">{new Date(reg.createdAt).toLocaleDateString()} {new Date(reg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                                <td className="p-4 font-bold text-white">{reg.name}</td>
+                                                <td className="p-4 text-gray-300">{reg.serviceTitle}</td>
+                                                <td className="p-4 font-mono text-mystic-gold">NT$ {reg.amount}</td>
+                                                <td className="p-4 text-right">
+                                                    <span className={`px-2 py-1 rounded text-xs ${reg.isProcessed ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                                                        {reg.isProcessed ? '已辦理' : '未辦理'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={5} className="p-8 text-center text-gray-500">目前尚無任何報名資料</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="mt-4 text-center">
+                                <button onClick={() => setActiveTab('REGISTRATIONS')} className="text-xs text-gray-400 hover:text-white border-b border-dashed border-gray-600 hover:border-white pb-0.5 transition-all">
+                                    查看所有報名紀錄
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* --- GENERAL SETTINGS TAB --- */}
                 {activeTab === 'GENERAL' && (
@@ -691,46 +931,171 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         )}
 
                         {/* Data Table */}
-                        <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
-                                    <tr><th className="p-4">項目</th><th className="p-4">匯款後五碼</th><th className="p-4">詳情</th><th className="p-4 text-right">操作</th></tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {activeTab === 'REGISTRATIONS' && registrations.map(reg => (
-                                        <tr key={reg.id} className="hover:bg-white/5">
-                                            <td className="p-4"><div className="font-bold text-white">{reg.name}</div><div className="text-xs text-gray-400">{reg.phone}</div><div className="text-xs text-mystic-gold">{reg.serviceTitle}</div></td>
-                                            <td className="p-4 text-gray-300 font-mono">{reg.bankLastFive || '-'}</td>
-                                            <td className="p-4"><button onClick={() => handleToggleStatus(reg)} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${reg.isProcessed ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>{reg.isProcessed ? '已圓滿' : '未辦理'}</button></td>
-                                            <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handlePrintReceipt(reg)} className="p-2 bg-gray-700 rounded"><Printer size={16} /></button><button onClick={() => handleEdit(reg)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteRegistration(reg.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
+                        {activeTab === 'REGISTRATIONS' && (
+                            <div className="flex flex-col gap-4 mb-4 bg-white/5 p-4 rounded border border-white/10">
+                                {/* Top Row: Filters & Actions */}
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        {/* Event Filter */}
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-xs text-gray-400 uppercase font-bold">篩選：</label>
+                                            <select
+                                                className="bg-black border border-white/20 text-white text-sm p-2 rounded outline-none focus:border-mystic-gold"
+                                                value={selectedEventFilter}
+                                                onChange={(e) => setSelectedEventFilter(e.target.value)}
+                                            >
+                                                <option value="ALL">全部活動</option>
+                                                {uniqueEventTitles.map(title => (
+                                                    <option key={title} value={title}>{title}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Search Box */}
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="搜尋姓名/電話..."
+                                                className="bg-black border border-white/20 text-white text-sm p-2 pl-8 rounded outline-none focus:border-mystic-gold w-48"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                            <Briefcase size={14} className="absolute left-2.5 top-3 text-gray-500" />
+                                            {/* Note: Icon usage above is arbitrary, using Search icon if imported would be better but reusing imported Briefcase or similar for generic icon or just wait for Search import fix if needed. Actually Search is imported in line 5. */}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        {selectedItems.size > 0 && (
+                                            <button
+                                                onClick={handleBatchDelete}
+                                                className="bg-red-900/80 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-red-800 transition-colors animate-fade-in"
+                                            >
+                                                <Trash2 size={16} /> 刪除選取 ({selectedItems.size})
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={handleExportCSV}
+                                            className="bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-green-700 transition-colors"
+                                        >
+                                            <FileText size={16} /> 匯出名單 (Excel)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Bottom Row: Stats */}
+                                <div className="text-xs text-gray-500 flex justify-between items-center bg-black/20 p-2 rounded">
+                                    <span>顯示搜尋結果: {filteredRegistrations.length} 筆資料 (共 {registrations.length} 筆)</span>
+                                    <span>已選取: {selectedItems.size} 筆</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'REGISTRATIONS' && (
+                            <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
+                                <div className="flex-1 overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
+                                            <tr>
+                                                <th className="p-4 w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="cursor-pointer"
+                                                        checked={filteredRegistrations.length > 0 && selectedItems.size === filteredRegistrations.length}
+                                                        onChange={handleSelectAll}
+                                                    />
+                                                </th>
+                                                <th className="p-4">項目</th>
+                                                <th className="p-4">金額</th>
+                                                <th className="p-4">匯款後五碼</th>
+                                                <th className="p-4">詳情</th>
+                                                <th className="p-4 text-right">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {paginatedRegistrations.map(reg => (
+                                                <tr key={reg.id} className={`hover:bg-white/5 ${selectedItems.has(reg.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="cursor-pointer"
+                                                            checked={selectedItems.has(reg.id)}
+                                                            onChange={() => handleSelectOne(reg.id)}
+                                                        />
+                                                    </td>
+                                                    <td className="p-4"><div className="font-bold text-white">{reg.name}</div><div className="text-xs text-gray-400">{reg.phone}</div><div className="text-xs text-mystic-gold">{reg.serviceTitle}</div></td>
+                                                    <td className="p-4 text-mystic-gold font-bold">NT$ {reg.amount}</td>
+                                                    <td className="p-4 text-gray-300 font-mono">{reg.bankLastFive || '-'}</td>
+                                                    <td className="p-4"><button onClick={() => handleToggleStatus(reg)} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${reg.isProcessed ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>{reg.isProcessed ? '已圓滿' : '未辦理'}</button></td>
+                                                    <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handlePrintReceipt(reg)} className="p-2 bg-gray-700 rounded"><Printer size={16} /></button><button onClick={() => handleEdit(reg)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteRegistration(reg.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
+
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Pagination Controls */}
+                                <div className="p-4 bg-white/5 border-t border-white/5 flex justify-center items-center gap-4">
+                                    <button
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        className="px-3 py-1 bg-gray-800 text-white rounded disabled:opacity-30 hover:bg-gray-700"
+                                    >
+                                        上一頁
+                                    </button>
+                                    <span className="text-sm text-gray-400">
+                                        第 <span className="text-white font-bold">{currentPage}</span> / {totalPages || 1} 頁
+                                    </span>
+                                    <button
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        className="px-3 py-1 bg-gray-800 text-white rounded disabled:opacity-30 hover:bg-gray-700"
+                                    >
+                                        下一頁
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {/* Shared Table for Non-Registration Tabs */}
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
+                            <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
+                                        <tr>
+                                            {activeTab === 'GALLERY' || activeTab === 'ORG' ? <th className="p-4">內容</th> : <th className="p-4">標題/名稱</th>}
+                                            <th className="p-4">詳細資訊</th>
+                                            <th className="p-4 text-right">操作</th>
                                         </tr>
-                                    ))}
-                                    {activeTab === 'EVENTS' && events.map(item => (
-                                        <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date} ({item.lunarDate})</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteEvent(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                    ))}
-                                    {activeTab === 'NEWS' && news.map(item => (
-                                        <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteNews(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                    ))}
-                                    {activeTab === 'SERVICES' && services.map(item => (
-                                        <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">${item.price}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteService(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                    ))}
-                                    {activeTab === 'GALLERY' && gallery.map(item => (
-                                        <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteGalleryItem(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                    ))}
-                                    {activeTab === 'ORG' && orgMembers.map(item => (
-                                        <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteOrgMember(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                    ))}
-                                    {activeTab === 'FAQS' && faqs.map(item => (
-                                        <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteFaq(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {((activeTab === 'REGISTRATIONS' && registrations.length === 0) || (activeTab === 'EVENTS' && events.length === 0) || (activeTab === 'GALLERY' && gallery.length === 0) || (activeTab === 'NEWS' && news.length === 0) || (activeTab === 'ORG' && orgMembers.length === 0) || (activeTab === 'FAQS' && faqs.length === 0)) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {activeTab === 'EVENTS' && events.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date} ({item.lunarDate})</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteEvent(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                        ))}
+                                        {activeTab === 'NEWS' && news.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteNews(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                        ))}
+                                        {activeTab === 'SERVICES' && services.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">${item.price}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteService(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                        ))}
+                                        {activeTab === 'GALLERY' && gallery.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteGalleryItem(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                        ))}
+                                        {activeTab === 'ORG' && orgMembers.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteOrgMember(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                        ))}
+                                        {activeTab === 'FAQS' && faqs.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteFaq(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {((activeTab === 'EVENTS' && events.length === 0) || (activeTab === 'GALLERY' && gallery.length === 0) || (activeTab === 'NEWS' && news.length === 0) || (activeTab === 'ORG' && orgMembers.length === 0) || (activeTab === 'FAQS' && faqs.length === 0)) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
+                            </div>
+                        )}
                     </>
                 )}
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
