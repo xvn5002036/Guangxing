@@ -14,7 +14,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         news, addNews, updateNews, deleteNews,
         events, addEvent, updateEvent, deleteEvent,
         services, addService, updateService, deleteService,
-        gallery, addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
+        gallery, galleryAlbums, addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
+        addGalleryAlbum, updateGalleryAlbum, deleteGalleryAlbum,
         registrations, updateRegistration, deleteRegistration,
         orgMembers, addOrgMember, updateOrgMember, deleteOrgMember,
         faqs, addFaq, updateFaq, deleteFaq,
@@ -38,12 +39,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const [editForm, setEditForm] = useState<any>({});
 
     const [isAdding, setIsAdding] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Generic Delete Handler
-    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'GALLERY' | 'ORG' | 'FAQ' | 'REGISTRATION', id: string) => {
+    const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+
+    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'GALLERY' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'ALBUM', id: string) => {
         if (!window.confirm('確定要刪除此項目嗎？此動作無法復原。')) return;
 
         try {
@@ -54,6 +58,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             else if (type === 'ORG') await deleteOrgMember(id);
             else if (type === 'FAQ') await deleteFaq(id);
             else if (type === 'REGISTRATION') await deleteRegistration(id);
+            else if (type === 'ALBUM') await deleteGalleryAlbum(id);
         } catch (error: any) {
             console.error("Delete failed:", error);
             if (error.code === '23503') { // Foreign Key Violation
@@ -139,7 +144,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             case 'EVENTS': return events;
             case 'NEWS': return news;
             case 'SERVICES': return services;
-            case 'GALLERY': return gallery;
+            case 'GALLERY':
+                return selectedAlbumId
+                    ? gallery.filter(g => g.albumId === selectedAlbumId)
+                    : galleryAlbums;
             case 'ORG': return orgMembers;
             case 'FAQS': return faqs;
             default: return [];
@@ -171,7 +179,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         }
         if (activeTab === 'NEWS') return check((item as any).title) || check((item as any).date);
         if (activeTab === 'SERVICES') return check((item as any).title) || check((item as any).price);
-        if (activeTab === 'GALLERY') return check((item as any).title) || check((item as any).type);
+        if (activeTab === 'GALLERY') {
+            if (selectedAlbumId) {
+                // Search in photos
+                return check((item as any).title);
+            } else {
+                // Search in albums
+                return check((item as any).title) || check((item as any).description);
+            }
+        }
         if (activeTab === 'ORG') return check((item as any).name) || check((item as any).title);
         if (activeTab === 'FAQS') return check((item as any).question) || check((item as any).answer);
 
@@ -240,9 +256,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     else if (activeTab === 'EVENTS') await deleteEvent(id);
                     else if (activeTab === 'NEWS') await deleteNews(id);
                     else if (activeTab === 'SERVICES') await deleteService(id);
-                    else if (activeTab === 'GALLERY') await deleteGalleryItem(id);
+                    else if (activeTab === 'GALLERY') {
+                        if (selectedAlbumId) await deleteGalleryItem(id);
+                        else await deleteGalleryAlbum(id);
+                    }
                     else if (activeTab === 'ORG') await deleteOrgMember(id);
                     else if (activeTab === 'FAQS') await deleteFaq(id);
+                    // Albums are not batch deleted for safety usually, but we could add ALBUM here if needed
 
                     successCount++;
                 } catch (error) {
@@ -276,8 +296,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // GitHub Import States
     const [showGithubImport, setShowGithubImport] = useState(false);
-    const [githubConfig, setGithubConfig] = useState({ owner: '', repo: '', path: 'public/images' });
+    const [githubConfig, setGithubConfig] = useState({
+        owner: '',
+        repo: '',
+        path: 'gallery',
+        token: ''
+    });
+    const [isUploadingToGithub, setIsUploadingToGithub] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [isSyncingGithub, setIsSyncingGithub] = useState(false);
+    const [showBatchUrlImport, setShowBatchUrlImport] = useState(false);
+    const [batchUrls, setBatchUrls] = useState('');
+    const [isImportingUrls, setIsImportingUrls] = useState(false);
 
     // Local File Upload States
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -373,46 +403,233 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setIsAdding(false);
     };
 
-    const handleSave = async () => {
+    const handleFileUploadToGithub = async (file: File, customPath?: string) => {
+        if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
+            throw new Error('請在 GitHub 匯入設定中填寫完整的 Owner, Repo 與 Token');
+        }
+
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => {
+                const base64String = (reader.result as string).split(',')[1];
+                resolve(base64String);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const base64Content = await base64Promise;
+        const uploadPath = customPath || `${githubConfig.path}/${Date.now()}_${file.name}`;
+        const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${uploadPath}`;
+
+        const response = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${githubConfig.token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: `Upload ${file.name} via CMS`,
+                content: base64Content,
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`GitHub Upload Error: ${error.message}`);
+        }
+
+        const result = await response.json();
+        return result.content.download_url;
+    };
+
+    const handleBatchUrlImport = async () => {
+        const rawUrls = batchUrls.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+        if (rawUrls.length === 0) {
+            alert('請輸入有效的網址 (每行一個)');
+            return;
+        }
+
+        setIsImportingUrls(true);
         try {
-            if (activeTab === 'NEWS') {
-                if (isAdding) await addNews(editForm); else await updateNews(editingId!, editForm);
-            } else if (activeTab === 'EVENTS') {
-                if (isAdding) await addEvent({
-                    ...editForm,
-                    type: editForm.type || 'FESTIVAL',
-                    description: editForm.description || ''
-                });
-                else await updateEvent(editingId!, editForm);
-            } else if (activeTab === 'SERVICES') {
-                if (isAdding) await addService(editForm); else await updateService(editingId!, editForm);
-            } else if (activeTab === 'GALLERY') {
-                if (isAdding) await addGalleryItem({
-                    ...editForm,
-                    type: editForm.type || 'IMAGE'
-                }); else await updateGalleryItem(editingId!, editForm);
-            } else if (activeTab === 'REGISTRATIONS') {
-                await updateRegistration(editingId!, editForm);
-            } else if (activeTab === 'ORG') {
-                if (isAdding) await addOrgMember({
-                    ...editForm,
-                    category: editForm.category || 'STAFF'
-                }); else await updateOrgMember(editingId!, editForm);
-            } else if (activeTab === 'FAQS') {
-                if (isAdding) await addFaq(editForm); else await updateFaq(editingId!, editForm);
+            const finalItems: Omit<GalleryItem, 'id'>[] = [];
+
+            for (const url of rawUrls) {
+                // Check if it's a Google Photos URL
+                if (url.includes('photos.app.goo.gl') || (url.includes('photos.google.com/share') && !url.includes('?key=')) || url.includes('photos.google.com/album/')) {
+
+                    // Specific Warning for private album URLs
+                    if (url.includes('/album/') && !url.includes('/share')) {
+                        alert(`偵測到私人相簿網址：\n${url}\n\n請使用 Google 相簿中的「分享」功能產生的連結 (例如 photos.app.goo.gl/...)，私人網址無法直接匯入。`);
+                        continue;
+                    }
+
+                    try {
+                        console.log("Fetching Google Photos via proxy:", url);
+                        // Use CORS proxy to fetch Google Photos page
+                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        const response = await fetch(proxyUrl);
+                        if (!response.ok) throw new Error("代理伺服器回傳錯誤");
+
+                        const html = await response.text();
+
+                        if (!html || html.length < 100) throw new Error("取得的網頁內容不完整或為空");
+
+                        // Regex to find high-res image URLs in the page content
+                        // Pattern: https://lh[3-6].googleusercontent.com/pw/[ID]
+                        // We use a broader regex but filter afterwards
+                        const imgRegex = /https:\/\/lh[3-6]\.googleusercontent\.com\/[a-zA-Z0-9\/_\-]{50,}/g;
+                        const matches = html.match(imgRegex);
+
+                        if (matches && matches.length > 0) {
+                            // Filter for PW (Shared Photos) or generic long identifiers
+                            const filteredMatches = matches.filter((u: string) => u.includes('/pw/') || u.includes('/lr/'));
+
+                            // Remove duplicates and append high-res param (=w2400)
+                            // We need to strip existing params like =w... before appending
+                            const uniqueUrls = Array.from(new Set(filteredMatches)).map((u: any) => {
+                                let baseUrl = u.split('=')[0]; // Remove existing resize params
+                                return `${baseUrl}=w2400`;
+                            });
+
+                            // Filter out potential UI elements or icons (short IDs)
+                            const validUrls = uniqueUrls.filter((u: string) => u.length > 80);
+
+                            console.log(`Found ${validUrls.length} valid images in album.`);
+
+                            validUrls.forEach((imgUrl, index) => {
+                                finalItems.push({
+                                    title: `從相簿匯入-${index + 1}`,
+                                    type: 'IMAGE' as const,
+                                    url: imgUrl,
+                                    albumId: selectedAlbumId || undefined
+                                });
+                            });
+                        } else {
+                            console.warn("No images found in Google Photos link:", url);
+                            alert(`在該連結中找不到可匯入的圖片，請確認這是一個公開分享的相簿網址。`);
+                        }
+                    } catch (err: any) {
+                        console.error("Error fetching Google Photos album:", err);
+                        alert(`讀取 Google 相簿失敗：可能是代理伺服器暫時不穩定或網址解析有誤。\n錯誤資訊：${err.message}`);
+                    }
+                } else {
+                    // Regular direct link
+                    finalItems.push({
+                        title: '快照匯入',
+                        type: 'IMAGE' as const,
+                        url,
+                        albumId: selectedAlbumId || undefined
+                    });
+                }
             }
-            // Success
+
+            if (finalItems.length > 0) {
+                await addGalleryItems(finalItems);
+                setBatchUrls('');
+                setShowBatchUrlImport(false);
+                alert(`成功匯入 ${finalItems.length} 個項目！`);
+            } else {
+                alert('未找到可匯入的項目，請檢查連結是否正確。');
+            }
+        } catch (error: any) {
+            alert(`匯入失敗：${error.message}`);
+        } finally {
+            setIsImportingUrls(false);
+        }
+    };
+
+    const handleSave = async () => {
+        // Validation: Required title OR selected files
+        if (!editForm.title && !editForm.name && selectedFiles.length === 0) {
+            alert('請填寫標題或選擇檔案');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // Priority: Batch Upload to GitHub (if multiple files selected)
+            if (selectedFiles.length > 0 && activeTab === 'GALLERY') {
+                setIsUploadingToGithub(true);
+                try {
+                    // SEQENTIAL processing to avoid GitHub "reference already exists" race conditions
+                    for (const file of selectedFiles) {
+                        const uploadedUrl = await handleFileUploadToGithub(file);
+
+                        if (selectedAlbumId) {
+                            // Add item to specific album
+                            await addGalleryItem({
+                                title: file.name.replace(/\.[^/.]+$/, ""),
+                                url: uploadedUrl,
+                                type: 'IMAGE',
+                                albumId: selectedAlbumId
+                            });
+                        } else {
+                            if (isAdding) {
+                                await addGalleryItem({
+                                    title: file.name.replace(/\.[^/.]+$/, ""),
+                                    url: uploadedUrl,
+                                    type: 'IMAGE'
+                                });
+                            }
+                        }
+                    }
+
+                    // Specific case: If editing/adding an album and a single file was selected to be the NEW cover
+                    if (!selectedAlbumId && selectedFiles.length === 1) {
+                        const coverUrl = await handleFileUploadToGithub(selectedFiles[0]);
+                        if (isAdding) {
+                            await addGalleryAlbum({ ...editForm, coverImageUrl: coverUrl });
+                        } else {
+                            await updateGalleryAlbum(editingId!, { ...editForm, coverImageUrl: coverUrl });
+                        }
+                    }
+
+                } finally {
+                    setIsUploadingToGithub(false);
+                }
+            } else {
+                // Regular Save Logic (URL or other tabs)
+                let finalUrl = editForm.url || editForm.image || editForm.coverImageUrl;
+
+                if (activeTab === 'NEWS') {
+                    if (isAdding) await addNews(editForm); else await updateNews(editingId!, editForm);
+                } else if (activeTab === 'EVENTS') {
+                    if (isAdding) await addEvent(editForm);
+                    else await updateEvent(editingId!, editForm);
+                } else if (activeTab === 'SERVICES') {
+                    if (isAdding) await addService(editForm); else await updateService(editingId!, editForm);
+                } else if (activeTab === 'GALLERY') {
+                    if (selectedAlbumId) {
+                        if (isAdding) await addGalleryItem({ ...editForm, url: finalUrl, albumId: selectedAlbumId });
+                        else await updateGalleryItem(editingId!, { ...editForm, url: finalUrl });
+                    } else {
+                        if (isAdding) await addGalleryAlbum({ ...editForm, coverImageUrl: finalUrl });
+                        else await updateGalleryAlbum(editingId!, { ...editForm, coverImageUrl: finalUrl });
+                    }
+                } else if (activeTab === 'REGISTRATIONS') {
+                    await updateRegistration(editingId!, editForm);
+                } else if (activeTab === 'ORG') {
+                    if (isAdding) await addOrgMember(editForm); else await updateOrgMember(editingId!, editForm);
+                } else if (activeTab === 'FAQS') {
+                    if (isAdding) await addFaq(editForm); else await updateFaq(editingId!, editForm);
+                }
+            }
+
+            // Reset Form
             setEditingId(null);
             setIsAdding(false);
             setEditForm({});
+            setSelectedFiles([]);
         } catch (error: any) {
             console.error("Save failed:", error);
-            // Translate common schema errors
             let msg = error.message || '未知錯誤';
             if (msg.includes('field_config')) {
-                msg = '資料庫架構尚未更新，缺少 "field_config" 欄位。\n請執行 walkthrough.md 中的 SQL 遷移指令。';
+                msg = '資料庫架構尚未更新，缺少 "field_config" 欄位。';
             }
             alert(`儲存失敗：\n${msg}`);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -532,33 +749,73 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
         setIsSyncingGithub(true);
         try {
-            const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.path}`;
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`GitHub API Error: ${response.statusText}`);
-            const data = await response.json();
-            if (!Array.isArray(data)) throw new Error('路徑不是一個資料夾');
+            const fetchFolder = async (path: string) => {
+                const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${path}`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) return [];
+                return await response.json();
+            };
+
+            const rootData = await fetchFolder(githubConfig.path);
+            if (!Array.isArray(rootData)) throw new Error('根路徑不是一個資料夾');
 
             const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-            const newItems: Omit<GalleryItem, 'id'>[] = [];
+            const isImage = (name: string) => imageExtensions.some(ext => name.toLowerCase().endsWith(ext));
 
-            data.forEach((file: any) => {
-                const lowerName = file.name.toLowerCase();
-                if (file.type === 'file' && imageExtensions.some(ext => lowerName.endsWith(ext))) {
-                    newItems.push({
-                        title: file.name.replace(/\.[^/.]+$/, ""),
-                        type: 'IMAGE',
-                        url: file.download_url
-                    });
-                }
-            });
-
-            if (newItems.length > 0) {
-                addGalleryItems(newItems);
-                alert(`成功從 GitHub 匯入 ${newItems.length} 張圖片！`);
-                setShowGithubImport(false);
-            } else {
-                alert('在該資料夾中找不到圖片檔案。');
+            // 1. Process files in the root path (they become a "General" album or handled as loose)
+            const rootFiles = rootData.filter((f: any) => f.type === 'file' && isImage(f.name));
+            if (rootFiles.length > 0) {
+                const rootAlbumTitle = "未分類相簿";
+                // Add albums/items logic here... 
+                // To keep it simple for now, we'll focus on subfolders
             }
+
+            // 2. Process Subfolders as Albums
+            const subfolders = rootData.filter((f: any) => f.type === 'dir');
+            let totalImported = 0;
+
+            for (const folder of subfolders) {
+                const folderFiles = await fetchFolder(folder.path);
+                const images = folderFiles.filter((f: any) => f.type === 'file' && isImage(f.name));
+
+                if (images.length > 0) {
+                    // Create Album
+                    const albumData = {
+                        title: folder.name,
+                        coverImageUrl: images[0].download_url // Default cover to first image
+                    };
+
+                    // Supabase addGalleryAlbum doesn't return ID easily in current wrapper without modification
+                    // But we can use direct supabase call here for efficiency during import
+                    const { data: album, error: albumError } = await supabase
+                        .from('gallery_albums')
+                        .insert([{
+                            title: albumData.title,
+                            cover_image_url: albumData.coverImageUrl
+                        }])
+                        .select()
+                        .single();
+
+                    if (albumError) {
+                        console.error("Error creating album:", albumError);
+                        continue;
+                    }
+
+                    const galleryItems = images.map((img: any) => ({
+                        title: img.name.replace(/\.[^/.]+$/, ""),
+                        type: 'IMAGE',
+                        url: img.download_url,
+                        album_id: album.id
+                    }));
+
+                    const { error: itemsError } = await supabase.from('gallery').insert(galleryItems);
+                    if (itemsError) console.error("Error adding items for album", folder.name, itemsError);
+                    else totalImported += images.length;
+                }
+            }
+
+            alert(`成功從 GitHub 匯入並建立相簿，共同匯入 ${totalImported} 張圖片！`);
+            setShowGithubImport(false);
 
         } catch (error: any) {
             console.error(error);
@@ -624,13 +881,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         <div className="fixed inset-0 z-[100] bg-black flex flex-col md:flex-row text-white font-sans h-screen overflow-hidden">
 
             {/* Mobile Header */}
-            <div className="md:hidden flex items-center justify-between p-4 bg-mystic-charcoal border-b border-white/5 z-40">
-                <h2 className="text-lg font-bold text-mystic-gold uppercase tracking-widest">Chi Fu CMS</h2>
+            <div className="md:hidden sticky top-0 flex items-center justify-between p-4 bg-mystic-charcoal border-b border-white/10 z-[60] shadow-lg">
+                <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-mystic-gold"></div>
+                    <h2 className="text-lg font-bold text-white uppercase tracking-widest">後台管理</h2>
+                </div>
                 <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="text-white p-2 hover:bg-white/10 rounded"
+                    className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
                 >
-                    {isMobileMenuOpen ? <X size={24} /> : <Home size={24} />} {/* Using Home icon as Menu or just Menu logic */}
+                    {isMobileMenuOpen ? <X size={24} /> : <Layout size={24} />}
                 </button>
             </div>
 
@@ -642,14 +902,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 />
             )}
 
-            {/* Sidebar */}
             <div className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-mystic-charcoal border-r border-white/5 flex flex-col 
-                transform transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-[70] w-72 bg-mystic-charcoal border-r border-white/10 flex flex-col 
+                transform transition-transform duration-300 ease-in-out shadow-2xl
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-                md:relative md:translate-x-0 md:inset-auto md:h-full
+                md:relative md:translate-x-0 md:inset-auto md:h-full md:w-64
             `}>
-                <div className="p-6 border-b border-white/5 hidden md:block">
+                <div className="p-6 border-b border-white/10 hidden md:block">
                     <h2 className="text-xl font-bold text-mystic-gold uppercase tracking-widest">Chi Fu CMS</h2>
                 </div>
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -681,9 +940,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 </div>
             </div>
 
-            <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-black w-full">
+            <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-black w-full pb-20 md:pb-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
-                    <h2 className="text-xl md:text-2xl font-bold text-white">
+                    <h2 className="text-xl md:text-2xl font-bold text-white border-l-4 border-mystic-gold pl-4 transition-all">
                         {activeTab === 'DASHBOARD' ? '後台管理總覽 (Dashboard)' :
                             activeTab === 'GENERAL' ? '一般網站設定 (圖片與文字)' :
                                 activeTab === 'ORG' ? '宮廟組織人員管理' :
@@ -693,22 +952,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 activeTab === 'SERVICES' ? '服務項目設定' :
                                                     activeTab === 'FAQS' ? '常見問題管理' : '活動花絮管理'}
                     </h2>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
                         {activeTab === 'GALLERY' && (
                             <>
-                                <button onClick={() => setShowGithubImport(!showGithubImport)} className="bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-gray-700 transition-colors">
+                                <button onClick={() => setShowGithubImport(!showGithubImport)} className="flex-1 md:flex-none justify-center bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-gray-700 transition-colors text-sm">
                                     <Github size={18} />
                                     {showGithubImport ? '取消' : 'GitHub 匯入'}
                                 </button>
                                 <input type="file" ref={fileInputRef} className="hidden" {...({ webkitdirectory: "", directory: "" } as any)} multiple onChange={handleFolderSelect} />
-                                <button onClick={triggerFolderUpload} disabled={isUploading} className="bg-blue-900/50 border border-blue-500/50 text-blue-200 px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-900 transition-colors disabled:opacity-50">
+                                <button onClick={triggerFolderUpload} disabled={isUploading} className="flex-1 md:flex-none justify-center bg-blue-900/50 border border-blue-500/50 text-blue-200 px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-900 transition-colors disabled:opacity-50 text-sm">
                                     {isUploading ? <Loader2 className="animate-spin" size={18} /> : <FolderInput size={18} />}
                                     {isUploading ? '處理中...' : '模擬上傳'}
                                 </button>
                             </>
                         )}
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && (
-                            <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600">
+                            <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
                                 <Plus size={18} /> 新增項目
                             </button>
                         )}
@@ -756,15 +1015,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 <div className="w-1 h-6 bg-mystic-gold"></div>
                                 最新報名動態
                             </h3>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
+                            <div className="overflow-x-auto -mx-6 px-6">
+                                <table className="w-full text-left text-sm min-w-[500px]">
                                     <thead className="bg-black/20 text-gray-400 uppercase tracking-widest text-xs">
                                         <tr>
-                                            <th className="p-4">時間</th>
-                                            <th className="p-4">信眾姓名</th>
-                                            <th className="p-4">服務項目</th>
-                                            <th className="p-4">金額</th>
-                                            <th className="p-4 text-right">狀態</th>
+                                            <th className="p-4 whitespace-nowrap">時間</th>
+                                            <th className="p-4 whitespace-nowrap">信眾姓名</th>
+                                            <th className="p-4 whitespace-nowrap">服務項目</th>
+                                            <th className="p-4 whitespace-nowrap">金額</th>
+                                            <th className="p-4 text-right whitespace-nowrap">狀態</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
@@ -799,7 +1058,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
                 {/* --- GENERAL SETTINGS TAB --- */}
                 {activeTab === 'GENERAL' && (
-                    <div className="bg-mystic-charcoal p-8 border border-white/5 rounded-sm shadow-xl max-w-4xl animate-fade-in-up">
+                    <div className="bg-mystic-charcoal p-4 md:p-8 border border-white/5 rounded-sm shadow-xl max-w-4xl animate-fade-in-up">
                         {/* ... (Existing General Settings Code) ... */}
 
 
@@ -995,18 +1254,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             <div className="bg-gray-900 border border-gray-700 p-6 mb-8 rounded-sm animate-fade-in-up">
                                 {/* ... (Github Import UI) ... */}
                                 <div className="flex items-center gap-2 mb-4"><Github className="text-white" size={24} /><h3 className="text-lg font-bold text-white">從 GitHub 儲存庫匯入圖片</h3></div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">GitHub 帳號 (Owner)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.owner} onChange={e => setGithubConfig({ ...githubConfig, owner: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">儲存庫名稱 (Repo)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.repo} onChange={e => setGithubConfig({ ...githubConfig, repo: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">資料夾路徑 (Path)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.path} onChange={e => setGithubConfig({ ...githubConfig, path: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-xs text-mystic-gold uppercase tracking-widest">GitHub Token (必填上傳)</label><input type="password" placeholder="ghp_..." className="w-full bg-black border border-mystic-gold/30 p-3 text-white focus:border-mystic-gold outline-none shadow-[0_0_10px_rgba(212,175,55,0.1)]" value={githubConfig.token} onChange={e => setGithubConfig({ ...githubConfig, token: e.target.value })} /></div>
                                 </div>
-                                <div className="flex justify-end gap-3"><button onClick={handleGithubImport} disabled={isSyncingGithub} className="bg-white text-black px-6 py-2 font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50">{isSyncingGithub ? <Loader2 className="animate-spin" size={18} /> : <Github size={18} />}{isSyncingGithub ? '連線讀取中...' : '開始同步匯入'}</button></div>
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={handleGithubImport} disabled={isSyncingGithub} className="bg-white text-black px-6 py-2 font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50">
+                                        {isSyncingGithub ? <Loader2 className="animate-spin" size={18} /> : <Github size={18} />}
+                                        {isSyncingGithub ? '連線讀取中...' : '開始同步匯入'}
+                                    </button>
+                                </div>
                             </div>
                         )}
 
                         {/* Edit/Add Form */}
                         {(editingId || isAdding) && (
-                            <div className="bg-mystic-charcoal p-6 mb-8 border border-mystic-gold/30 animate-fade-in-up rounded-sm shadow-xl">
+                            <div className="bg-mystic-charcoal p-4 md:p-6 mb-8 border border-mystic-gold/30 animate-fade-in-up rounded-sm shadow-xl">
                                 <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4"><Info size={20} className="text-mystic-gold" /><h3 className="text-lg font-bold text-white">{isAdding ? '新增內容' : '編輯內容'}</h3></div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {activeTab === 'REGISTRATIONS' ? (
@@ -1089,17 +1354,56 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">問題 (Question)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.question || ''} onChange={e => setEditForm({ ...editForm, question: e.target.value })} /></div>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">解答 (Answer)</label><textarea rows={5} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.answer || ''} onChange={e => setEditForm({ ...editForm, answer: e.target.value })} /></div>
                                         </>
+                                    ) : activeTab === 'GALLERY' ? (
+                                        <>
+                                            {selectedAlbumId ? (
+                                                <>
+                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">照片標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
+                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">類型</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.type || 'IMAGE'} onChange={e => setEditForm({ ...editForm, type: e.target.value })}><option value="IMAGE">圖片</option><option value="VIDEO">影片</option><option value="YOUTUBE">YouTube</option></select></div>
+                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">照片連結 URL</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.url || ''} onChange={e => setEditForm({ ...editForm, url: e.target.value })} /></div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-mystic-gold uppercase tracking-widest">或 從本地多選上傳至 GitHub</label>
+                                                        <input
+                                                            type="file"
+                                                            multiple
+                                                            accept="image/*"
+                                                            className="w-full bg-white/5 border border-mystic-gold/30 p-2 text-sm text-gray-300 file:bg-mystic-gold file:text-black file:border-none file:px-3 file:py-1 file:mr-3 file:rounded-sm file:font-bold file:cursor-pointer"
+                                                            onChange={e => setSelectedFiles(Array.from(e.target.files || []))}
+                                                        />
+                                                        {selectedFiles.length > 0 && <span className="text-[10px] text-mystic-gold mt-1">已選擇 {selectedFiles.length} 張照片</span>}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">相簿名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
+                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">活動日期</label><input type="date" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.eventDate || ''} onChange={e => setEditForm({ ...editForm, eventDate: e.target.value })} /></div>
+                                                    <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">相簿描述</label><textarea rows={2} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
+                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">封面圖片連結</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.coverImageUrl || ''} onChange={e => setEditForm({ ...editForm, coverImageUrl: e.target.value })} /></div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-mystic-gold uppercase tracking-widest">或 上傳封面至 GitHub</label>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="w-full bg-white/5 border border-mystic-gold/30 p-2 text-sm text-gray-300 file:bg-mystic-gold file:text-black file:border-none file:px-3 file:py-1 file:mr-3 file:rounded-sm file:font-bold file:cursor-pointer"
+                                                            onChange={e => setSelectedFiles([e.target.files?.[0]].filter(Boolean) as File[])}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </>
                                     ) : (
                                         <>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">類型</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.type || 'IMAGE'} onChange={e => setEditForm({ ...editForm, type: e.target.value })}><option value="IMAGE">圖片</option><option value="VIDEO">影片</option><option value="YOUTUBE">YouTube</option></select></div>
-                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">連結 URL</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.url || ''} onChange={e => setEditForm({ ...editForm, url: e.target.value })} /></div>
+                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">標題/名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || editForm.name || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
+                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">連結/路徑</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.url || editForm.image || ''} onChange={e => setEditForm({ ...editForm, url: e.target.value })} /></div>
                                         </>
                                     )}
                                 </div>
                                 <div className="flex gap-3 mt-8 pt-6 border-t border-white/10">
-                                    <button onClick={handleSave} className="bg-mystic-gold text-black px-8 py-3 rounded-sm font-bold hover:bg-white transition-all shadow-lg"><Save size={18} className="inline-block mr-2 mb-1" /> 儲存變更</button>
-                                    <button onClick={() => { setEditingId(null); setIsAdding(false); setEditForm({}); }} className="bg-gray-800 text-white px-8 py-3 rounded-sm hover:bg-gray-700 transition-all">取消</button>
+                                    <button onClick={handleSave} disabled={isSaving || isUploadingToGithub} className="bg-mystic-gold text-black px-8 py-3 rounded-sm font-bold hover:bg-white transition-all shadow-lg disabled:opacity-50 flex items-center gap-2">
+                                        {isSaving || isUploadingToGithub ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                                        {isUploadingToGithub ? `上傳中 (${selectedFiles.length} 張檔案)...` : '儲存變更'}
+                                    </button>
+                                    <button onClick={() => { setEditingId(null); setIsAdding(false); setEditForm({}); setSelectedFiles([]); }} className="bg-gray-800 text-white px-8 py-3 rounded-sm hover:bg-gray-700 transition-all">取消</button>
                                 </div>
                             </div>
                         )}
@@ -1107,14 +1411,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         {/* Data Table */}
                         {activeTab === 'REGISTRATIONS' && (
                             <div className="flex flex-col gap-4 mb-4 bg-white/5 p-4 rounded border border-white/10">
-                                {/* Top Row: Filters & Actions */}
                                 <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
                                         {/* Event Filter */}
-                                        <div className="flex items-center gap-2">
-                                            <label className="text-xs text-gray-400 uppercase font-bold">篩選：</label>
+                                        <div className="flex items-center gap-2 w-full md:w-auto">
+                                            <label className="text-xs text-gray-400 uppercase font-bold whitespace-nowrap">篩選：</label>
                                             <select
-                                                className="bg-black border border-white/20 text-white text-sm p-2 rounded outline-none focus:border-mystic-gold"
+                                                className="flex-1 md:flex-none bg-black border border-white/20 text-white text-sm p-2 rounded outline-none focus:border-mystic-gold"
                                                 value={selectedEventFilter}
                                                 onChange={(e) => setSelectedEventFilter(e.target.value)}
                                             >
@@ -1126,33 +1429,32 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         </div>
 
                                         {/* Search Box */}
-                                        <div className="relative">
+                                        <div className="relative w-full md:w-auto">
                                             <input
                                                 type="text"
                                                 placeholder="搜尋姓名/電話..."
-                                                className="bg-black border border-white/20 text-white text-sm p-2 pl-8 rounded outline-none focus:border-mystic-gold w-48"
+                                                className="w-full md:w-48 bg-black border border-white/20 text-white text-sm p-2 pl-8 rounded outline-none focus:border-mystic-gold"
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
                                             />
                                             <Briefcase size={14} className="absolute left-2.5 top-3 text-gray-500" />
-                                            {/* Note: Icon usage above is arbitrary, using Search icon if imported would be better but reusing imported Briefcase or similar for generic icon or just wait for Search import fix if needed. Actually Search is imported in line 5. */}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                                         {selectedItems.size > 0 && (
                                             <button
                                                 onClick={handleBatchDelete}
-                                                className="bg-red-900/80 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-red-800 transition-colors animate-fade-in"
+                                                className="flex-1 md:flex-none justify-center bg-red-900/80 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-red-800 transition-colors animate-fade-in"
                                             >
-                                                <Trash2 size={16} /> 刪除選取 ({selectedItems.size})
+                                                <Trash2 size={16} /> 刪除 ({selectedItems.size})
                                             </button>
                                         )}
                                         <button
                                             onClick={handleExportCSV}
-                                            className="bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-green-700 transition-colors"
+                                            className="flex-1 md:flex-none justify-center bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-green-700 transition-colors"
                                         >
-                                            <FileText size={16} /> 匯出名單 (Excel)
+                                            <FileText size={16} /> 匯出名單
                                         </button>
                                     </div>
                                 </div>
@@ -1168,7 +1470,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         {activeTab === 'REGISTRATIONS' && (
                             <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
                                 <div className="flex-1 overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
+                                    <table className="w-full text-left text-sm min-w-[700px]">
                                         <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
                                             <tr>
                                                 <th className="p-4 w-10">
@@ -1179,11 +1481,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         onChange={handleSelectAll}
                                                     />
                                                 </th>
-                                                <th className="p-4">項目</th>
-                                                <th className="p-4">金額</th>
-                                                <th className="p-4">匯款後五碼</th>
-                                                <th className="p-4">詳情</th>
-                                                <th className="p-4 text-right">操作</th>
+                                                <th className="p-4 whitespace-nowrap">信眾項目</th>
+                                                <th className="p-4 whitespace-nowrap">金額</th>
+                                                <th className="p-4 whitespace-nowrap">匯款末五碼</th>
+                                                <th className="p-4 whitespace-nowrap">處理狀態</th>
+                                                <th className="p-4 text-right whitespace-nowrap">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
@@ -1247,6 +1549,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             />
                                             <Briefcase size={14} className="absolute left-2.5 top-3 text-gray-500" />
                                         </div>
+                                        {activeTab === 'GALLERY' && selectedAlbumId && (
+                                            <button
+                                                onClick={() => setSelectedAlbumId(null)}
+                                                className="bg-gray-800 text-white px-3 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-gray-700"
+                                            >
+                                                <ImageIcon size={16} /> 返回相簿列表
+                                            </button>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-3">
@@ -1258,11 +1568,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 <Trash2 size={16} /> 刪除選取 ({selectedItems.size})
                                             </button>
                                         )}
+                                        <button
+                                            onClick={() => setShowBatchUrlImport(true)}
+                                            className="bg-blue-900/40 text-blue-400 border border-blue-500/30 px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-blue-900/60 transition-colors"
+                                        >
+                                            <Network size={16} /> 批次連結匯入
+                                        </button>
                                         <button onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }} className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors">
-                                            <Plus size={16} /> 新增項目
+                                            <Plus size={16} /> {activeTab === 'GALLERY' ? (selectedAlbumId ? '上傳照片' : '建立相簿') : '新增項目'}
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Batch URL Import Modal Overlay */}
+                                {showBatchUrlImport && (
+                                    <div className="mt-4 p-6 bg-black/60 border border-blue-500/30 rounded-lg animate-fade-in">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-blue-400 font-bold flex items-center gap-2">
+                                                <Network size={18} /> 批次連結匯入 (如 Google 相簿連結)
+                                            </h4>
+                                            <button onClick={() => setShowBatchUrlImport(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mb-3">請在下方貼上照片網址或 <strong>Google 相簿分享連結</strong>，每行一個。<br />注意：Google 相簿請務必使用「分享」產生的連結 (例如 photos.app.goo.gl/...)。</p>
+                                        <textarea
+                                            rows={8}
+                                            placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
+                                            className="w-full bg-black border border-white/10 p-4 text-sm text-gray-300 font-mono focus:border-blue-500 outline-none"
+                                            value={batchUrls}
+                                            onChange={(e) => setBatchUrls(e.target.value)}
+                                        />
+                                        <div className="flex justify-end mt-4 gap-3">
+                                            <button onClick={() => setShowBatchUrlImport(false)} className="px-6 py-2 text-sm text-gray-400 hover:text-white transition-colors">取消</button>
+                                            <button
+                                                onClick={handleBatchUrlImport}
+                                                disabled={isImportingUrls}
+                                                className="bg-blue-600 text-white px-8 py-2 rounded font-bold hover:bg-blue-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                            >
+                                                {isImportingUrls ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
+                                                確認匯入
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="text-xs text-gray-500 flex justify-between items-center bg-black/20 p-2 rounded">
                                     <span>顯示搜尋結果: {filteredActiveData.length} 筆資料 (共 {activeListData.length} 筆)</span>
                                     <span>已選取: {selectedItems.size} 筆</span>
@@ -1274,7 +1621,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
                             <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
                                 <div className="flex-1 overflow-x-auto">
-                                    <table className="w-full text-left text-sm min-w-[600px]">
+                                    <table className="w-full text-left text-sm min-w-[650px]">
                                         <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
                                             <tr>
                                                 <th className="p-4 w-10">
@@ -1285,9 +1632,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         onChange={handleSelectAll}
                                                     />
                                                 </th>
-                                                {activeTab === 'GALLERY' || activeTab === 'ORG' ? <th className="p-4">內容</th> : <th className="p-4">標題/名稱</th>}
-                                                <th className="p-4">詳細資訊</th>
-                                                <th className="p-4 text-right">操作</th>
+                                                {activeTab === 'GALLERY'
+                                                    ? (selectedAlbumId ? <th className="p-4 whitespace-nowrap">相片內容</th> : <th className="p-4 whitespace-nowrap">相簿內容</th>)
+                                                    : (activeTab === 'ORG' ? <th className="p-4 whitespace-nowrap">內容</th> : <th className="p-4 whitespace-nowrap">標題/名稱</th>)
+                                                }
+                                                <th className="p-4 whitespace-nowrap">{activeTab === 'GALLERY' && !selectedAlbumId ? '照片數量' : '詳細資訊'}</th>
+                                                <th className="p-4 text-right whitespace-nowrap">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
@@ -1331,7 +1681,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             {activeTab === 'GALLERY' && paginatedItems.map((item: any) => (
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
-                                                    <td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('GALLERY', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                    <td className="p-4 flex gap-4">
+                                                        <img src={selectedAlbumId ? item.url : (item.coverImageUrl || 'https://via.placeholder.com/150')} className="w-10 h-10 object-cover rounded" />
+                                                        <div>
+                                                            <div className="font-bold text-white">{item.title}</div>
+                                                            {!selectedAlbumId && <div className="text-xs text-gray-500 line-clamp-1">{item.description}</div>}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-gray-400">
+                                                        {selectedAlbumId ? item.type : (
+                                                            <button
+                                                                onClick={() => setSelectedAlbumId(item.id)}
+                                                                className="text-mystic-gold hover:underline text-xs flex items-center gap-1"
+                                                            >
+                                                                <FolderInput size={14} /> 進入相簿
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-4 text-right flex justify-end gap-2">
+                                                        {selectedAlbumId && (
+                                                            <button
+                                                                title="設為封面"
+                                                                onClick={() => updateGalleryAlbum(selectedAlbumId, { coverImageUrl: item.url })}
+                                                                className="p-2 bg-green-900/20 text-green-400 rounded hover:bg-green-900/40"
+                                                            >
+                                                                <ImageIcon size={16} />
+                                                            </button>
+                                                        )}
+                                                        <button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button>
+                                                        <button onClick={() => handleDelete(selectedAlbumId ? 'GALLERY' : 'ALBUM', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button>
+                                                    </td>
+                                                </tr>
                                             ))}
                                             {activeTab === 'ORG' && paginatedItems.map((item: any) => (
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>

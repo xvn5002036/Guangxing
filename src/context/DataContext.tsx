@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NewsItem, TempleEvent, ServiceItem, GalleryItem, Registration, SiteSettings, OrgMember, FAQItem } from '../types';
+import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem } from '../types';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 // Helper to get formatted date for current month
@@ -102,6 +102,7 @@ interface DataContextType {
     events: TempleEvent[];
     services: ServiceItem[];
     gallery: GalleryItem[];
+    galleryAlbums: GalleryAlbum[];
     registrations: Registration[];
     orgMembers: OrgMember[];
     faqs: FAQItem[];
@@ -125,10 +126,14 @@ interface DataContextType {
     updateService: (id: string, item: Partial<ServiceItem>) => void;
     deleteService: (id: string) => void;
 
-    addGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
-    addGalleryItems: (items: Omit<GalleryItem, 'id'>[]) => void;
-    updateGalleryItem: (id: string, item: Partial<GalleryItem>) => void;
-    deleteGalleryItem: (id: string) => void;
+    addGalleryItem: (item: Omit<GalleryItem, 'id'>) => Promise<void>;
+    addGalleryItems: (items: Omit<GalleryItem, 'id'>[]) => Promise<void>;
+    updateGalleryItem: (id: string, item: Partial<GalleryItem>) => Promise<void>;
+    deleteGalleryItem: (id: string) => Promise<void>;
+
+    addGalleryAlbum: (album: Omit<GalleryAlbum, 'id'>) => Promise<void>;
+    updateGalleryAlbum: (id: string, album: Partial<GalleryAlbum>) => Promise<void>;
+    deleteGalleryAlbum: (id: string) => Promise<void>;
 
     addOrgMember: (item: Omit<OrgMember, 'id'>) => void;
     updateOrgMember: (id: string, item: Partial<OrgMember>) => void;
@@ -160,6 +165,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [faqs, setFaqs] = useState<FAQItem[]>(INITIAL_FAQS);
     const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
     const [registrations, setRegistrations] = useState<Registration[]>([]);
+    const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>([]);
 
     // === SUPABASE SYNCHRONIZATION ===
 
@@ -278,6 +284,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('org_members', setOrgMembers, 'order', true, INITIAL_ORG as any), []); // Assuming 'order' column exists
     useEffect(() => syncTable('registrations', setRegistrations, 'created_at', false), []);
     useEffect(() => syncTable('faqs', setFaqs, 'created_at', false, INITIAL_FAQS as any), []);
+    useEffect(() => syncTable('gallery_albums', setGalleryAlbums, 'created_at', false), []);
 
 
     // === ACTIONS ===
@@ -433,7 +440,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const addGalleryItem = async (item: Omit<GalleryItem, 'id'>) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('gallery').insert([item]);
+            const dbItem: any = { ...item };
+            // Robust mapping: always map albumId to album_id and remove camelCase key
+            dbItem.album_id = item.albumId || null;
+            delete dbItem.albumId;
+
+            const { error } = await supabase.from('gallery').insert([dbItem]);
+            if (error) throw error;
         } else {
             const newItem = { ...item, id: `local_${Date.now()}` };
             setGallery(prev => [...prev, newItem]);
@@ -441,7 +454,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('gallery').insert(items);
+            const dbItems = items.map(item => {
+                const dbItem: any = { ...item };
+                dbItem.album_id = item.albumId || null;
+                delete dbItem.albumId;
+                return dbItem;
+            });
+            const { error } = await supabase.from('gallery').insert(dbItems);
+            if (error) throw error;
         } else {
             const newItems = items.map((item, i) => ({ ...item, id: `local_${Date.now()}_${i}` }));
             setGallery(prev => [...prev, ...newItems]);
@@ -449,7 +469,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('gallery').update(item).eq('id', id);
+            const dbItem: any = { ...item };
+            if (item.albumId) {
+                dbItem.album_id = item.albumId;
+                delete dbItem.albumId;
+            }
+            await supabase.from('gallery').update(dbItem).eq('id', id);
         } else {
             setGallery(prev => prev.map(g => g.id === id ? { ...g, ...item } : g));
         }
@@ -460,6 +485,54 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) throw error;
         } else {
             setGallery(prev => prev.filter(g => g.id !== id));
+        }
+    };
+
+    const addGalleryAlbum = async (album: Omit<GalleryAlbum, 'id'>) => {
+        if (isSupabaseConfigured()) {
+            const dbAlbum: any = { ...album };
+            if (album.coverImageUrl) {
+                dbAlbum.cover_image_url = album.coverImageUrl;
+                delete dbAlbum.coverImageUrl;
+            }
+            if (album.eventDate) {
+                dbAlbum.event_date = album.eventDate;
+                delete dbAlbum.eventDate;
+            }
+            await supabase.from('gallery_albums').insert([dbAlbum]);
+        } else {
+            const newAlbum = { ...album, id: `local_album_${Date.now()}` };
+            setGalleryAlbums(prev => [newAlbum as GalleryAlbum, ...prev]);
+        }
+    };
+
+    const updateGalleryAlbum = async (id: string, album: Partial<GalleryAlbum>) => {
+        if (isSupabaseConfigured()) {
+            const dbAlbum: any = { ...album };
+            if (album.coverImageUrl) {
+                dbAlbum.cover_image_url = album.coverImageUrl;
+                delete dbAlbum.coverImageUrl;
+            }
+            if (album.eventDate) {
+                dbAlbum.event_date = album.eventDate;
+                delete dbAlbum.eventDate;
+            }
+            // Remove derived fields
+            delete dbAlbum.photoCount;
+            await supabase.from('gallery_albums').update(dbAlbum).eq('id', id);
+        } else {
+            setGalleryAlbums(prev => prev.map(a => a.id === id ? { ...a, ...album } : a));
+        }
+    };
+
+    const deleteGalleryAlbum = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            // First check if it has photos? Or let cascade handle if configured (better)
+            // But we don't have cascade in current schema view yet.
+            const { error } = await supabase.from('gallery_albums').delete().eq('id', id);
+            if (error) throw error;
+        } else {
+            setGalleryAlbums(prev => prev.filter(a => a.id !== id));
         }
     };
 
@@ -731,6 +804,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addEvent, updateEvent, deleteEvent,
             addService, updateService, deleteService,
             addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
+            addGalleryAlbum, updateGalleryAlbum, deleteGalleryAlbum,
+            galleryAlbums,
             addOrgMember, updateOrgMember, deleteOrgMember,
             addFaq, updateFaq, deleteFaq,
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,

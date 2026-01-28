@@ -107,12 +107,22 @@ create table public.events (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 2.6 Gallery (Photos/Videos)
+-- 2.6 Gallery (Albums and Photos)
+create table public.gallery_albums (
+  id uuid primary key default uuid_generate_v4(),
+  title text not null,
+  description text,
+  cover_image_url text,
+  event_date date,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 create table public.gallery (
   id uuid primary key default uuid_generate_v4(),
   type text check (type in ('IMAGE', 'VIDEO', 'YOUTUBE')),
   url text not null,
   title text,
+  album_id uuid references public.gallery_albums(id) on delete cascade,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -159,6 +169,12 @@ create table public.site_settings (
   history_image_stone text,
   history_stone_title text,
   history_stone_desc text,
+  history_title1 text,
+  history_desc1 text,
+  history_title2 text,
+  history_desc2 text,
+  history_title3 text,
+  history_desc3 text,
   config_donation jsonb,
   config_light jsonb,
   config_event jsonb,
@@ -176,6 +192,7 @@ alter table public.registrations enable row level security;
 alter table public.news enable row level security;
 alter table public.events enable row level security;
 alter table public.gallery enable row level security;
+alter table public.gallery_albums enable row level security;
 alter table public.org_members enable row level security;
 alter table public.faqs enable row level security;
 alter table public.site_settings enable row level security;
@@ -200,9 +217,11 @@ create policy "Admins can manage news" on public.news for all using (public.is_a
 create policy "Public can view events" on public.events for select using (true);
 create policy "Admins can manage events" on public.events for all using (public.is_admin());
 
--- Gallery
+-- Gallery & Albums
 create policy "Public can view gallery" on public.gallery for select using (true);
 create policy "Admins can manage gallery" on public.gallery for all using (public.is_admin());
+create policy "Public can view albums" on public.gallery_albums for select using (true);
+create policy "Admins can manage albums" on public.gallery_albums for all using (public.is_admin());
 
 -- Org Members
 create policy "Public can view members" on public.org_members for select using (true);
@@ -240,6 +259,7 @@ alter publication supabase_realtime add table services;
 alter publication supabase_realtime add table news;
 alter publication supabase_realtime add table events;
 alter publication supabase_realtime add table gallery;
+alter publication supabase_realtime add table gallery_albums;
 alter publication supabase_realtime add table org_members;
 alter publication supabase_realtime add table registrations;
 alter publication supabase_realtime add table site_settings;

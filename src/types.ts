@@ -86,11 +86,22 @@ export interface TempleEvent {
   fieldConfig?: FieldConfig; // Per-item configuration
 }
 
+export interface GalleryAlbum {
+  id: string;
+  title: string;
+  description?: string;
+  coverImageUrl?: string;
+  eventDate?: string;
+  createdAt?: string;
+  photoCount?: number; // Optional derived field
+}
+
 export interface GalleryItem {
   id: string;
   type: 'IMAGE' | 'VIDEO' | 'YOUTUBE';
   url: string;
   title: string;
+  albumId?: string;
 }
 
 export type OrgCategory = 'LEADER' | 'EXECUTIVE' | 'STAFF';
