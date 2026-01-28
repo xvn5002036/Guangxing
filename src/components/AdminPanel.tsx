@@ -36,7 +36,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     // Admin UI States
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>({});
+
     const [isAdding, setIsAdding] = useState(false);
+
+    // Mobile Menu State
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // REGISTRATIONS Filter & Export Logic
     const [selectedEventFilter, setSelectedEventFilter] = useState<string>('ALL');
@@ -544,12 +548,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     );
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black flex text-white font-sans">
-            <div className="w-64 bg-mystic-charcoal border-r border-white/5 flex flex-col">
-                <div className="p-6 border-b border-white/5">
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col md:flex-row text-white font-sans h-screen overflow-hidden">
+
+            {/* Mobile Header */}
+            <div className="md:hidden flex items-center justify-between p-4 bg-mystic-charcoal border-b border-white/5 z-40">
+                <h2 className="text-lg font-bold text-mystic-gold uppercase tracking-widest">Chi Fu CMS</h2>
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="text-white p-2 hover:bg-white/10 rounded"
+                >
+                    {isMobileMenuOpen ? <X size={24} /> : <Home size={24} />} {/* Using Home icon as Menu or just Menu logic */}
+                </button>
+            </div>
+
+            {/* Mobile Backdrop */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/80 z-40 md:hidden backdrop-blur-sm"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
+            <div className={`
+                fixed inset-y-0 left-0 z-50 w-64 bg-mystic-charcoal border-r border-white/5 flex flex-col 
+                transform transition-transform duration-300 ease-in-out
+                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                md:relative md:translate-x-0 md:inset-auto md:h-full
+            `}>
+                <div className="p-6 border-b border-white/5 hidden md:block">
                     <h2 className="text-xl font-bold text-mystic-gold uppercase tracking-widest">Chi Fu CMS</h2>
                 </div>
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     {[
                         { id: 'DASHBOARD', icon: Layout, label: '總覽/儀表板' },
                         { id: 'GENERAL', icon: Settings, label: '一般設定' },
@@ -561,20 +591,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         { id: 'FAQS', icon: HelpCircle, label: '常見問題' },
                         { id: 'REGISTRATIONS', icon: Users, label: '報名管理' }
                     ].map(tab => (
-                        <button key={tab.id} onClick={() => { setActiveTab(tab.id as any); setEditingId(null); setIsAdding(false); setShowGithubImport(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-colors ${activeTab === tab.id ? 'bg-mystic-gold text-black' : 'text-gray-400 hover:bg-white/5'}`}>
+                        <button key={tab.id} onClick={() => {
+                            setActiveTab(tab.id as any);
+                            setEditingId(null);
+                            setIsAdding(false);
+                            setShowGithubImport(false);
+                            setIsMobileMenuOpen(false); // Close on selection
+                        }} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-colors ${activeTab === tab.id ? 'bg-mystic-gold text-black' : 'text-gray-400 hover:bg-white/5'}`}>
                             <tab.icon size={18} /> {tab.label}
                         </button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-white/5 space-y-2">
+                <div className="p-4 border-t border-white/5 space-y-2 bg-mystic-charcoal">
                     <button onClick={onClose} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-colors text-xs"><Home size={14} /> 回首頁</button>
                     <button onClick={onClose} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 rounded transition-colors"><LogOut size={18} /> 登出系統</button>
                 </div>
             </div>
 
-            <div className="flex-1 p-8 overflow-y-auto bg-black">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h2 className="text-2xl font-bold text-white">
+            <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-black w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
+                    <h2 className="text-xl md:text-2xl font-bold text-white">
                         {activeTab === 'DASHBOARD' ? '後台管理總覽 (Dashboard)' :
                             activeTab === 'GENERAL' ? '一般網站設定 (圖片與文字)' :
                                 activeTab === 'ORG' ? '宮廟組織人員管理' :
@@ -780,10 +816,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
                                 {/* Roof Section */}
                                 <div className="mb-6 border border-white/5 p-4 rounded bg-black/20">
-                                    <h5 className="text-xs font-bold text-gray-400 mb-3 border-b border-white/5 pb-2">區塊 1：燕尾脊</h5>
-                                    <div className="grid grid-cols-1 gap-4">
+                                    <h5 className="text-xs font-bold text-gray-400 mb-3 border-b border-white/5 pb-2">宮廟主神資訊</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <label className="text-xs text-gray-500 uppercase">圖片連結</label>
+                                            <label className="text-xs text-gray-500 uppercase">主神聖像 (URL)</label>
                                             <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={settingsForm.historyImageRoof} onChange={e => setSettingsForm({ ...settingsForm, historyImageRoof: e.target.value })} />
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1125,35 +1161,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         {/* Shared Table for Non-Registration Tabs */}
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
                             <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
-                                        <tr>
-                                            {activeTab === 'GALLERY' || activeTab === 'ORG' ? <th className="p-4">內容</th> : <th className="p-4">標題/名稱</th>}
-                                            <th className="p-4">詳細資訊</th>
-                                            <th className="p-4 text-right">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5">
-                                        {activeTab === 'EVENTS' && events.map(item => (
-                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date} ({item.lunarDate})</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteEvent(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                        ))}
-                                        {activeTab === 'NEWS' && news.map(item => (
-                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteNews(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                        ))}
-                                        {activeTab === 'SERVICES' && services.map(item => (
-                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">${item.price}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteService(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                        ))}
-                                        {activeTab === 'GALLERY' && gallery.map(item => (
-                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteGalleryItem(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                        ))}
-                                        {activeTab === 'ORG' && orgMembers.map(item => (
-                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteOrgMember(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                        ))}
-                                        {activeTab === 'FAQS' && faqs.map(item => (
-                                            <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteFaq(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm min-w-[600px]">
+                                        <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
+                                            <tr>
+                                                {activeTab === 'GALLERY' || activeTab === 'ORG' ? <th className="p-4">內容</th> : <th className="p-4">標題/名稱</th>}
+                                                <th className="p-4">詳細資訊</th>
+                                                <th className="p-4 text-right">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {activeTab === 'EVENTS' && events.map(item => (
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date} ({item.lunarDate})</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteEvent(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                            {activeTab === 'NEWS' && news.map(item => (
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteNews(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                            {activeTab === 'SERVICES' && services.map(item => (
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">${item.price}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteService(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                            {activeTab === 'GALLERY' && gallery.map(item => (
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteGalleryItem(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                            {activeTab === 'ORG' && orgMembers.map(item => (
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteOrgMember(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                            {activeTab === 'FAQS' && faqs.map(item => (
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteFaq(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                                 {((activeTab === 'EVENTS' && events.length === 0) || (activeTab === 'GALLERY' && gallery.length === 0) || (activeTab === 'NEWS' && news.length === 0) || (activeTab === 'ORG' && orgMembers.length === 0) || (activeTab === 'FAQS' && faqs.length === 0)) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
                             </div>
                         )}
