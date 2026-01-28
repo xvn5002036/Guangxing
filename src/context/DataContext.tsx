@@ -785,10 +785,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const signOut = async () => {
-        if (isSupabaseConfigured()) {
-            await supabase.auth.signOut();
-            alert('您已成功登出');
-        } else {
+        try {
+            if (isSupabaseConfigured()) {
+                await supabase.auth.signOut();
+            }
+        } catch (error) {
+            console.error("Supabase signOut error:", error);
+        } finally {
             setUser(null);
             setUserProfile(null);
         }

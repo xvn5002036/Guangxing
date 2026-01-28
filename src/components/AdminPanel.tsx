@@ -20,7 +20,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         orgMembers, addOrgMember, updateOrgMember, deleteOrgMember,
         faqs, addFaq, updateFaq, deleteFaq,
         siteSettings, updateSiteSettings,
-        resetData
+        resetData, signOut
     } = useData();
 
     const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS'>('DASHBOARD');
@@ -130,6 +130,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Batch Selection State
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            setForceDashboard(false);
+            onClose(); // Optional: close the panel after logout
+        } catch (error) {
+            console.error("Logout failed:", error);
+            // Even if signOut fails, we should clear local state
+            setForceDashboard(false);
+            onClose();
+        }
+    };
 
     // Helper to get unique event titles for the filter dropdown
     const uniqueEventTitles = Array.from(new Set([
@@ -934,9 +947,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         </button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-white/5 space-y-2 bg-mystic-charcoal">
+                <div className="p-4 border-t border-white/10 space-y-2 bg-mystic-charcoal">
                     <button onClick={onClose} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-colors text-xs"><Home size={14} /> 回首頁</button>
-                    <button onClick={onClose} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 rounded transition-colors"><LogOut size={18} /> 登出系統</button>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 rounded transition-colors font-bold"><LogOut size={18} /> 登出系統</button>
                 </div>
             </div>
 
