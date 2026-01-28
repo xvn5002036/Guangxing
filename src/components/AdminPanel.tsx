@@ -132,17 +132,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         ...services.map(s => s.title)
     ]));
 
-    // Filter Logic: 1. Event Type -> 2. Search Term
-    const filteredRegistrations = activeTab === 'REGISTRATIONS'
-        ? registrations.filter(r => {
+    // Generic Data Filtering Logic
+    const activeListData = (() => {
+        switch (activeTab) {
+            case 'REGISTRATIONS': return registrations;
+            case 'EVENTS': return events;
+            case 'NEWS': return news;
+            case 'SERVICES': return services;
+            case 'GALLERY': return gallery;
+            case 'ORG': return orgMembers;
+            case 'FAQS': return faqs;
+            default: return [];
+        }
+    })();
+
+    const filteredActiveData = activeListData.filter(item => {
+        // Special logic for Registrations (keep existing filters)
+        if (activeTab === 'REGISTRATIONS') {
+            const r = item as Registration;
             const matchesEvent = selectedEventFilter === 'ALL' || r.serviceTitle === selectedEventFilter;
             const matchesSearch = searchTerm === '' ||
                 r.name.includes(searchTerm) ||
                 r.phone.includes(searchTerm) ||
                 (r.bankLastFive && r.bankLastFive.includes(searchTerm));
             return matchesEvent && matchesSearch;
-        })
-        : [];
+        }
+
+        // Generic logic for other types
+        if (searchTerm === '') return true;
+        const lowTerm = searchTerm.toLowerCase();
+
+        // Helper to safe check strings
+        const check = (val: any) => String(val || '').toLowerCase().includes(lowTerm);
+
+        if (activeTab === 'EVENTS') {
+            const i = item as any; // Type assertion for convenience
+            return check(i.title) || check(i.date) || check(i.lunarDate);
+        }
+        if (activeTab === 'NEWS') return check((item as any).title) || check((item as any).date);
+        if (activeTab === 'SERVICES') return check((item as any).title) || check((item as any).price);
+        if (activeTab === 'GALLERY') return check((item as any).title) || check((item as any).type);
+        if (activeTab === 'ORG') return check((item as any).name) || check((item as any).title);
+        if (activeTab === 'FAQS') return check((item as any).question) || check((item as any).answer);
+
+        return true;
+    });
 
     // Dashboard Statistics Calculation
     const stats = {
@@ -165,18 +199,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
 
     // Pagination Logic
-    const totalPages = Math.ceil(filteredRegistrations.length / itemsPerPage);
-    const paginatedRegistrations = filteredRegistrations.slice(
+    const totalPages = Math.ceil(filteredActiveData.length / itemsPerPage);
+    const paginatedItems = filteredActiveData.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+    // Backward compatibility for existing code using 'paginatedRegistrations'
+    const paginatedRegistrations = activeTab === 'REGISTRATIONS' ? (paginatedItems as Registration[]) : [];
 
     // Batch Actions
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            // Select all currently filtered items (not just current page, usually expected behavior in admins, or just page? Let's do all filtered for bulk ops)
-            // User requested "batch delete", often implies all matching. But to be safe lets select all visible on current filter.
-            setSelectedItems(new Set(filteredRegistrations.map(r => r.id)));
+            setSelectedItems(new Set(filteredActiveData.map(item => item.id!))); // Ensure ID exists
         } else {
             setSelectedItems(new Set());
         }
@@ -201,22 +235,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
             for (const id of Array.from(selectedItems)) {
                 try {
-                    await deleteRegistration(id);
+                    // Switch dispatch based on activeTab
+                    if (activeTab === 'REGISTRATIONS') await deleteRegistration(id);
+                    else if (activeTab === 'EVENTS') await deleteEvent(id);
+                    else if (activeTab === 'NEWS') await deleteNews(id);
+                    else if (activeTab === 'SERVICES') await deleteService(id);
+                    else if (activeTab === 'GALLERY') await deleteGalleryItem(id);
+                    else if (activeTab === 'ORG') await deleteOrgMember(id);
+                    else if (activeTab === 'FAQS') await deleteFaq(id);
+
                     successCount++;
                 } catch (error) {
-                    console.error(`Failed to delete registration ${id}:`, error);
+                    console.error(`Failed to delete item ${id}:`, error);
                     failCount++;
                 }
             }
 
             setSelectedItems(new Set());
-            // Adjust page if empty
-            if (currentPage > 1 && paginatedRegistrations.length === selectedItems.size && filteredRegistrations.length === selectedItems.size) {
+            // Adjust page logic
+            if (currentPage > 1 && paginatedItems.length === selectedItems.size && filteredActiveData.length === selectedItems.size) {
                 setCurrentPage(prev => Math.max(1, prev - 1));
             }
 
             if (failCount > 0) {
-                alert(`批次處理完成。成功刪除: ${successCount} 筆，失敗: ${failCount} 筆。\n(失敗原因通常是網路問題或資料庫限制)`);
+                alert(`批次處理完成。成功刪除: ${successCount} 筆，失敗: ${failCount} 筆。\n(失敗原因通常是資料庫關聯限制)`);
             } else {
                 alert('已完成批次刪除');
             }
@@ -1117,7 +1159,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
                                 {/* Bottom Row: Stats */}
                                 <div className="text-xs text-gray-500 flex justify-between items-center bg-black/20 p-2 rounded">
-                                    <span>顯示搜尋結果: {filteredRegistrations.length} 筆資料 (共 {registrations.length} 筆)</span>
+                                    <span>顯示搜尋結果: {filteredActiveData.length} 筆資料 (共 {registrations.length} 筆)</span>
                                     <span>已選取: {selectedItems.size} 筆</span>
                                 </div>
                             </div>
@@ -1133,7 +1175,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <input
                                                         type="checkbox"
                                                         className="cursor-pointer"
-                                                        checked={filteredRegistrations.length > 0 && selectedItems.size === filteredRegistrations.length}
+                                                        checked={filteredActiveData.length > 0 && selectedItems.size === filteredActiveData.length}
                                                         onChange={handleSelectAll}
                                                     />
                                                 </th>
@@ -1189,21 +1231,69 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 </div>
                             </div>
                         )}
+                        {/* Shared Search & Actions for Non-Registration Tabs */}
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
+                            <div className="flex flex-col gap-4 mb-4 bg-white/5 p-4 rounded border border-white/10">
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        {/* Search Box */}
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="搜尋關鍵字..."
+                                                className="bg-black border border-white/20 text-white text-sm p-2 pl-8 rounded outline-none focus:border-mystic-gold w-48"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                            <Briefcase size={14} className="absolute left-2.5 top-3 text-gray-500" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        {selectedItems.size > 0 && (
+                                            <button
+                                                onClick={handleBatchDelete}
+                                                className="bg-red-900/80 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-red-800 transition-colors animate-fade-in"
+                                            >
+                                                <Trash2 size={16} /> 刪除選取 ({selectedItems.size})
+                                            </button>
+                                        )}
+                                        <button onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }} className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors">
+                                            <Plus size={16} /> 新增項目
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-gray-500 flex justify-between items-center bg-black/20 p-2 rounded">
+                                    <span>顯示搜尋結果: {filteredActiveData.length} 筆資料 (共 {activeListData.length} 筆)</span>
+                                    <span>已選取: {selectedItems.size} 筆</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Shared Table for Non-Registration Tabs */}
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
-                            <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl">
-                                <div className="overflow-x-auto">
+                            <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
+                                <div className="flex-1 overflow-x-auto">
                                     <table className="w-full text-left text-sm min-w-[600px]">
                                         <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
                                             <tr>
+                                                <th className="p-4 w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="cursor-pointer"
+                                                        checked={filteredActiveData.length > 0 && selectedItems.size === filteredActiveData.length}
+                                                        onChange={handleSelectAll}
+                                                    />
+                                                </th>
                                                 {activeTab === 'GALLERY' || activeTab === 'ORG' ? <th className="p-4">內容</th> : <th className="p-4">標題/名稱</th>}
                                                 <th className="p-4">詳細資訊</th>
                                                 <th className="p-4 text-right">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
-                                            {activeTab === 'EVENTS' && events.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5">
+                                            {activeTab === 'EVENTS' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
                                                     <td className="p-4 text-white font-bold">{item.title}</td>
                                                     <td className="p-4 text-gray-400">
                                                         <div className="mb-1">{item.date} ({item.lunarDate})</div>
@@ -1217,11 +1307,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('EVENT', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
                                                 </tr>
                                             ))}
-                                            {activeTab === 'NEWS' && news.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('NEWS', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            {activeTab === 'NEWS' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
+                                                    <td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('NEWS', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
-                                            {activeTab === 'SERVICES' && services.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5">
+                                            {activeTab === 'SERVICES' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
                                                     <td className="p-4 text-white font-bold">{item.title}</td>
                                                     <td className="p-4 text-gray-400">
                                                         <div className="mb-1">${item.price}</div>
@@ -1235,21 +1328,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('SERVICE', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
                                                 </tr>
                                             ))}
-                                            {activeTab === 'GALLERY' && gallery.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('GALLERY', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            {activeTab === 'GALLERY' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
+                                                    <td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('GALLERY', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
-                                            {activeTab === 'ORG' && orgMembers.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('ORG', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            {activeTab === 'ORG' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
+                                                    <td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('ORG', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
-                                            {activeTab === 'FAQS' && faqs.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('FAQ', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            {activeTab === 'FAQS' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
+                                                    <td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('FAQ', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
-                                {((activeTab === 'EVENTS' && events.length === 0) || (activeTab === 'GALLERY' && gallery.length === 0) || (activeTab === 'NEWS' && news.length === 0) || (activeTab === 'ORG' && orgMembers.length === 0) || (activeTab === 'FAQS' && faqs.length === 0)) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
+
+                                {/* Pagination Controls */}
+                                <div className="p-4 bg-white/5 border-t border-white/5 flex justify-center items-center gap-4">
+                                    <button
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        className="px-3 py-1 bg-gray-800 text-white rounded disabled:opacity-30 hover:bg-gray-700"
+                                    >
+                                        上一頁
+                                    </button>
+                                    <span className="text-sm text-gray-400">
+                                        第 <span className="text-white font-bold">{currentPage}</span> / {totalPages || 1} 頁
+                                    </span>
+                                    <button
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        className="px-3 py-1 bg-gray-800 text-white rounded disabled:opacity-30 hover:bg-gray-700"
+                                    >
+                                        下一頁
+                                    </button>
+                                </div>
                             </div>
                         )}
+                        {((activeTab === 'EVENTS' || activeTab === 'NEWS' || activeTab === 'SERVICES' || activeTab === 'GALLERY' || activeTab === 'ORG' || activeTab === 'FAQS') && paginatedItems.length === 0) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
                     </>
                 )}
             </div >
