@@ -42,6 +42,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // Generic Delete Handler
+    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'GALLERY' | 'ORG' | 'FAQ' | 'REGISTRATION', id: string) => {
+        if (!window.confirm('確定要刪除此項目嗎？此動作無法復原。')) return;
+
+        try {
+            if (type === 'NEWS') await deleteNews(id);
+            else if (type === 'EVENT') await deleteEvent(id);
+            else if (type === 'SERVICE') await deleteService(id);
+            else if (type === 'GALLERY') await deleteGalleryItem(id);
+            else if (type === 'ORG') await deleteOrgMember(id);
+            else if (type === 'FAQ') await deleteFaq(id);
+            else if (type === 'REGISTRATION') await deleteRegistration(id);
+        } catch (error: any) {
+            console.error("Delete failed:", error);
+            if (error.code === '23503') { // Foreign Key Violation
+                alert('無法刪除：此項目已被其他資料引用 (例如已有人報名此活動)。\n請先刪除相關聯的資料後再試。');
+            } else {
+                alert(`刪除失敗：${error.message || '未知錯誤'}`);
+            }
+        }
+    };
+
     // REGISTRATIONS Filter & Export Logic
     const [selectedEventFilter, setSelectedEventFilter] = useState<string>('ALL');
 
@@ -174,21 +196,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         if (selectedItems.size === 0) return;
 
         if (window.confirm(`確定要刪除選取的 ${selectedItems.size} 筆資料嗎？此動作無法復原。`)) {
-            // We can only delete one by one with current context, or add a bulk delete method.
-            // For now, loop is fine as it's client side calls to context.
-            // Ideally context should expose deleteRegistrations(ids[]).
-            // Let's iterate.
+            let successCount = 0;
+            let failCount = 0;
 
-            // Show loading state if we had one, but we'll just process.
             for (const id of Array.from(selectedItems)) {
-                await deleteRegistration(id);
+                try {
+                    await deleteRegistration(id);
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to delete registration ${id}:`, error);
+                    failCount++;
+                }
             }
+
             setSelectedItems(new Set());
             // Adjust page if empty
             if (currentPage > 1 && paginatedRegistrations.length === selectedItems.size && filteredRegistrations.length === selectedItems.size) {
                 setCurrentPage(prev => Math.max(1, prev - 1));
             }
-            alert('已完成批次刪除');
+
+            if (failCount > 0) {
+                alert(`批次處理完成。成功刪除: ${successCount} 筆，失敗: ${failCount} 筆。\n(失敗原因通常是網路問題或資料庫限制)`);
+            } else {
+                alert('已完成批次刪除');
+            }
         }
     };
 
@@ -1128,7 +1159,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4 text-mystic-gold font-bold">NT$ {reg.amount}</td>
                                                     <td className="p-4 text-gray-300 font-mono">{reg.bankLastFive || '-'}</td>
                                                     <td className="p-4"><button onClick={() => handleToggleStatus(reg)} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${reg.isProcessed ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>{reg.isProcessed ? '已圓滿' : '未辦理'}</button></td>
-                                                    <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handlePrintReceipt(reg)} className="p-2 bg-gray-700 rounded"><Printer size={16} /></button><button onClick={() => handleEdit(reg)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteRegistration(reg.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
+                                                    <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handlePrintReceipt(reg)} className="p-2 bg-gray-700 rounded"><Printer size={16} /></button><button onClick={() => handleEdit(reg)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('REGISTRATION', reg.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
 
                                                 </tr>
                                             ))}
@@ -1172,22 +1203,46 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
                                             {activeTab === 'EVENTS' && events.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date} ({item.lunarDate})</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteEvent(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                <tr key={item.id} className="hover:bg-white/5">
+                                                    <td className="p-4 text-white font-bold">{item.title}</td>
+                                                    <td className="p-4 text-gray-400">
+                                                        <div className="mb-1">{item.date} ({item.lunarDate})</div>
+                                                        <div className="flex gap-1">
+                                                            {item.fieldConfig?.showBirth && <span className="text-[10px] bg-green-900/40 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">生辰</span>}
+                                                            {item.fieldConfig?.showTime && <span className="text-[10px] bg-purple-900/40 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/30">時辰</span>}
+                                                            {item.fieldConfig?.showAddress && <span className="text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30">地址</span>}
+                                                            {item.fieldConfig?.showIdNumber && <span className="text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">身分證</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('EVENT', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
+                                                </tr>
                                             ))}
                                             {activeTab === 'NEWS' && news.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteNews(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('NEWS', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
                                             {activeTab === 'SERVICES' && services.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">${item.price}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteService(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                <tr key={item.id} className="hover:bg-white/5">
+                                                    <td className="p-4 text-white font-bold">{item.title}</td>
+                                                    <td className="p-4 text-gray-400">
+                                                        <div className="mb-1">${item.price}</div>
+                                                        <div className="flex gap-1">
+                                                            {item.fieldConfig?.showBirth && <span className="text-[10px] bg-green-900/40 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">生辰</span>}
+                                                            {item.fieldConfig?.showTime && <span className="text-[10px] bg-purple-900/40 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/30">時辰</span>}
+                                                            {item.fieldConfig?.showAddress && <span className="text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30">地址</span>}
+                                                            {item.fieldConfig?.showIdNumber && <span className="text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">身分證</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('SERVICE', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
+                                                </tr>
                                             ))}
                                             {activeTab === 'GALLERY' && gallery.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteGalleryItem(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.url} className="w-10 h-10 object-cover rounded" /><span className="text-white font-bold">{item.title}</span></td><td className="p-4 text-gray-400">{item.type}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('GALLERY', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
                                             {activeTab === 'ORG' && orgMembers.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteOrgMember(item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 flex gap-4"><img src={item.image} className="w-10 h-10 object-cover rounded-full" /><div><div className="font-bold text-white">{item.name}</div><div className="text-xs text-gray-400">{item.title}</div></div></td><td className="p-4 text-gray-400"><span className={`px-2 py-1 rounded text-xs border ${item.category === 'LEADER' ? 'border-mystic-gold text-mystic-gold' : item.category === 'EXECUTIVE' ? 'border-blue-500 text-blue-400' : 'border-gray-500 text-gray-400'}`}>{item.category === 'LEADER' ? '宮主' : item.category === 'EXECUTIVE' ? '幹事/委員' : '執事/志工'}</span></td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('ORG', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
                                             {activeTab === 'FAQS' && faqs.map(item => (
-                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => deleteFaq(item.id!)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                                <tr key={item.id} className="hover:bg-white/5"><td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('FAQ', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
                                         </tbody>
                                     </table>

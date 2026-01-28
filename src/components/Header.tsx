@@ -206,6 +206,20 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onOpenAdmin }) => {
               >
                 {user ? '會員中心' : '會員登入 / 註冊'}
               </button>
+
+              {/* Mobile Admin Button */}
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  if (onOpenAdmin) onOpenAdmin();
+                }}
+                className="text-center text-gray-500 text-sm tracking-widest hover:text-white transition-colors"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Lock size={14} />
+                  <span>管理員後台</span>
+                </div>
+              </button>
             </div>
           </div>
         )}

@@ -300,7 +300,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteNews = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('news').delete().eq('id', id);
+            const { error } = await supabase.from('news').delete().eq('id', id);
+            if (error) throw error;
         } else {
             setNews(prev => prev.filter(n => n.id !== id));
         }
@@ -361,7 +362,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteEvent = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('events').delete().eq('id', id);
+            const { error } = await supabase.from('events').delete().eq('id', id);
+            if (error) throw error;
         } else {
             setEvents(prev => prev.filter(e => e.id !== id));
         }
@@ -422,7 +424,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteService = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('services').delete().eq('id', id);
+            const { error } = await supabase.from('services').delete().eq('id', id);
+            if (error) throw error;
         } else {
             setServices(prev => prev.filter(s => s.id !== id));
         }
@@ -453,7 +456,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteGalleryItem = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('gallery').delete().eq('id', id);
+            const { error } = await supabase.from('gallery').delete().eq('id', id);
+            if (error) throw error;
         } else {
             setGallery(prev => prev.filter(g => g.id !== id));
         }
@@ -476,7 +480,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteOrgMember = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('org_members').delete().eq('id', id);
+            const { error } = await supabase.from('org_members').delete().eq('id', id);
+            if (error) throw error;
         } else {
             setOrgMembers(prev => prev.filter(m => m.id !== id));
         }
@@ -500,7 +505,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteFaq = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from('faqs').delete().eq('id', id);
+            const { error } = await supabase.from('faqs').delete().eq('id', id);
+            if (error) throw error;
         } else {
             setFaqs(prev => prev.filter(f => f.id !== id));
         }
@@ -560,7 +566,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const deleteRegistration = async (id: string) => {
         if (isSupabaseConfigured()) {
-            await supabase.from("registrations").delete().eq('id', id);
+            const { error } = await supabase.from("registrations").delete().eq('id', id);
+            if (error) throw error;
         } else {
             setRegistrations(prev => prev.filter(r => r.id !== id));
         }
