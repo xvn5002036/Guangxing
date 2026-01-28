@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase'; // Import Supabase Client
-import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network, HelpCircle, Home } from 'lucide-react';
+import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network, HelpCircle, Home, HeartHandshake, Sun } from 'lucide-react';
 import { GalleryItem, Registration } from '../types';
 
 interface AdminPanelProps {
@@ -23,6 +23,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     } = useData();
 
     const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS'>('DASHBOARD');
+    const [generalSubTab, setGeneralSubTab] = useState<'VISUAL' | 'CONFIG'>('VISUAL');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
@@ -207,7 +208,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Initialize settings form when loading or switching tabs
     useEffect(() => {
-        setSettingsForm(siteSettings);
+        setSettingsForm({
+            ...siteSettings,
+            // Ensure nested objects are initialized if missing (fallback)
+            configDonation: siteSettings.configDonation || { showBirth: false, showTime: false, showAddress: false, showIdNumber: false },
+            configLight: siteSettings.configLight || { showBirth: true, showTime: true, showAddress: true, showIdNumber: false },
+            configEvent: siteSettings.configEvent || { showBirth: true, showTime: false, showAddress: true, showIdNumber: true }
+        });
     }, [siteSettings, activeTab]);
 
     // Derived state for determining if we should show the dashboard
@@ -289,41 +296,57 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setIsAdding(false);
     };
 
-    const handleSave = () => {
-        if (activeTab === 'NEWS') {
-            if (isAdding) addNews(editForm); else updateNews(editingId!, editForm);
-        } else if (activeTab === 'EVENTS') {
-            if (isAdding) addEvent({
-                ...editForm,
-                type: editForm.type || 'FESTIVAL',
-                description: editForm.description || ''
-            });
-            else updateEvent(editingId!, editForm);
-        } else if (activeTab === 'SERVICES') {
-            if (isAdding) addService(editForm); else updateService(editingId!, editForm);
-        } else if (activeTab === 'GALLERY') {
-            if (isAdding) addGalleryItem({
-                ...editForm,
-                type: editForm.type || 'IMAGE'
-            }); else updateGalleryItem(editingId!, editForm);
-        } else if (activeTab === 'REGISTRATIONS') {
-            updateRegistration(editingId!, editForm);
-        } else if (activeTab === 'ORG') {
-            if (isAdding) addOrgMember({
-                ...editForm,
-                category: editForm.category || 'STAFF'
-            }); else updateOrgMember(editingId!, editForm);
-        } else if (activeTab === 'FAQS') {
-            if (isAdding) addFaq(editForm); else updateFaq(editingId!, editForm);
+    const handleSave = async () => {
+        try {
+            if (activeTab === 'NEWS') {
+                if (isAdding) await addNews(editForm); else await updateNews(editingId!, editForm);
+            } else if (activeTab === 'EVENTS') {
+                if (isAdding) await addEvent({
+                    ...editForm,
+                    type: editForm.type || 'FESTIVAL',
+                    description: editForm.description || ''
+                });
+                else await updateEvent(editingId!, editForm);
+            } else if (activeTab === 'SERVICES') {
+                if (isAdding) await addService(editForm); else await updateService(editingId!, editForm);
+            } else if (activeTab === 'GALLERY') {
+                if (isAdding) await addGalleryItem({
+                    ...editForm,
+                    type: editForm.type || 'IMAGE'
+                }); else await updateGalleryItem(editingId!, editForm);
+            } else if (activeTab === 'REGISTRATIONS') {
+                await updateRegistration(editingId!, editForm);
+            } else if (activeTab === 'ORG') {
+                if (isAdding) await addOrgMember({
+                    ...editForm,
+                    category: editForm.category || 'STAFF'
+                }); else await updateOrgMember(editingId!, editForm);
+            } else if (activeTab === 'FAQS') {
+                if (isAdding) await addFaq(editForm); else await updateFaq(editingId!, editForm);
+            }
+            // Success
+            setEditingId(null);
+            setIsAdding(false);
+            setEditForm({});
+        } catch (error: any) {
+            console.error("Save failed:", error);
+            // Translate common schema errors
+            let msg = error.message || '未知錯誤';
+            if (msg.includes('field_config')) {
+                msg = '資料庫架構尚未更新，缺少 "field_config" 欄位。\n請執行 walkthrough.md 中的 SQL 遷移指令。';
+            }
+            alert(`儲存失敗：\n${msg}`);
         }
-        setEditingId(null);
-        setIsAdding(false);
-        setEditForm({});
     };
 
-    const handleSaveSettings = () => {
-        updateSiteSettings(settingsForm);
-        alert('網站設定已更新！');
+    const handleSaveSettings = async () => {
+        try {
+            await updateSiteSettings(settingsForm);
+            alert('網站設定已更新！');
+        } catch (error) {
+            console.error("Save settings error:", error);
+            alert('儲存失敗，請檢查網路或權限');
+        }
     };
 
     const handleToggleStatus = (reg: Registration) => {
@@ -669,12 +692,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 {activeTab === 'GENERAL' && (
                     <div className="bg-mystic-charcoal p-8 border border-white/5 rounded-sm shadow-xl max-w-4xl animate-fade-in-up">
                         {/* ... (Existing General Settings Code) ... */}
-                        <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4">
-                            <Layout size={20} className="text-mystic-gold" />
-                            <h3 className="text-lg font-bold text-white">前台顯示內容設定</h3>
-                        </div>
 
-                        <div className="space-y-8">
+
+                        <div className="space-y-8 animate-fade-in-up">
                             {/* Basic Info */}
                             <div>
                                 <h4 className="text-sm text-mystic-gold font-bold mb-4 uppercase tracking-widest border-l-2 border-mystic-gold pl-2">宮廟基本資訊</h4>
@@ -847,6 +867,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             </div>
                         </div>
 
+
+
+
                         <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
                             <button onClick={handleSaveSettings} className="bg-mystic-gold text-black px-8 py-3 rounded-sm font-bold hover:bg-white transition-all shadow-lg flex items-center gap-2">
                                 <Save size={18} /> 儲存所有設定
@@ -890,12 +913,54 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">時間 (Time)</label><input type="time" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.time || ''} onChange={e => setEditForm({ ...editForm, time: e.target.value })} /></div>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">類別</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.type || 'FESTIVAL'} onChange={e => setEditForm({ ...editForm, type: e.target.value })}><option value="FESTIVAL">慶典</option><option value="RITUAL">科儀</option><option value="SERVICE">服務</option></select></div>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">詳情</label><textarea rows={4} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
+
+                                            {/* Field Config for Events */}
+                                            <div className="md:col-span-2 bg-black/40 p-4 border border-white/10 rounded">
+                                                <h5 className="text-xs text-mystic-gold uppercase tracking-widest font-bold mb-3 border-b border-white/10 pb-2">表單欄位設定</h5>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    {[{ key: 'showBirth', label: '農曆生辰' }, { key: 'showTime', label: '出生時辰' }, { key: 'showAddress', label: '通訊地址' }, { key: 'showIdNumber', label: '身分證字號' }].map(field => {
+                                                        const config = editForm.fieldConfig || {};
+                                                        return (
+                                                            <div key={field.key} className="flex flex-col gap-2">
+                                                                <span className="text-xs text-gray-400">{field.label}</span>
+                                                                <div
+                                                                    onClick={() => setEditForm({ ...editForm, fieldConfig: { ...config, [field.key]: !config[field.key] } })}
+                                                                    className={`w-10 h-6 rounded-full cursor-pointer transition-colors p-1 ${config[field.key] ? 'bg-green-600' : 'bg-gray-700'}`}
+                                                                >
+                                                                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${config[field.key] ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
                                         </>
                                     ) : activeTab === 'SERVICES' ? (
                                         <>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">服務名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">價格</label><input className="w-full bg-black border border-white/10 p-3 text-white" type="number" value={editForm.price || ''} onChange={e => setEditForm({ ...editForm, price: parseInt(e.target.value) })} /></div>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">類別</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.type || 'LIGHT'} onChange={e => setEditForm({ ...editForm, type: e.target.value })}><option value="LIGHT">點燈 (Light)</option><option value="RITUAL">科儀 (Ritual)</option><option value="DONATION">捐獻 (Donation)</option></select></div>
+
+                                            {/* Field Config for Services */}
+                                            <div className="md:col-span-2 bg-black/40 p-4 border border-white/10 rounded">
+                                                <h5 className="text-xs text-mystic-gold uppercase tracking-widest font-bold mb-3 border-b border-white/10 pb-2">表單欄位設定</h5>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    {[{ key: 'showBirth', label: '農曆生辰' }, { key: 'showTime', label: '出生時辰' }, { key: 'showAddress', label: '通訊地址' }, { key: 'showIdNumber', label: '身分證字號' }].map(field => {
+                                                        const config = editForm.fieldConfig || {};
+                                                        return (
+                                                            <div key={field.key} className="flex flex-col gap-2">
+                                                                <span className="text-xs text-gray-400">{field.label}</span>
+                                                                <div
+                                                                    onClick={() => setEditForm({ ...editForm, fieldConfig: { ...config, [field.key]: !config[field.key] } })}
+                                                                    className={`w-10 h-6 rounded-full cursor-pointer transition-colors p-1 ${config[field.key] ? 'bg-green-600' : 'bg-gray-700'}`}
+                                                                >
+                                                                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${config[field.key] ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
                                         </>
                                     ) : activeTab === 'NEWS' ? (
                                         <>

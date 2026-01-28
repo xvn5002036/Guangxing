@@ -1,6 +1,11 @@
 -- ==========================================
 -- 1. EXTENSIONS & UTILITIES
 -- ==========================================
+-- Recent Changes (2026-01-29):
+-- 1. Added `field_config` (jsonb) to `services` and `events` tables for per-item field control.
+-- 2. Added `id_number` (text) to `registrations` table.
+-- 3. Confirmed `lunar_date` and `icon_name` columns support.
+-- ==========================================
 create extension if not exists "uuid-ossp";
 
 -- Helper Function: Check if current user is admin
@@ -49,6 +54,7 @@ create table public.services (
   icon_name text,
   price numeric,
   type text check (type in ('LIGHT', 'DONATION', 'RITUAL')),
+  field_config jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -68,6 +74,7 @@ create table public.registrations (
   district text,
   road text,
   address_detail text,
+  id_number text,
   amount numeric not null,
   status text check (status in ('PAID', 'PENDING', 'CANCELLED')) default 'PENDING',
   is_processed boolean default false,
@@ -96,6 +103,7 @@ create table public.events (
   description text,
   time text,
   type text check (type in ('FESTIVAL', 'RITUAL', 'SERVICE')),
+  field_config jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -151,6 +159,9 @@ create table public.site_settings (
   history_image_stone text,
   history_stone_title text,
   history_stone_desc text,
+  config_donation jsonb,
+  config_light jsonb,
+  config_event jsonb,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

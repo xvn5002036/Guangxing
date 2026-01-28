@@ -13,7 +13,7 @@ interface ServiceModalProps {
 }
 
 const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, initialEventTitle }) => {
-  const { addRegistration, getRegistrationsByPhone, updateRegistration, deleteRegistration, userProfile, user } = useData();
+  const { addRegistration, getRegistrationsByPhone, updateRegistration, deleteRegistration, userProfile, user, siteSettings } = useData();
 
   const [mode, setMode] = useState<'REGISTER' | 'LOOKUP'>('REGISTER');
   const [step, setStep] = useState(1);
@@ -39,8 +39,29 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     road: '',
     isManualRoad: false,
     addressDetail: '',
+    idNumber: '', // New field
     amount: service?.price || 600
   });
+
+  // Determine current field config
+  // Determine current field config
+  const currentConfig = useMemo(() => {
+    // 1. Prefer per-item config
+    if (service?.fieldConfig) {
+      return service.fieldConfig;
+    }
+
+    // 2. Fallback logic for legacy items without config (maintain behavior)
+    if (service?.type === 'DONATION' || service?.title?.includes('隨喜') || service?.title?.includes('捐獻')) {
+      return { showBirth: false, showTime: false, showAddress: false, showIdNumber: false };
+    }
+    if (service?.type === 'LIGHT' || service?.title?.includes('燈')) {
+      return { showBirth: true, showTime: true, showAddress: true, showIdNumber: false };
+    }
+
+    // Default (Events/Rituals)
+    return { showBirth: true, showTime: false, showAddress: true, showIdNumber: true };
+  }, [service]);
 
   // Dynamic lists based on selections
   const cityList = useMemo(() => Object.keys(TAIWAN_ADDRESS_DATA), []);
@@ -132,6 +153,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
         district: formData.district,
         road: formData.road,
         addressDetail: formData.addressDetail,
+        idNumber: formData.idNumber,
         amount: formData.amount,
         paymentMethod: 'ATM_TRANSFER',
         paymentDetails: `ATM 末五碼 ${atmLast5}`,
@@ -325,107 +347,124 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
                         value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="09XX-XXXXXX" />
                     </div>
                   </div>
+                  {/* ID Number */}
+                  {currentConfig.showIdNumber && (
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <User size={14} className="text-mystic-gold" /> 身分證字號
+                      </label>
+                      <input required type="text" className="w-full bg-black/40 border border-white/10 p-3 text-white focus:border-mystic-gold outline-none rounded-sm"
+                        value={formData.idNumber} onChange={e => setFormData({ ...formData, idNumber: e.target.value })} placeholder="請輸入身分證字號" />
+                    </div>
+                  )}
+
 
                   {/* 農曆生辰選單 */}
-                  <div>
-                    <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <Calendar size={14} className="text-mystic-gold" /> 農曆生辰
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthYear} onChange={e => setFormData({ ...formData, birthYear: e.target.value })}>
-                        {Array.from({ length: 100 }, (_, i) => 114 - i).map(y => (
-                          <option key={y} value={`民國${y}`}>民國{y}年</option>
-                        ))}
-                      </select>
-                      <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthMonth} onChange={e => setFormData({ ...formData, birthMonth: e.target.value })}>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                          <option key={m} value={m}>{m}月</option>
-                        ))}
-                      </select>
-                      <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthDay} onChange={e => setFormData({ ...formData, birthDay: e.target.value })}>
-                        {Array.from({ length: 30 }, (_, i) => i + 1).map(d => (
-                          <option key={d} value={d}>{d}日</option>
-                        ))}
-                      </select>
-                      <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthHour} onChange={e => setFormData({ ...formData, birthHour: e.target.value })}>
-                        {LUNAR_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                      </select>
+                  {currentConfig.showBirth && (
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Calendar size={14} className="text-mystic-gold" /> 農曆生辰
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthYear} onChange={e => setFormData({ ...formData, birthYear: e.target.value })}>
+                          {Array.from({ length: 100 }, (_, i) => 114 - i).map(y => (
+                            <option key={y} value={`民國${y}`}>民國{y}年</option>
+                          ))}
+                        </select>
+                        <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthMonth} onChange={e => setFormData({ ...formData, birthMonth: e.target.value })}>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                            <option key={m} value={m}>{m}月</option>
+                          ))}
+                        </select>
+                        <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthDay} onChange={e => setFormData({ ...formData, birthDay: e.target.value })}>
+                          {Array.from({ length: 30 }, (_, i) => i + 1).map(d => (
+                            <option key={d} value={d}>{d}日</option>
+                          ))}
+                        </select>
+                        {currentConfig.showTime && (
+                          <select className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer" value={formData.birthHour} onChange={e => setFormData({ ...formData, birthHour: e.target.value })}>
+                            {LUNAR_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                          </select>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* 通訊地址選單 - 三級聯動 */}
-                  <div>
-                    <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <MapPin size={14} className="text-mystic-gold" /> 通訊地址
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
-                      {/* 縣市 */}
-                      <select
-                        className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer"
-                        value={formData.city}
-                        onChange={e => handleCityChange(e.target.value)}
-                      >
-                        {cityList.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
+                  {currentConfig.showAddress && (
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <MapPin size={14} className="text-mystic-gold" /> 通訊地址
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                        {/* 縣市 */}
+                        <select
+                          className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer"
+                          value={formData.city}
+                          onChange={e => handleCityChange(e.target.value)}
+                        >
+                          {cityList.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
 
-                      {/* 鄉鎮市區 */}
-                      <select
-                        className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer"
-                        value={formData.district}
-                        onChange={e => handleDistrictChange(e.target.value)}
-                      >
-                        {districtList.map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
+                        {/* 鄉鎮市區 */}
+                        <select
+                          className="bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer"
+                          value={formData.district}
+                          onChange={e => handleDistrictChange(e.target.value)}
+                        >
+                          {districtList.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
 
-                      {/* 路/街 選擇器 */}
-                      {!formData.isManualRoad ? (
-                        <div className="relative">
-                          <select
-                            className="w-full bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer pr-8"
-                            value={formData.road}
-                            onChange={e => {
-                              if (e.target.value === "__manual__") {
-                                setFormData({ ...formData, isManualRoad: true, road: '' });
-                              } else {
-                                setFormData({ ...formData, road: e.target.value });
-                              }
-                            }}
-                          >
-                            <option value="" disabled>選擇路街</option>
-                            {roadList.map(r => <option key={r} value={r}>{r}</option>)}
-                            <option value="__manual__">+ 其他路街 (手寫)</option>
-                          </select>
-                        </div>
-                      ) : (
-                        <div className="flex gap-1">
-                          <input
-                            required
-                            className="flex-1 bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold"
-                            placeholder="請輸入路/街名"
-                            value={formData.road}
-                            onChange={e => setFormData({ ...formData, road: e.target.value })}
-                          />
-                          {roadList.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setFormData({ ...formData, isManualRoad: false })}
-                              className="px-2 bg-gray-800 text-xs text-gray-400 hover:text-white"
+                        {/* 路/街 選擇器 */}
+                        {!formData.isManualRoad ? (
+                          <div className="relative">
+                            <select
+                              className="w-full bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold cursor-pointer pr-8"
+                              value={formData.road}
+                              onChange={e => {
+                                if (e.target.value === "__manual__") {
+                                  setFormData({ ...formData, isManualRoad: true, road: '' });
+                                } else {
+                                  setFormData({ ...formData, road: e.target.value });
+                                }
+                              }}
                             >
-                              返回列表
-                            </button>
-                          )}
-                        </div>
-                      )}
+                              <option value="" disabled>選擇路街</option>
+                              {roadList.map(r => <option key={r} value={r}>{r}</option>)}
+                              <option value="__manual__">+ 其他路街 (手寫)</option>
+                            </select>
+                          </div>
+                        ) : (
+                          <div className="flex gap-1">
+                            <input
+                              required
+                              className="flex-1 bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold"
+                              placeholder="請輸入路/街名"
+                              value={formData.road}
+                              onChange={e => setFormData({ ...formData, road: e.target.value })}
+                            />
+                            {roadList.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, isManualRoad: false })}
+                                className="px-2 bg-gray-800 text-xs text-gray-400 hover:text-white"
+                              >
+                                返回列表
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {/* 詳細門牌 */}
+                      <input
+                        required
+                        className="w-full bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold"
+                        placeholder="詳細門牌號碼、樓層 (例如：10號2樓)"
+                        value={formData.addressDetail}
+                        onChange={e => setFormData({ ...formData, addressDetail: e.target.value })}
+                      />
                     </div>
-                    {/* 詳細門牌 */}
-                    <input
-                      required
-                      className="w-full bg-black border border-white/10 p-2 text-white outline-none focus:border-mystic-gold"
-                      placeholder="詳細門牌號碼、樓層 (例如：10號2樓)"
-                      value={formData.addressDetail}
-                      onChange={e => setFormData({ ...formData, addressDetail: e.target.value })}
-                    />
-                  </div>
+                  )}
 
                   <div className="bg-black/20 p-4 border-l-4 border-mystic-gold flex justify-between items-center">
                     <span className="text-gray-400">合計緣金</span>
@@ -626,7 +665,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

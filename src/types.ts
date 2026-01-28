@@ -15,8 +15,9 @@ export interface ServiceItem {
   title: string;
   description: string;
   iconName: string;
-  price?: number;
+  price: number;
   type: 'LIGHT' | 'DONATION' | 'RITUAL';
+  fieldConfig?: FieldConfig; // Per-item configuration
 }
 
 export interface Registration {
@@ -40,6 +41,7 @@ export interface Registration {
   paymentMethod?: string;
   paymentDetails?: string;
   bankLastFive?: string;
+  idNumber?: string; // New field for ID Card Number
   userId?: string; // Optional because old records won't have it
 }
 
@@ -81,6 +83,7 @@ export interface TempleEvent {
   description: string;
   time: string;
   type: 'FESTIVAL' | 'RITUAL' | 'SERVICE';
+  fieldConfig?: FieldConfig; // Per-item configuration
 }
 
 export interface GalleryItem {
@@ -105,6 +108,13 @@ export interface FAQItem {
   id?: string;
   question: string;
   answer: string;
+}
+
+export interface FieldConfig {
+  showBirth: boolean;
+  showTime: boolean;
+  showAddress: boolean;
+  showIdNumber: boolean;
 }
 
 export interface SiteSettings {
@@ -143,6 +153,11 @@ export interface SiteSettings {
   historyDesc2: string;
   historyTitle3: string;
   historyDesc3: string;
+
+  // Form Configuration Per Category
+  configDonation: FieldConfig;
+  configLight: FieldConfig;
+  configEvent: FieldConfig;
 }
 
 export interface UserProfile {
