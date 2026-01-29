@@ -489,20 +489,43 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const addGalleryAlbum = async (album: Omit<GalleryAlbum, 'id'>) => {
+        // Optimistic Update: Add to UI immediately with temporary ID
+        const tempId = `temp_${Date.now()}`;
+        const optimisticAlbum: GalleryAlbum = {
+            id: tempId,
+            title: album.title,
+            description: album.description,
+            coverImageUrl: album.coverImageUrl,
+            eventDate: album.eventDate
+        };
+        setGalleryAlbums(prev => [optimisticAlbum, ...prev]);
+
         if (isSupabaseConfigured()) {
-            const dbAlbum: any = { ...album };
+            // Sanitize: Only include allowed fields to prevent 400 Bad Request
+            const dbAlbum: any = {
+                title: album.title,
+                description: album.description || null
+            };
+
             if (album.coverImageUrl) {
                 dbAlbum.cover_image_url = album.coverImageUrl;
-                delete dbAlbum.coverImageUrl;
             }
             if (album.eventDate) {
                 dbAlbum.event_date = album.eventDate;
-                delete dbAlbum.eventDate;
             }
-            await supabase.from('gallery_albums').insert([dbAlbum]);
-        } else {
-            const newAlbum = { ...album, id: `local_album_${Date.now()}` };
-            setGalleryAlbums(prev => [newAlbum as GalleryAlbum, ...prev]);
+
+            const { data, error } = await supabase.from('gallery_albums').insert([dbAlbum]).select().single();
+
+            if (error) {
+                console.error("Error creating album:", error);
+                // Rollback on error
+                setGalleryAlbums(prev => prev.filter(a => a.id !== tempId));
+                alert(`建立相簿失敗: ${error.message}`);
+                throw error;
+            } else if (data) {
+                // Replace temporary ID with real ID from database
+                setGalleryAlbums(prev => prev.map(a => a.id === tempId ? { ...a, id: data.id } : a));
+            }
         }
     };
 
@@ -531,19 +554,27 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const deleteGalleryAlbum = async (id: string) => {
-        if (isSupabaseConfigured()) {
-            // Manual Cascade: Delete items in the album first
-            const { error: itemsError } = await supabase.from('gallery').delete().eq('album_id', id);
-            if (itemsError) {
-                console.error("Error deleting album items:", itemsError);
-                throw itemsError;
-            }
+        // Optimistic Update: Remove from UI immediately
+        const albumToDelete = galleryAlbums.find(a => a.id === id);
+        setGalleryAlbums(prev => prev.filter(a => a.id !== id));
 
-            // Then delete the album
-            const { error } = await supabase.from('gallery_albums').delete().eq('id', id);
-            if (error) throw error;
-        } else {
-            setGalleryAlbums(prev => prev.filter(a => a.id !== id));
+        if (isSupabaseConfigured()) {
+            try {
+                // Manual Cascade: Delete items in the album first
+                const { error: itemsError } = await supabase.from('gallery').delete().eq('album_id', id);
+                if (itemsError) throw itemsError;
+
+                // Then delete the album
+                const { error } = await supabase.from('gallery_albums').delete().eq('id', id);
+                if (error) throw error;
+            } catch (error: any) {
+                console.error("Error deleting album:", error);
+                // Rollback
+                if (albumToDelete) {
+                    setGalleryAlbums(prev => [...prev, albumToDelete]);
+                }
+                alert(`刪除失敗: ${error.message}`);
+            }
         }
     };
 

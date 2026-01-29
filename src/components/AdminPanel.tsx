@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase'; // Import Supabase Client
-import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network, HelpCircle, Home, HeartHandshake, Sun } from 'lucide-react';
+import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network, HelpCircle, Home, HeartHandshake, Sun, Eye } from 'lucide-react';
 import { GalleryItem, Registration } from '../types';
 
 interface AdminPanelProps {
@@ -54,11 +54,91 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             if (type === 'NEWS') await deleteNews(id);
             else if (type === 'EVENT') await deleteEvent(id);
             else if (type === 'SERVICE') await deleteService(id);
-            else if (type === 'GALLERY') await deleteGalleryItem(id);
+            else if (type === 'GALLERY') {
+                // Attempt to delete from GitHub if it's a GitHub URL
+                const itemToDelete = gallery.find(g => g.id === id);
+                if (itemToDelete && itemToDelete.url && itemToDelete.url.includes('raw.githubusercontent.com') && githubConfig.token) {
+                    try {
+                        // Parse URL: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH...
+                        const urlParts = itemToDelete.url.split('/');
+                        if (urlParts.length >= 7) {
+                            const owner = urlParts[3];
+                            const repo = urlParts[4];
+                            const path = decodeURIComponent(urlParts.slice(6).join('/')); // Decode path in case of spaces/special chars
+
+                            // 1. Get file SHA
+                            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                            const getResponse = await fetch(apiUrl, {
+                                headers: {
+                                    'Authorization': `Bearer ${githubConfig.token}`,
+                                    'Accept': 'application/vnd.github.v3+json'
+                                }
+                            });
+
+                            if (getResponse.ok) {
+                                const fileData = await getResponse.json();
+
+                                // 2. Delete file
+                                const deleteResponse = await fetch(apiUrl, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${githubConfig.token}`,
+                                        'Accept': 'application/vnd.github.v3+json',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        message: `Delete ${path} via CMS`,
+                                        sha: fileData.sha,
+                                        branch: urlParts[5] // Attempt to use the branch from URL
+                                    })
+                                });
+
+                                if (deleteResponse.ok) {
+                                    console.log("Successfully deleted from GitHub:", path);
+                                } else {
+                                    console.error("Failed to delete from GitHub:", await deleteResponse.text());
+                                    alert("注意：無法從 GitHub 刪除檔案，請檢查 Token 權限或手動刪除。");
+                                }
+                            }
+                        }
+                    } catch (ghError) {
+                        console.error("GitHub Sync Delete Error:", ghError);
+                    }
+                }
+
+                await deleteGalleryItem(id);
+            }
             else if (type === 'ORG') await deleteOrgMember(id);
             else if (type === 'FAQ') await deleteFaq(id);
             else if (type === 'REGISTRATION') await deleteRegistration(id);
-            else if (type === 'ALBUM') await deleteGalleryAlbum(id);
+            else if (type === 'ALBUM') {
+                // Recursive Delete: Delete all GitHub files in this album first (Robust DB Check)
+                console.log(`[Delete Album] Starting cleanup for Album ID: ${id}`);
+
+                // 1. Fetch all items in this album directly from Supabase to ensure we don't miss any due to local state lag
+                const { data: dbItems, error: fetchError } = await supabase
+                    .from('gallery')
+                    .select('url')
+                    .eq('album_id', id);
+
+                if (fetchError) {
+                    console.error("[Delete Album] Failed to fetch items for cleanup:", fetchError);
+                    alert("警告：無法讀取相簿內的照片，可能無法從 GitHub 同步刪除檔案。");
+                } else if (dbItems && dbItems.length > 0) {
+                    console.log(`[Delete Album] Found ${dbItems.length} items in DB to delete from GitHub.`);
+
+                    for (const item of dbItems) {
+                        if (item.url) {
+                            // Use the shared helper
+                            await deleteGithubFile(item.url);
+                        }
+                    }
+                } else {
+                    console.log("[Delete Album] No items found in this album (DB).");
+                }
+
+                await deleteGalleryAlbum(id);
+            }
         } catch (error: any) {
             console.error("Delete failed:", error);
             if (error.code === '23503') { // Foreign Key Violation
@@ -255,6 +335,57 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setSelectedItems(newSet);
     };
 
+    // Helper: Delete file from GitHub
+    const deleteGithubFile = async (imageUrl: string) => {
+        if (!imageUrl || !imageUrl.includes('raw.githubusercontent.com') || !githubConfig.token) return;
+
+        try {
+            // Parse URL: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH...
+            const urlParts = imageUrl.split('/');
+            if (urlParts.length >= 7) {
+                const owner = urlParts[3];
+                const repo = urlParts[4];
+                const path = decodeURIComponent(urlParts.slice(6).join('/')); // Decode path
+
+                // 1. Get file SHA
+                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                const getResponse = await fetch(apiUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+
+                    // 2. Delete file
+                    const deleteResponse = await fetch(apiUrl, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${githubConfig.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Delete ${path} via CMS`,
+                            sha: fileData.sha,
+                            branch: urlParts[5] // Attempt to use the branch from URL
+                        })
+                    });
+
+                    if (deleteResponse.ok) {
+                        console.log("Successfully deleted from GitHub:", path);
+                    } else {
+                        console.error("Failed to delete from GitHub:", await deleteResponse.text());
+                    }
+                }
+            }
+        } catch (ghError) {
+            console.error("GitHub Sync Delete Error:", ghError);
+        }
+    };
+
     const handleBatchDelete = async () => {
         if (selectedItems.size === 0) return;
 
@@ -270,7 +401,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     else if (activeTab === 'NEWS') await deleteNews(id);
                     else if (activeTab === 'SERVICES') await deleteService(id);
                     else if (activeTab === 'GALLERY') {
-                        if (selectedAlbumId) await deleteGalleryItem(id);
+                        if (selectedAlbumId) {
+                            // Sync GitHub Delete for Batch
+                            const itemToDelete = gallery.find(g => g.id === id);
+                            if (itemToDelete?.url) {
+                                await deleteGithubFile(itemToDelete.url);
+                            }
+                            await deleteGalleryItem(id);
+                        }
                         else await deleteGalleryAlbum(id);
                     }
                     else if (activeTab === 'ORG') await deleteOrgMember(id);
@@ -1001,18 +1139,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
                         {activeTab === 'GALLERY' && (
                             <>
-                                <button onClick={() => setShowGithubImport(!showGithubImport)} className="flex-1 md:flex-none justify-center bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-gray-700 transition-colors text-sm">
-                                    <Github size={18} />
-                                    {showGithubImport ? '取消' : 'GitHub 匯入'}
-                                </button>
                                 <input type="file" ref={fileInputRef} className="hidden" {...({ webkitdirectory: "", directory: "" } as any)} multiple onChange={handleFolderSelect} />
-                                <button onClick={triggerFolderUpload} disabled={isUploading} className="flex-1 md:flex-none justify-center bg-blue-900/50 border border-blue-500/50 text-blue-200 px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-900 transition-colors disabled:opacity-50 text-sm">
-                                    {isUploading ? <Loader2 className="animate-spin" size={18} /> : <FolderInput size={18} />}
-                                    {isUploading ? '處理中...' : '模擬上傳'}
-                                </button>
                             </>
                         )}
-                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && (
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && (
                             <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
                                 <Plus size={18} /> 新增項目
                             </button>
@@ -1295,25 +1425,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 {/* --- OTHER TABS CONTENT --- */}
                 {activeTab !== 'GENERAL' && (
                     <>
-                        {/* GitHub Import Panel */}
-                        {showGithubImport && activeTab === 'GALLERY' && (
-                            <div className="bg-gray-900 border border-gray-700 p-6 mb-8 rounded-sm animate-fade-in-up">
-                                {/* ... (Github Import UI) ... */}
-                                <div className="flex items-center gap-2 mb-4"><Github className="text-white" size={24} /><h3 className="text-lg font-bold text-white">從 GitHub 儲存庫匯入圖片</h3></div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">GitHub 帳號 (Owner)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.owner} onChange={e => setGithubConfig({ ...githubConfig, owner: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">儲存庫名稱 (Repo)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.repo} onChange={e => setGithubConfig({ ...githubConfig, repo: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">資料夾路徑 (Path)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.path} onChange={e => setGithubConfig({ ...githubConfig, path: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-xs text-mystic-gold uppercase tracking-widest">GitHub Token</label><input type="password" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.token} onChange={e => setGithubConfig({ ...githubConfig, token: e.target.value })} placeholder="請輸入有效的 GitHub Token" /></div>
-                                </div>
-                                <div className="flex justify-end gap-3">
-                                    <button onClick={handleGithubImport} disabled={isSyncingGithub} className="bg-white text-black px-6 py-2 font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50">
-                                        {isSyncingGithub ? <Loader2 className="animate-spin" size={18} /> : <Github size={18} />}
-                                        {isSyncingGithub ? '連線讀取中...' : '開始同步匯入'}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Edit/Add Form */}
                         {(editingId || isAdding) && (
@@ -1615,47 +1727,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             </button>
                                         )}
                                         <button
-                                            onClick={() => setShowBatchUrlImport(true)}
-                                            className="bg-blue-900/40 text-blue-400 border border-blue-500/30 px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-blue-900/60 transition-colors"
+                                            onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }}
+                                            className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors"
                                         >
-                                            <Network size={16} /> 批次連結匯入
-                                        </button>
-                                        <button onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }} className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors">
                                             <Plus size={16} /> {activeTab === 'GALLERY' ? (selectedAlbumId ? '上傳照片' : '建立相簿') : '新增項目'}
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Batch URL Import Modal Overlay */}
-                                {showBatchUrlImport && (
-                                    <div className="mt-4 p-6 bg-black/60 border border-blue-500/30 rounded-lg animate-fade-in">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h4 className="text-blue-400 font-bold flex items-center gap-2">
-                                                <Network size={18} /> 批次連結匯入 (如 Google 相簿連結)
-                                            </h4>
-                                            <button onClick={() => setShowBatchUrlImport(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
-                                        </div>
-                                        <p className="text-xs text-gray-400 mb-3">請在下方貼上照片網址或 <strong>Google 相簿分享連結</strong>，每行一個。<br />注意：Google 相簿請務必使用「分享」產生的連結 (例如 photos.app.goo.gl/...)。</p>
-                                        <textarea
-                                            rows={8}
-                                            placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
-                                            className="w-full bg-black border border-white/10 p-4 text-sm text-gray-300 font-mono focus:border-blue-500 outline-none"
-                                            value={batchUrls}
-                                            onChange={(e) => setBatchUrls(e.target.value)}
-                                        />
-                                        <div className="flex justify-end mt-4 gap-3">
-                                            <button onClick={() => setShowBatchUrlImport(false)} className="px-6 py-2 text-sm text-gray-400 hover:text-white transition-colors">取消</button>
-                                            <button
-                                                onClick={handleBatchUrlImport}
-                                                disabled={isImportingUrls}
-                                                className="bg-blue-600 text-white px-8 py-2 rounded font-bold hover:bg-blue-500 transition-colors flex items-center gap-2 disabled:opacity-50"
-                                            >
-                                                {isImportingUrls ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
-                                                確認匯入
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+
                                 <div className="text-xs text-gray-500 flex justify-between items-center bg-black/20 p-2 rounded">
                                     <span>顯示搜尋結果: {filteredActiveData.length} 筆資料 (共 {activeListData.length} 筆)</span>
                                     <span>已選取: {selectedItems.size} 筆</span>
@@ -1728,7 +1808,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
                                                     <td className="p-4 flex gap-4">
-                                                        <img src={selectedAlbumId ? item.url : (item.coverImageUrl || 'https://via.placeholder.com/150')} className="w-10 h-10 object-cover rounded" />
+                                                        <img src={selectedAlbumId ? item.url : (item.coverImageUrl || 'https://placehold.co/150x150?text=No+Cover')} className="w-10 h-10 object-cover rounded" />
                                                         <div>
                                                             <div className="font-bold text-white">{item.title}</div>
                                                             {!selectedAlbumId && <div className="text-xs text-gray-500 line-clamp-1">{item.description}</div>}
@@ -1746,23 +1826,32 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     </td>
                                                     <td className="p-4 text-right flex justify-end gap-2">
                                                         {selectedAlbumId && (
-                                                            <button
-                                                                title="設為封面"
-                                                                onClick={async () => {
-                                                                    if (confirm('確定要將這張照片設為相簿封面嗎？')) {
-                                                                        try {
-                                                                            await updateGalleryAlbum(selectedAlbumId, { coverImageUrl: item.url });
-                                                                            alert('封面已更新！請至前台重新整理查看。');
-                                                                        } catch (e) {
-                                                                            console.error(e);
-                                                                            alert('設定封面失敗');
+                                                            <>
+                                                                <button
+                                                                    onClick={() => window.open(item.url, '_blank')}
+                                                                    className="p-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+                                                                    title="預覽照片"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                                <button
+                                                                    title="設為封面"
+                                                                    onClick={async () => {
+                                                                        if (confirm('確定要將這張照片設為相簿封面嗎？')) {
+                                                                            try {
+                                                                                await updateGalleryAlbum(selectedAlbumId, { coverImageUrl: item.url });
+                                                                                alert('封面已更新！請至前台重新整理查看。');
+                                                                            } catch (e) {
+                                                                                console.error(e);
+                                                                                alert('設定封面失敗');
+                                                                            }
                                                                         }
-                                                                    }
-                                                                }}
-                                                                className="p-2 bg-green-900/20 text-green-400 rounded hover:bg-green-900/40"
-                                                            >
-                                                                <ImageIcon size={16} />
-                                                            </button>
+                                                                    }}
+                                                                    className="p-2 bg-green-900/20 text-green-400 rounded hover:bg-green-900/40"
+                                                                >
+                                                                    <ImageIcon size={16} />
+                                                                </button>
+                                                            </>
                                                         )}
                                                         <button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button>
                                                         <button onClick={() => handleDelete(selectedAlbumId ? 'GALLERY' : 'ALBUM', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button>
