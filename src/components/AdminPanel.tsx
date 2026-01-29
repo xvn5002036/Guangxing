@@ -309,12 +309,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // GitHub Import States
     const [showGithubImport, setShowGithubImport] = useState(false);
-    const [githubConfig, setGithubConfig] = useState({
-        owner: 'xvn5002036',
-        repo: 'gallery',
-        path: 'gallery',
-        token: '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'
+    const [githubConfig, setGithubConfig] = useState(() => {
+        const saved = localStorage.getItem('githubConfig');
+        return saved ? JSON.parse(saved) : {
+            owner: 'xvn5002036',
+            repo: 'gallery',
+            path: 'gallery',
+            token: ''
+        };
     });
+
+    // Persist GitHub config
+    useEffect(() => {
+        localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
+    }, [githubConfig]);
     const [isUploadingToGithub, setIsUploadingToGithub] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [isSyncingGithub, setIsSyncingGithub] = useState(false);
@@ -1296,7 +1304,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">GitHub 帳號 (Owner)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.owner} onChange={e => setGithubConfig({ ...githubConfig, owner: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">儲存庫名稱 (Repo)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.repo} onChange={e => setGithubConfig({ ...githubConfig, repo: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">資料夾路徑 (Path)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.path} onChange={e => setGithubConfig({ ...githubConfig, path: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-xs text-mystic-gold uppercase tracking-widest">GitHub Token (已鎖定)</label><input type="password" disabled className="w-full bg-black/50 border border-mystic-gold/30 p-3 text-gray-500 focus:border-mystic-gold outline-none shadow-[0_0_10px_rgba(212,175,55,0.1)] cursor-not-allowed" value={githubConfig.token} /></div>
+                                    <div className="space-y-1"><label className="text-xs text-mystic-gold uppercase tracking-widest">GitHub Token</label><input type="password" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.token} onChange={e => setGithubConfig({ ...githubConfig, token: e.target.value })} placeholder="請輸入有效的 GitHub Token" /></div>
                                 </div>
                                 <div className="flex justify-end gap-3">
                                     <button onClick={handleGithubImport} disabled={isSyncingGithub} className="bg-white text-black px-6 py-2 font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50">
@@ -1740,7 +1748,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         {selectedAlbumId && (
                                                             <button
                                                                 title="設為封面"
-                                                                onClick={() => updateGalleryAlbum(selectedAlbumId, { coverImageUrl: item.url })}
+                                                                onClick={async () => {
+                                                                    if (confirm('確定要將這張照片設為相簿封面嗎？')) {
+                                                                        try {
+                                                                            await updateGalleryAlbum(selectedAlbumId, { coverImageUrl: item.url });
+                                                                            alert('封面已更新！請至前台重新整理查看。');
+                                                                        } catch (e) {
+                                                                            console.error(e);
+                                                                            alert('設定封面失敗');
+                                                                        }
+                                                                    }
+                                                                }}
                                                                 className="p-2 bg-green-900/20 text-green-400 rounded hover:bg-green-900/40"
                                                             >
                                                                 <ImageIcon size={16} />

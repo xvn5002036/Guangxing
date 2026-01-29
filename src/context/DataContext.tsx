@@ -507,6 +507,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const updateGalleryAlbum = async (id: string, album: Partial<GalleryAlbum>) => {
+        // Optimistic Update: Update UI immediately
+        setGalleryAlbums(prev => prev.map(a => a.id === id ? { ...a, ...album } : a));
+
         if (isSupabaseConfigured()) {
             const dbAlbum: any = { ...album };
             if (album.coverImageUrl) {
@@ -519,16 +522,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             // Remove derived fields
             delete dbAlbum.photoCount;
-            await supabase.from('gallery_albums').update(dbAlbum).eq('id', id);
-        } else {
-            setGalleryAlbums(prev => prev.map(a => a.id === id ? { ...a, ...album } : a));
+            const { error } = await supabase.from('gallery_albums').update(dbAlbum).eq('id', id);
+            if (error) {
+                console.error("Supabase update album error:", error);
+                throw error;
+            }
         }
     };
 
     const deleteGalleryAlbum = async (id: string) => {
         if (isSupabaseConfigured()) {
-            // First check if it has photos? Or let cascade handle if configured (better)
-            // But we don't have cascade in current schema view yet.
+            // Manual Cascade: Delete items in the album first
+            const { error: itemsError } = await supabase.from('gallery').delete().eq('album_id', id);
+            if (itemsError) {
+                console.error("Error deleting album items:", itemsError);
+                throw itemsError;
+            }
+
+            // Then delete the album
             const { error } = await supabase.from('gallery_albums').delete().eq('id', id);
             if (error) throw error;
         } else {
