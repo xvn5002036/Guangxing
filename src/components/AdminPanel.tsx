@@ -310,10 +310,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     // GitHub Import States
     const [showGithubImport, setShowGithubImport] = useState(false);
     const [githubConfig, setGithubConfig] = useState({
-        owner: '',
-        repo: '',
+        owner: 'xvn5002036',
+        repo: 'gallery',
         path: 'gallery',
-        token: ''
+        token: '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'
     });
     const [isUploadingToGithub, setIsUploadingToGithub] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -775,17 +775,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
             const isImage = (name: string) => imageExtensions.some(ext => name.toLowerCase().endsWith(ext));
 
-            // 1. Process files in the root path (they become a "General" album or handled as loose)
+            // 1. Process files in the root path (they become a "General" album)
             const rootFiles = rootData.filter((f: any) => f.type === 'file' && isImage(f.name));
+            let totalImported = 0;
+
             if (rootFiles.length > 0) {
-                const rootAlbumTitle = "未分類相簿";
-                // Add albums/items logic here... 
-                // To keep it simple for now, we'll focus on subfolders
+                const rootAlbumTitle = `GitHub 匯入 (${new Date().toLocaleDateString()})`;
+
+                // Create Album for root files
+                const { data: album, error: albumError } = await supabase
+                    .from('gallery_albums')
+                    .insert([{
+                        title: rootAlbumTitle,
+                        cover_image_url: rootFiles[0].download_url,
+                        description: '直接從 GitHub 儲存庫根目錄匯入的圖片'
+                    }])
+                    .select('id')
+                    .single();
+
+                if (!albumError && album) {
+                    const galleryItems = rootFiles.map((img: any) => ({
+                        title: img.name.replace(/\.[^/.]+$/, ""),
+                        type: 'IMAGE',
+                        url: img.download_url,
+                        album_id: album.id
+                    }));
+
+                    const { error: itemsError } = await supabase.from('gallery').insert(galleryItems);
+                    if (itemsError) console.error("Error adding items for root album", itemsError);
+                    else totalImported += rootFiles.length;
+                } else {
+                    console.error("Error creating root album:", albumError);
+                }
             }
 
             // 2. Process Subfolders as Albums
             const subfolders = rootData.filter((f: any) => f.type === 'dir');
-            let totalImported = 0;
 
             for (const folder of subfolders) {
                 const folderFiles = await fetchFolder(folder.path);
@@ -806,7 +831,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             title: albumData.title,
                             cover_image_url: albumData.coverImageUrl
                         }])
-                        .select()
+                        .select('id')
                         .single();
 
                     if (albumError) {
@@ -1271,7 +1296,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">GitHub 帳號 (Owner)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.owner} onChange={e => setGithubConfig({ ...githubConfig, owner: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">儲存庫名稱 (Repo)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.repo} onChange={e => setGithubConfig({ ...githubConfig, repo: e.target.value })} /></div>
                                     <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">資料夾路徑 (Path)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={githubConfig.path} onChange={e => setGithubConfig({ ...githubConfig, path: e.target.value })} /></div>
-                                    <div className="space-y-1"><label className="text-xs text-mystic-gold uppercase tracking-widest">GitHub Token (必填上傳)</label><input type="password" placeholder="ghp_..." className="w-full bg-black border border-mystic-gold/30 p-3 text-white focus:border-mystic-gold outline-none shadow-[0_0_10px_rgba(212,175,55,0.1)]" value={githubConfig.token} onChange={e => setGithubConfig({ ...githubConfig, token: e.target.value })} /></div>
+                                    <div className="space-y-1"><label className="text-xs text-mystic-gold uppercase tracking-widest">GitHub Token (已鎖定)</label><input type="password" disabled className="w-full bg-black/50 border border-mystic-gold/30 p-3 text-gray-500 focus:border-mystic-gold outline-none shadow-[0_0_10px_rgba(212,175,55,0.1)] cursor-not-allowed" value={githubConfig.token} /></div>
                                 </div>
                                 <div className="flex justify-end gap-3">
                                     <button onClick={handleGithubImport} disabled={isSyncingGithub} className="bg-white text-black px-6 py-2 font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50">

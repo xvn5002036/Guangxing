@@ -1,10 +1,10 @@
 -- ==========================================
 -- 1. EXTENSIONS & UTILITIES
 -- ==========================================
--- Recent Changes (2026-01-29):
--- 1. Added `field_config` (jsonb) to `services` and `events` tables for per-item field control.
--- 2. Added `id_number` (text) to `registrations` table.
--- 3. Confirmed `lunar_date` and `icon_name` columns support.
+-- Recent Changes (2026-01-30):
+-- 1. Verified and fixed `gallery` table missing `album_id` column.
+-- 2. Refined RLS policies for `gallery_albums` and `gallery` to ensure Admin access works correctly.
+-- 3. Confirmed `is_admin()` function usage for standardized permission checks.
 -- ==========================================
 create extension if not exists "uuid-ossp";
 
