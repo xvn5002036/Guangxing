@@ -60,9 +60,12 @@ export const GalleryManager: React.FC = () => {
             if (urlParts.length >= 7) {
                 const owner = urlParts[3];
                 const repo = urlParts[4];
-                const path = decodeURIComponent(urlParts.slice(6).join('/'));
+                const branch = urlParts[5];
+                const pathParts = urlParts.slice(6).map(p => decodeURIComponent(p));
+                const path = pathParts.join('/');
+                const encodedPath = pathParts.map(p => encodeURIComponent(p)).join('/');
 
-                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
                 const getResponse = await fetch(apiUrl, {
                     headers: {
                         'Authorization': `Bearer ${githubConfig.token}`,
@@ -82,7 +85,7 @@ export const GalleryManager: React.FC = () => {
                         body: JSON.stringify({
                             message: `Delete ${path} via CMS`,
                             sha: fileData.sha,
-                            branch: urlParts[5]
+                            branch: branch
                         })
                     });
 
@@ -205,8 +208,11 @@ export const GalleryManager: React.FC = () => {
         });
 
         const base64Content = await base64Promise;
-        const uploadPath = customPath || `${githubConfig.path}/${Date.now()}_${file.name}`;
-        const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${uploadPath}`;
+        const rawPath = customPath || `${githubConfig.path}/${Date.now()}_${file.name}`;
+
+        // Encode each segment of the path individually to handle Chinese characters correctly
+        const encodedPath = rawPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+        const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${encodedPath}`;
 
         const response = await fetch(apiUrl, {
             method: 'PUT',
