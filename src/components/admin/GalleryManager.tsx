@@ -32,7 +32,7 @@ export const GalleryManager: React.FC = () => {
             owner: 'xvn5002036',
             repo: 'gallery',
             path: 'gallery',
-            token: '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'
+            token: ''
         };
     });
 
