@@ -29,10 +29,10 @@ export const GalleryManager: React.FC = () => {
     const [githubConfig, setGithubConfig] = useState(() => {
         const saved = localStorage.getItem('githubConfig');
         return saved ? JSON.parse(saved) : {
-            owner: '',
-            repo: '',
-            path: '',
-            token: ''
+            owner: 'xvn5002036',
+            repo: 'gallery',
+            path: 'gallery',
+            token: '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'
         };
     });
 
