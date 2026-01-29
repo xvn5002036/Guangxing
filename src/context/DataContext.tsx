@@ -438,13 +438,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const toGalleryDbItem = (item: any) => {
+        const dbItem: any = {};
+        if (item.title !== undefined) dbItem.title = item.title;
+        if (item.url !== undefined) dbItem.url = item.url;
+        if (item.type !== undefined) dbItem.type = item.type;
+        if (item.albumId !== undefined || item.album_id !== undefined) {
+            dbItem.album_id = item.albumId !== undefined ? item.albumId : item.album_id;
+        }
+        return dbItem;
+    };
+
     const addGalleryItem = async (item: Omit<GalleryItem, 'id'>) => {
         if (isSupabaseConfigured()) {
-            const dbItem: any = { ...item };
-            // Robust mapping: always map albumId to album_id and remove camelCase key
-            dbItem.album_id = item.albumId || null;
-            delete dbItem.albumId;
-
+            const dbItem = toGalleryDbItem(item);
             const { error } = await supabase.from('gallery').insert([dbItem]);
             if (error) throw error;
         } else {
@@ -454,12 +461,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const addGalleryItems = async (items: Omit<GalleryItem, 'id'>[]) => {
         if (isSupabaseConfigured()) {
-            const dbItems = items.map(item => {
-                const dbItem: any = { ...item };
-                dbItem.album_id = item.albumId || null;
-                delete dbItem.albumId;
-                return dbItem;
-            });
+            const dbItems = items.map(item => toGalleryDbItem(item));
             const { error } = await supabase.from('gallery').insert(dbItems);
             if (error) throw error;
         } else {
@@ -469,12 +471,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const updateGalleryItem = async (id: string, item: Partial<GalleryItem>) => {
         if (isSupabaseConfigured()) {
-            const dbItem: any = { ...item };
-            if (item.albumId) {
-                dbItem.album_id = item.albumId;
-                delete dbItem.albumId;
-            }
-            await supabase.from('gallery').update(dbItem).eq('id', id);
+            const dbItem = toGalleryDbItem(item);
+            const { error } = await supabase.from('gallery').update(dbItem).eq('id', id);
+            if (error) throw error;
         } else {
             setGallery(prev => prev.map(g => g.id === id ? { ...g, ...item } : g));
         }

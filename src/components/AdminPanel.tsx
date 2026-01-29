@@ -2,8 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase'; // Import Supabase Client
-import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Image as ImageIcon, FolderInput, Loader2, Users, Info, Github, RefreshCw, Printer, Settings, Layout, Network, HelpCircle, Home, HeartHandshake, Sun, Eye } from 'lucide-react';
+import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Loader2, Users, Info, Settings, Network, Layout, Home, Printer, Image, HelpCircle } from 'lucide-react';
 import { GalleryItem, Registration } from '../types';
+import { GalleryManager } from './admin/GalleryManager';
 
 interface AdminPanelProps {
     onClose: () => void;
@@ -45,100 +46,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Generic Delete Handler
-    const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
 
-    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'GALLERY' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'ALBUM', id: string) => {
+    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION', id: string) => {
         if (!window.confirm('確定要刪除此項目嗎？此動作無法復原。')) return;
 
         try {
             if (type === 'NEWS') await deleteNews(id);
             else if (type === 'EVENT') await deleteEvent(id);
             else if (type === 'SERVICE') await deleteService(id);
-            else if (type === 'GALLERY') {
-                // Attempt to delete from GitHub if it's a GitHub URL
-                const itemToDelete = gallery.find(g => g.id === id);
-                if (itemToDelete && itemToDelete.url && itemToDelete.url.includes('raw.githubusercontent.com') && githubConfig.token) {
-                    try {
-                        // Parse URL: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH...
-                        const urlParts = itemToDelete.url.split('/');
-                        if (urlParts.length >= 7) {
-                            const owner = urlParts[3];
-                            const repo = urlParts[4];
-                            const path = decodeURIComponent(urlParts.slice(6).join('/')); // Decode path in case of spaces/special chars
 
-                            // 1. Get file SHA
-                            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-                            const getResponse = await fetch(apiUrl, {
-                                headers: {
-                                    'Authorization': `Bearer ${githubConfig.token}`,
-                                    'Accept': 'application/vnd.github.v3+json'
-                                }
-                            });
-
-                            if (getResponse.ok) {
-                                const fileData = await getResponse.json();
-
-                                // 2. Delete file
-                                const deleteResponse = await fetch(apiUrl, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'Authorization': `Bearer ${githubConfig.token}`,
-                                        'Accept': 'application/vnd.github.v3+json',
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        message: `Delete ${path} via CMS`,
-                                        sha: fileData.sha,
-                                        branch: urlParts[5] // Attempt to use the branch from URL
-                                    })
-                                });
-
-                                if (deleteResponse.ok) {
-                                    console.log("Successfully deleted from GitHub:", path);
-                                } else {
-                                    console.error("Failed to delete from GitHub:", await deleteResponse.text());
-                                    alert("注意：無法從 GitHub 刪除檔案，請檢查 Token 權限或手動刪除。");
-                                }
-                            }
-                        }
-                    } catch (ghError) {
-                        console.error("GitHub Sync Delete Error:", ghError);
-                    }
-                }
-
-                await deleteGalleryItem(id);
-            }
             else if (type === 'ORG') await deleteOrgMember(id);
             else if (type === 'FAQ') await deleteFaq(id);
             else if (type === 'REGISTRATION') await deleteRegistration(id);
-            else if (type === 'ALBUM') {
-                // Recursive Delete: Delete all GitHub files in this album first (Robust DB Check)
-                console.log(`[Delete Album] Starting cleanup for Album ID: ${id}`);
-
-                // 1. Fetch all items in this album directly from Supabase to ensure we don't miss any due to local state lag
-                const { data: dbItems, error: fetchError } = await supabase
-                    .from('gallery')
-                    .select('url')
-                    .eq('album_id', id);
-
-                if (fetchError) {
-                    console.error("[Delete Album] Failed to fetch items for cleanup:", fetchError);
-                    alert("警告：無法讀取相簿內的照片，可能無法從 GitHub 同步刪除檔案。");
-                } else if (dbItems && dbItems.length > 0) {
-                    console.log(`[Delete Album] Found ${dbItems.length} items in DB to delete from GitHub.`);
-
-                    for (const item of dbItems) {
-                        if (item.url) {
-                            // Use the shared helper
-                            await deleteGithubFile(item.url);
-                        }
-                    }
-                } else {
-                    console.log("[Delete Album] No items found in this album (DB).");
-                }
-
-                await deleteGalleryAlbum(id);
-            }
         } catch (error: any) {
             console.error("Delete failed:", error);
             if (error.code === '23503') { // Foreign Key Violation
@@ -237,10 +156,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             case 'EVENTS': return events;
             case 'NEWS': return news;
             case 'SERVICES': return services;
-            case 'GALLERY':
-                return selectedAlbumId
-                    ? gallery.filter(g => g.albumId === selectedAlbumId)
-                    : galleryAlbums;
+            case 'SERVICES': return services;
             case 'ORG': return orgMembers;
             case 'FAQS': return faqs;
             default: return [];
@@ -272,15 +188,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         }
         if (activeTab === 'NEWS') return check((item as any).title) || check((item as any).date);
         if (activeTab === 'SERVICES') return check((item as any).title) || check((item as any).price);
-        if (activeTab === 'GALLERY') {
-            if (selectedAlbumId) {
-                // Search in photos
-                return check((item as any).title);
-            } else {
-                // Search in albums
-                return check((item as any).title) || check((item as any).description);
-            }
-        }
         if (activeTab === 'ORG') return check((item as any).name) || check((item as any).title);
         if (activeTab === 'FAQS') return check((item as any).question) || check((item as any).answer);
 
@@ -335,56 +242,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setSelectedItems(newSet);
     };
 
-    // Helper: Delete file from GitHub
-    const deleteGithubFile = async (imageUrl: string) => {
-        if (!imageUrl || !imageUrl.includes('raw.githubusercontent.com') || !githubConfig.token) return;
 
-        try {
-            // Parse URL: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH...
-            const urlParts = imageUrl.split('/');
-            if (urlParts.length >= 7) {
-                const owner = urlParts[3];
-                const repo = urlParts[4];
-                const path = decodeURIComponent(urlParts.slice(6).join('/')); // Decode path
-
-                // 1. Get file SHA
-                const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-                const getResponse = await fetch(apiUrl, {
-                    headers: {
-                        'Authorization': `Bearer ${githubConfig.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (getResponse.ok) {
-                    const fileData = await getResponse.json();
-
-                    // 2. Delete file
-                    const deleteResponse = await fetch(apiUrl, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${githubConfig.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Delete ${path} via CMS`,
-                            sha: fileData.sha,
-                            branch: urlParts[5] // Attempt to use the branch from URL
-                        })
-                    });
-
-                    if (deleteResponse.ok) {
-                        console.log("Successfully deleted from GitHub:", path);
-                    } else {
-                        console.error("Failed to delete from GitHub:", await deleteResponse.text());
-                    }
-                }
-            }
-        } catch (ghError) {
-            console.error("GitHub Sync Delete Error:", ghError);
-        }
-    };
 
     const handleBatchDelete = async () => {
         if (selectedItems.size === 0) return;
@@ -400,17 +258,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     else if (activeTab === 'EVENTS') await deleteEvent(id);
                     else if (activeTab === 'NEWS') await deleteNews(id);
                     else if (activeTab === 'SERVICES') await deleteService(id);
-                    else if (activeTab === 'GALLERY') {
-                        if (selectedAlbumId) {
-                            // Sync GitHub Delete for Batch
-                            const itemToDelete = gallery.find(g => g.id === id);
-                            if (itemToDelete?.url) {
-                                await deleteGithubFile(itemToDelete.url);
-                            }
-                            await deleteGalleryItem(id);
-                        }
-                        else await deleteGalleryAlbum(id);
-                    }
                     else if (activeTab === 'ORG') await deleteOrgMember(id);
                     else if (activeTab === 'FAQS') await deleteFaq(id);
                     // Albums are not batch deleted for safety usually, but we could add ALBUM here if needed
@@ -445,32 +292,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     // Settings Form State
     const [settingsForm, setSettingsForm] = useState(siteSettings);
 
-    // GitHub Import States
-    const [showGithubImport, setShowGithubImport] = useState(false);
-    const [githubConfig, setGithubConfig] = useState(() => {
-        const saved = localStorage.getItem('githubConfig');
-        return saved ? JSON.parse(saved) : {
-            owner: 'xvn5002036',
-            repo: 'gallery',
-            path: 'gallery',
-            token: ''
-        };
-    });
-
-    // Persist GitHub config
-    useEffect(() => {
-        localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
-    }, [githubConfig]);
-    const [isUploadingToGithub, setIsUploadingToGithub] = useState(false);
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-    const [isSyncingGithub, setIsSyncingGithub] = useState(false);
-    const [showBatchUrlImport, setShowBatchUrlImport] = useState(false);
-    const [batchUrls, setBatchUrls] = useState('');
-    const [isImportingUrls, setIsImportingUrls] = useState(false);
-
     // Local File Upload States
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    // Local File Upload States
+    // const fileInputRef = useRef<HTMLInputElement>(null); // Moved to GalleryManager
+
 
     // Initialize settings form when loading or switching tabs
     useEffect(() => {
@@ -562,191 +387,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setIsAdding(false);
     };
 
-    const handleFileUploadToGithub = async (file: File, customPath?: string) => {
-        if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
-            throw new Error('請在 GitHub 匯入設定中填寫完整的 Owner, Repo 與 Token');
-        }
 
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve, reject) => {
-            reader.onload = () => {
-                const base64String = (reader.result as string).split(',')[1];
-                resolve(base64String);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-
-        const base64Content = await base64Promise;
-        const uploadPath = customPath || `${githubConfig.path}/${Date.now()}_${file.name}`;
-        const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${uploadPath}`;
-
-        const response = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${githubConfig.token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: `Upload ${file.name} via CMS`,
-                content: base64Content,
-            }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`GitHub Upload Error: ${error.message}`);
-        }
-
-        const result = await response.json();
-        return result.content.download_url;
-    };
-
-    const handleBatchUrlImport = async () => {
-        const rawUrls = batchUrls.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
-        if (rawUrls.length === 0) {
-            alert('請輸入有效的網址 (每行一個)');
-            return;
-        }
-
-        setIsImportingUrls(true);
-        try {
-            const finalItems: Omit<GalleryItem, 'id'>[] = [];
-
-            for (const url of rawUrls) {
-                // Check if it's a Google Photos URL
-                if (url.includes('photos.app.goo.gl') || (url.includes('photos.google.com/share') && !url.includes('?key=')) || url.includes('photos.google.com/album/')) {
-
-                    // Specific Warning for private album URLs
-                    if (url.includes('/album/') && !url.includes('/share')) {
-                        alert(`偵測到私人相簿網址：\n${url}\n\n請使用 Google 相簿中的「分享」功能產生的連結 (例如 photos.app.goo.gl/...)，私人網址無法直接匯入。`);
-                        continue;
-                    }
-
-                    try {
-                        console.log("Fetching Google Photos via proxy:", url);
-                        // Use CORS proxy to fetch Google Photos page
-                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                        const response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error("代理伺服器回傳錯誤");
-
-                        const html = await response.text();
-
-                        if (!html || html.length < 100) throw new Error("取得的網頁內容不完整或為空");
-
-                        // Regex to find high-res image URLs in the page content
-                        // Pattern: https://lh[3-6].googleusercontent.com/pw/[ID]
-                        // We use a broader regex but filter afterwards
-                        const imgRegex = /https:\/\/lh[3-6]\.googleusercontent\.com\/[a-zA-Z0-9\/_\-]{50,}/g;
-                        const matches = html.match(imgRegex);
-
-                        if (matches && matches.length > 0) {
-                            // Filter for PW (Shared Photos) or generic long identifiers
-                            const filteredMatches = matches.filter((u: string) => u.includes('/pw/') || u.includes('/lr/'));
-
-                            // Remove duplicates and append high-res param (=w2400)
-                            // We need to strip existing params like =w... before appending
-                            const uniqueUrls = Array.from(new Set(filteredMatches)).map((u: any) => {
-                                let baseUrl = u.split('=')[0]; // Remove existing resize params
-                                return `${baseUrl}=w2400`;
-                            });
-
-                            // Filter out potential UI elements or icons (short IDs)
-                            const validUrls = uniqueUrls.filter((u: string) => u.length > 80);
-
-                            console.log(`Found ${validUrls.length} valid images in album.`);
-
-                            validUrls.forEach((imgUrl, index) => {
-                                finalItems.push({
-                                    title: `從相簿匯入-${index + 1}`,
-                                    type: 'IMAGE' as const,
-                                    url: imgUrl,
-                                    albumId: selectedAlbumId || undefined
-                                });
-                            });
-                        } else {
-                            console.warn("No images found in Google Photos link:", url);
-                            alert(`在該連結中找不到可匯入的圖片，請確認這是一個公開分享的相簿網址。`);
-                        }
-                    } catch (err: any) {
-                        console.error("Error fetching Google Photos album:", err);
-                        alert(`讀取 Google 相簿失敗：可能是代理伺服器暫時不穩定或網址解析有誤。\n錯誤資訊：${err.message}`);
-                    }
-                } else {
-                    // Regular direct link
-                    finalItems.push({
-                        title: '快照匯入',
-                        type: 'IMAGE' as const,
-                        url,
-                        albumId: selectedAlbumId || undefined
-                    });
-                }
-            }
-
-            if (finalItems.length > 0) {
-                await addGalleryItems(finalItems);
-                setBatchUrls('');
-                setShowBatchUrlImport(false);
-                alert(`成功匯入 ${finalItems.length} 個項目！`);
-            } else {
-                alert('未找到可匯入的項目，請檢查連結是否正確。');
-            }
-        } catch (error: any) {
-            alert(`匯入失敗：${error.message}`);
-        } finally {
-            setIsImportingUrls(false);
-        }
-    };
 
     const handleSave = async () => {
         // Validation: Required title OR selected files
-        if (!editForm.title && !editForm.name && selectedFiles.length === 0) {
-            alert('請填寫標題或選擇檔案');
+        if (!editForm.title && !editForm.name) {
+            alert('請填寫標題或名稱');
             return;
         }
 
         setIsSaving(true);
         try {
-            // Priority: Batch Upload to GitHub (if multiple files selected)
-            if (selectedFiles.length > 0 && activeTab === 'GALLERY') {
-                setIsUploadingToGithub(true);
-                try {
-                    // SEQENTIAL processing to avoid GitHub "reference already exists" race conditions
-                    for (const file of selectedFiles) {
-                        const uploadedUrl = await handleFileUploadToGithub(file);
-
-                        if (selectedAlbumId) {
-                            // Add item to specific album
-                            await addGalleryItem({
-                                title: file.name.replace(/\.[^/.]+$/, ""),
-                                url: uploadedUrl,
-                                type: 'IMAGE',
-                                albumId: selectedAlbumId
-                            });
-                        } else {
-                            if (isAdding) {
-                                await addGalleryItem({
-                                    title: file.name.replace(/\.[^/.]+$/, ""),
-                                    url: uploadedUrl,
-                                    type: 'IMAGE'
-                                });
-                            }
-                        }
-                    }
-
-                    // Specific case: If editing/adding an album and a single file was selected to be the NEW cover
-                    if (!selectedAlbumId && selectedFiles.length === 1) {
-                        const coverUrl = await handleFileUploadToGithub(selectedFiles[0]);
-                        if (isAdding) {
-                            await addGalleryAlbum({ ...editForm, coverImageUrl: coverUrl });
-                        } else {
-                            await updateGalleryAlbum(editingId!, { ...editForm, coverImageUrl: coverUrl });
-                        }
-                    }
-
-                } finally {
-                    setIsUploadingToGithub(false);
-                }
+            // Priority: Batch Upload to GitHub
+            if (activeTab === 'GALLERY') {
+                // GALLERY Logic should move to GalleryManager, skipping here in main
+                // But wait, local handleSave is for "General" add, how to block?
+                // The easiest way is to NOT call handleSave for GALLERY in main AdminPanel
             } else {
                 // Regular Save Logic (URL or other tabs)
                 let finalUrl = editForm.url || editForm.image || editForm.coverImageUrl;
@@ -759,13 +415,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 } else if (activeTab === 'SERVICES') {
                     if (isAdding) await addService(editForm); else await updateService(editingId!, editForm);
                 } else if (activeTab === 'GALLERY') {
-                    if (selectedAlbumId) {
-                        if (isAdding) await addGalleryItem({ ...editForm, url: finalUrl, albumId: selectedAlbumId });
-                        else await updateGalleryItem(editingId!, { ...editForm, url: finalUrl });
-                    } else {
-                        if (isAdding) await addGalleryAlbum({ ...editForm, coverImageUrl: finalUrl });
-                        else await updateGalleryAlbum(editingId!, { ...editForm, coverImageUrl: finalUrl });
-                    }
+                    // Handled by GalleryManager, should not trigger here
+                    console.warn("Should not save Gallery item here");
                 } else if (activeTab === 'REGISTRATIONS') {
                     await updateRegistration(editingId!, editForm);
                 } else if (activeTab === 'ORG') {
@@ -779,7 +430,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             setEditingId(null);
             setIsAdding(false);
             setEditForm({});
-            setSelectedFiles([]);
         } catch (error: any) {
             console.error("Save failed:", error);
             let msg = error.message || '未知錯誤';
@@ -864,150 +514,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         printWindow.document.close();
     };
 
-    const triggerFolderUpload = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
 
-    const handleFolderSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
 
-        setIsUploading(true);
 
-        setTimeout(() => {
-            const newItems: Omit<GalleryItem, 'id'>[] = [];
-            Array.from(files).forEach((file: File) => {
-                const isImage = file.type.startsWith('image/');
-                const isVideo = file.type.startsWith('video/');
-                if (isImage || isVideo) {
-                    const url = URL.createObjectURL(file);
-                    const title = file.name.replace(/\.[^/.]+$/, "");
-                    newItems.push({
-                        title: title,
-                        type: isVideo ? 'VIDEO' : 'IMAGE',
-                        url: url
-                    });
-                }
-            });
-            if (newItems.length > 0) {
-                addGalleryItems(newItems);
-                alert(`已暫存 ${newItems.length} 個檔案！`);
-            }
-            if (event.target) event.target.value = '';
-            setIsUploading(false);
-        }, 500);
-    };
-
-    const handleGithubImport = async () => {
-        if (!githubConfig.owner || !githubConfig.repo || !githubConfig.path) {
-            alert('請填寫完整的 GitHub 資訊');
-            return;
-        }
-
-        setIsSyncingGithub(true);
-        try {
-            const fetchFolder = async (path: string) => {
-                const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${path}`;
-                const response = await fetch(apiUrl);
-                if (!response.ok) return [];
-                return await response.json();
-            };
-
-            const rootData = await fetchFolder(githubConfig.path);
-            if (!Array.isArray(rootData)) throw new Error('根路徑不是一個資料夾');
-
-            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-            const isImage = (name: string) => imageExtensions.some(ext => name.toLowerCase().endsWith(ext));
-
-            // 1. Process files in the root path (they become a "General" album)
-            const rootFiles = rootData.filter((f: any) => f.type === 'file' && isImage(f.name));
-            let totalImported = 0;
-
-            if (rootFiles.length > 0) {
-                const rootAlbumTitle = `GitHub 匯入 (${new Date().toLocaleDateString()})`;
-
-                // Create Album for root files
-                const { data: album, error: albumError } = await supabase
-                    .from('gallery_albums')
-                    .insert([{
-                        title: rootAlbumTitle,
-                        cover_image_url: rootFiles[0].download_url,
-                        description: '直接從 GitHub 儲存庫根目錄匯入的圖片'
-                    }])
-                    .select('id')
-                    .single();
-
-                if (!albumError && album) {
-                    const galleryItems = rootFiles.map((img: any) => ({
-                        title: img.name.replace(/\.[^/.]+$/, ""),
-                        type: 'IMAGE',
-                        url: img.download_url,
-                        album_id: album.id
-                    }));
-
-                    const { error: itemsError } = await supabase.from('gallery').insert(galleryItems);
-                    if (itemsError) console.error("Error adding items for root album", itemsError);
-                    else totalImported += rootFiles.length;
-                } else {
-                    console.error("Error creating root album:", albumError);
-                }
-            }
-
-            // 2. Process Subfolders as Albums
-            const subfolders = rootData.filter((f: any) => f.type === 'dir');
-
-            for (const folder of subfolders) {
-                const folderFiles = await fetchFolder(folder.path);
-                const images = folderFiles.filter((f: any) => f.type === 'file' && isImage(f.name));
-
-                if (images.length > 0) {
-                    // Create Album
-                    const albumData = {
-                        title: folder.name,
-                        coverImageUrl: images[0].download_url // Default cover to first image
-                    };
-
-                    // Supabase addGalleryAlbum doesn't return ID easily in current wrapper without modification
-                    // But we can use direct supabase call here for efficiency during import
-                    const { data: album, error: albumError } = await supabase
-                        .from('gallery_albums')
-                        .insert([{
-                            title: albumData.title,
-                            cover_image_url: albumData.coverImageUrl
-                        }])
-                        .select('id')
-                        .single();
-
-                    if (albumError) {
-                        console.error("Error creating album:", albumError);
-                        continue;
-                    }
-
-                    const galleryItems = images.map((img: any) => ({
-                        title: img.name.replace(/\.[^/.]+$/, ""),
-                        type: 'IMAGE',
-                        url: img.download_url,
-                        album_id: album.id
-                    }));
-
-                    const { error: itemsError } = await supabase.from('gallery').insert(galleryItems);
-                    if (itemsError) console.error("Error adding items for album", folder.name, itemsError);
-                    else totalImported += images.length;
-                }
-            }
-
-            alert(`成功從 GitHub 匯入並建立相簿，共同匯入 ${totalImported} 張圖片！`);
-            setShowGithubImport(false);
-
-        } catch (error: any) {
-            console.error(error);
-            alert(`匯入失敗：${error.message}`);
-        } finally {
-            setIsSyncingGithub(false);
-        }
-    };
 
     if (!isAdmin) return (
         <div className="fixed inset-0 z-[100] bg-black">
@@ -1103,7 +612,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         { id: 'NEWS', icon: FileText, label: '最新消息' },
                         { id: 'EVENTS', icon: Calendar, label: '行事曆管理' },
                         { id: 'SERVICES', icon: Briefcase, label: '服務項目' },
-                        { id: 'GALLERY', icon: ImageIcon, label: '活動花絮' },
+                        { id: 'GALLERY', icon: Image, label: '活動花絮' },
                         { id: 'FAQS', icon: HelpCircle, label: '常見問題' },
                         { id: 'REGISTRATIONS', icon: Users, label: '報名管理' }
                     ].map(tab => (
@@ -1111,7 +620,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             setActiveTab(tab.id as any);
                             setEditingId(null);
                             setIsAdding(false);
-                            setShowGithubImport(false);
+                            // setShowGithubImport(false); // Removed
                             setIsMobileMenuOpen(false); // Close on selection
                         }} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-colors ${activeTab === tab.id ? 'bg-mystic-gold text-black' : 'text-gray-400 hover:bg-white/5'}`}>
                             <tab.icon size={18} /> {tab.label}
@@ -1137,13 +646,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     activeTab === 'FAQS' ? '常見問題管理' : '活動花絮管理'}
                     </h2>
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
-                        {activeTab === 'GALLERY' && (
-                            <>
-                                <input type="file" ref={fileInputRef} className="hidden" {...({ webkitdirectory: "", directory: "" } as any)} multiple onChange={handleFolderSelect} />
-                            </>
-                        )}
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && (
-                            <button onClick={() => { setEditingId(null); setIsAdding(true); setShowGithubImport(false); setEditForm(activeTab === 'GALLERY' ? { type: 'IMAGE' } : activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
+                            <button onClick={() => { setEditingId(null); setIsAdding(true); setEditForm(activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
                                 <Plus size={18} /> 新增項目
                             </button>
                         )}
@@ -1422,8 +926,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     </div>
                 )}
 
+                {/* --- GALLERY TAB --- */}
+                {activeTab === 'GALLERY' && <GalleryManager />}
+
                 {/* --- OTHER TABS CONTENT --- */}
-                {activeTab !== 'GENERAL' && (
+                {activeTab !== 'GENERAL' && activeTab !== 'GALLERY' && (
                     <>
 
 
@@ -1512,43 +1019,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">問題 (Question)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.question || ''} onChange={e => setEditForm({ ...editForm, question: e.target.value })} /></div>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">解答 (Answer)</label><textarea rows={5} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.answer || ''} onChange={e => setEditForm({ ...editForm, answer: e.target.value })} /></div>
                                         </>
-                                    ) : activeTab === 'GALLERY' ? (
-                                        <>
-                                            {selectedAlbumId ? (
-                                                <>
-                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">照片標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
-                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">類型</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.type || 'IMAGE'} onChange={e => setEditForm({ ...editForm, type: e.target.value })}><option value="IMAGE">圖片</option><option value="VIDEO">影片</option><option value="YOUTUBE">YouTube</option></select></div>
-                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">照片連結 URL</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.url || ''} onChange={e => setEditForm({ ...editForm, url: e.target.value })} /></div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-xs text-mystic-gold uppercase tracking-widest">或 從本地多選上傳至 GitHub</label>
-                                                        <input
-                                                            type="file"
-                                                            multiple
-                                                            accept="image/*"
-                                                            className="w-full bg-white/5 border border-mystic-gold/30 p-2 text-sm text-gray-300 file:bg-mystic-gold file:text-black file:border-none file:px-3 file:py-1 file:mr-3 file:rounded-sm file:font-bold file:cursor-pointer"
-                                                            onChange={e => setSelectedFiles(Array.from(e.target.files || []))}
-                                                        />
-                                                        {selectedFiles.length > 0 && <span className="text-[10px] text-mystic-gold mt-1">已選擇 {selectedFiles.length} 張照片</span>}
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">相簿名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
-                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">活動日期</label><input type="date" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.eventDate || ''} onChange={e => setEditForm({ ...editForm, eventDate: e.target.value })} /></div>
-                                                    <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">相簿描述</label><textarea rows={2} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
-                                                    <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">封面圖片連結</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.coverImageUrl || ''} onChange={e => setEditForm({ ...editForm, coverImageUrl: e.target.value })} /></div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-xs text-mystic-gold uppercase tracking-widest">或 上傳封面至 GitHub</label>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            className="w-full bg-white/5 border border-mystic-gold/30 p-2 text-sm text-gray-300 file:bg-mystic-gold file:text-black file:border-none file:px-3 file:py-1 file:mr-3 file:rounded-sm file:font-bold file:cursor-pointer"
-                                                            onChange={e => setSelectedFiles([e.target.files?.[0]].filter(Boolean) as File[])}
-                                                        />
-                                                    </div>
-                                                </>
-                                            )}
-                                        </>
                                     ) : (
                                         <>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">標題/名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || editForm.name || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
@@ -1557,11 +1027,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     )}
                                 </div>
                                 <div className="flex gap-3 mt-8 pt-6 border-t border-white/10">
-                                    <button onClick={handleSave} disabled={isSaving || isUploadingToGithub} className="bg-mystic-gold text-black px-8 py-3 rounded-sm font-bold hover:bg-white transition-all shadow-lg disabled:opacity-50 flex items-center gap-2">
-                                        {isSaving || isUploadingToGithub ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                                        {isUploadingToGithub ? `上傳中 (${selectedFiles.length} 張檔案)...` : '儲存變更'}
+                                    <button onClick={handleSave} disabled={isSaving} className="bg-mystic-gold text-black px-8 py-3 rounded-sm font-bold hover:bg-white transition-all shadow-lg disabled:opacity-50 flex items-center gap-2">
+                                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                                        儲存變更
                                     </button>
-                                    <button onClick={() => { setEditingId(null); setIsAdding(false); setEditForm({}); setSelectedFiles([]); }} className="bg-gray-800 text-white px-8 py-3 rounded-sm hover:bg-gray-700 transition-all">取消</button>
+                                    <button onClick={() => { setEditingId(null); setIsAdding(false); setEditForm({}); }} className="bg-gray-800 text-white px-8 py-3 rounded-sm hover:bg-gray-700 transition-all">取消</button>
                                 </div>
                             </div>
                         )}
@@ -1707,14 +1177,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             />
                                             <Briefcase size={14} className="absolute left-2.5 top-3 text-gray-500" />
                                         </div>
-                                        {activeTab === 'GALLERY' && selectedAlbumId && (
-                                            <button
-                                                onClick={() => setSelectedAlbumId(null)}
-                                                className="bg-gray-800 text-white px-3 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-gray-700"
-                                            >
-                                                <ImageIcon size={16} /> 返回相簿列表
-                                            </button>
-                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-3">
@@ -1730,7 +1192,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }}
                                             className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors"
                                         >
-                                            <Plus size={16} /> {activeTab === 'GALLERY' ? (selectedAlbumId ? '上傳照片' : '建立相簿') : '新增項目'}
+                                            <Plus size={16} /> 新增項目
                                         </button>
                                     </div>
                                 </div>
@@ -1758,11 +1220,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         onChange={handleSelectAll}
                                                     />
                                                 </th>
-                                                {activeTab === 'GALLERY'
-                                                    ? (selectedAlbumId ? <th className="p-4 whitespace-nowrap">相片內容</th> : <th className="p-4 whitespace-nowrap">相簿內容</th>)
-                                                    : (activeTab === 'ORG' ? <th className="p-4 whitespace-nowrap">內容</th> : <th className="p-4 whitespace-nowrap">標題/名稱</th>)
-                                                }
-                                                <th className="p-4 whitespace-nowrap">{activeTab === 'GALLERY' && !selectedAlbumId ? '照片數量' : '詳細資訊'}</th>
+                                                {activeTab === 'ORG' ? <th className="p-4 whitespace-nowrap">內容</th> : <th className="p-4 whitespace-nowrap">標題/名稱</th>}
+                                                <th className="p-4 whitespace-nowrap">詳細資訊</th>
                                                 <th className="p-4 text-right whitespace-nowrap">操作</th>
                                             </tr>
                                         </thead>
@@ -1804,60 +1263,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('SERVICE', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
                                                 </tr>
                                             ))}
-                                            {activeTab === 'GALLERY' && paginatedItems.map((item: any) => (
-                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
-                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
-                                                    <td className="p-4 flex gap-4">
-                                                        <img src={selectedAlbumId ? item.url : (item.coverImageUrl || 'https://placehold.co/150x150?text=No+Cover')} className="w-10 h-10 object-cover rounded" />
-                                                        <div>
-                                                            <div className="font-bold text-white">{item.title}</div>
-                                                            {!selectedAlbumId && <div className="text-xs text-gray-500 line-clamp-1">{item.description}</div>}
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4 text-gray-400">
-                                                        {selectedAlbumId ? item.type : (
-                                                            <button
-                                                                onClick={() => setSelectedAlbumId(item.id)}
-                                                                className="text-mystic-gold hover:underline text-xs flex items-center gap-1"
-                                                            >
-                                                                <FolderInput size={14} /> 進入相簿
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-4 text-right flex justify-end gap-2">
-                                                        {selectedAlbumId && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => window.open(item.url, '_blank')}
-                                                                    className="p-2 bg-gray-700 text-white rounded hover:bg-gray-600"
-                                                                    title="預覽照片"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                </button>
-                                                                <button
-                                                                    title="設為封面"
-                                                                    onClick={async () => {
-                                                                        if (confirm('確定要將這張照片設為相簿封面嗎？')) {
-                                                                            try {
-                                                                                await updateGalleryAlbum(selectedAlbumId, { coverImageUrl: item.url });
-                                                                                alert('封面已更新！請至前台重新整理查看。');
-                                                                            } catch (e) {
-                                                                                console.error(e);
-                                                                                alert('設定封面失敗');
-                                                                            }
-                                                                        }
-                                                                    }}
-                                                                    className="p-2 bg-green-900/20 text-green-400 rounded hover:bg-green-900/40"
-                                                                >
-                                                                    <ImageIcon size={16} />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        <button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button>
-                                                        <button onClick={() => handleDelete(selectedAlbumId ? 'GALLERY' : 'ALBUM', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button>
-                                                    </td>
-                                                </tr>
-                                            ))}
                                             {activeTab === 'ORG' && paginatedItems.map((item: any) => (
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
@@ -1894,7 +1299,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 </div>
                             </div>
                         )}
-                        {((activeTab === 'EVENTS' || activeTab === 'NEWS' || activeTab === 'SERVICES' || activeTab === 'GALLERY' || activeTab === 'ORG' || activeTab === 'FAQS') && paginatedItems.length === 0) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
+                        {((activeTab === 'EVENTS' || activeTab === 'NEWS' || activeTab === 'SERVICES' || activeTab === 'ORG' || activeTab === 'FAQS') && paginatedItems.length === 0) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
                     </>
                 )}
             </div >
