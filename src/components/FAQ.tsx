@@ -10,7 +10,7 @@ const FAQ: React.FC = () => {
     <section className="py-24 bg-black">
       <div className="container mx-auto px-6 max-w-3xl">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white">常見問題</h2>
+          <h2 className="text-[clamp(1.5rem,4vw,1.875rem)] font-bold text-white">常見問題</h2>
         </div>
 
         <div className="space-y-4">

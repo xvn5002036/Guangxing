@@ -213,3 +213,28 @@ export const COMMON_ROADS: Record<string, string[]> = {
   "西屯區": ["台灣大道", "黎明路", "文心路", "市政路", "福科路", "西屯路", "河南路"],
   "板橋區": ["文化路", "中山路", "民生路", "縣民大道", "南雅南路", "重慶路", "四川路"]
 };
+
+export interface DigitalProduct {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  fileType: string;
+  filePath: string;
+  previewUrl: string;
+  category: string;
+  createdAt?: string;
+}
+
+export interface ScriptureOrder {
+  id: string;
+  userId: string;
+  productId: string;
+  amount: number;
+  status: 'PAID' | 'PENDING' | 'FAILED';
+  merchantTradeNo: string;
+  paymentDate?: string;
+  paymentType?: string;
+  createdAt?: string;
+  product?: DigitalProduct;
+}

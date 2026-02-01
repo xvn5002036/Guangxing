@@ -20,16 +20,20 @@ import Footer from './components/Footer';
 import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
 import MemberCenter from './components/MemberCenter';
-import { DataProvider } from './context/DataContext';
+import { DataProvider, useData } from './context/DataContext';
 import { isSupabaseConfigured } from './services/supabase';
 import SupabaseSetupWizard from './components/SupabaseSetupWizard';
 
+import { ScriptureShop } from './components/ScriptureShop';
+
 const App: React.FC = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [view, setView] = useState<'HOME' | 'MEMBER'>('HOME');
+  const [view, setView] = useState<'HOME' | 'MEMBER' | 'SHOP'>('HOME');
+
+  const { user } = useData();
 
   return (
-    <DataProvider>
+    <>
       <SupabaseSetupWizard />
       <div className="min-h-screen flex flex-col bg-mystic-dark relative">
         <BackgroundEffects />
@@ -38,12 +42,37 @@ const App: React.FC = () => {
           <AdminPanel onClose={() => setIsAdminOpen(false)} />
         ) : view === 'MEMBER' ? (
           <>
-            <Header onNavigateToMember={() => setView('MEMBER')} onOpenAdmin={() => setIsAdminOpen(true)} />
+            <Header 
+              onNavigateToMember={() => setView('MEMBER')} 
+              onNavigateToShop={() => setView('SHOP')}
+              onOpenAdmin={() => setIsAdminOpen(true)} 
+            />
             <MemberCenter onBack={() => setView('HOME')} />
+          </>
+        ) : view === 'SHOP' ? (
+          <>
+            <Header 
+              onNavigateToMember={() => setView('MEMBER')} 
+              onNavigateToShop={() => setView('SHOP')}
+              onOpenAdmin={() => setIsAdminOpen(true)} 
+            />
+            <main className="flex-grow pt-20">
+              <ScriptureShop userId={user?.id} />
+              <div className="container mx-auto px-6 py-10 text-center">
+                 <button onClick={() => setView('HOME')} className="text-gray-500 hover:text-mystic-gold transition-all text-sm">
+                   ← 返回首頁
+                 </button>
+              </div>
+            </main>
+            <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
           </>
         ) : (
           <div className="relative z-10">
-            <Header onNavigateToMember={() => setView('MEMBER')} onOpenAdmin={() => setIsAdminOpen(true)} />
+            <Header 
+              onNavigateToMember={() => setView('MEMBER')} 
+              onNavigateToShop={() => setView('SHOP')}
+              onOpenAdmin={() => setIsAdminOpen(true)} 
+            />
             <main className="flex-grow">
               <Hero />
               <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
@@ -64,7 +93,7 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-    </DataProvider>
+    </>
   );
 };
 

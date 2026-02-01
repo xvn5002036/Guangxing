@@ -14,7 +14,7 @@ const News: React.FC = () => {
     <section id="news" className="py-20 bg-black text-white">
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-gray-800 pb-4">
-            <h2 className="text-3xl font-bold tracking-widest text-white">宮廟快訊</h2>
+            <h2 className="text-[clamp(1.5rem,4vw,1.875rem)] font-bold tracking-widest text-white">宮廟快訊</h2>
             <button 
                 onClick={() => setIsModalOpen(true)}
                 className="text-sm text-mystic-gold hover:text-white transition-colors mt-4 md:mt-0 flex items-center gap-1 cursor-pointer"

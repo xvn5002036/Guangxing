@@ -14,15 +14,17 @@ const navItems: NavItem[] = [
   // { label: '靈籤擲筊', href: '#oracle' }, // Removed by request
   { label: '濟世服務', href: '#services' },
   { label: '活動花絮', href: '#gallery' },
+  { label: '數位商城', href: '#shop' },
   { label: '交通指引', href: '#contact-info' },
 ];
 
 interface HeaderProps {
   onNavigateToMember: () => void;
+  onNavigateToShop: () => void;
   onOpenAdmin?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onOpenAdmin }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, onOpenAdmin }) => {
   const { siteSettings, user } = useData();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -64,7 +66,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onOpenAdmin }) => {
     e.preventDefault();
     setIsMenuOpen(false);
 
-    // Small timeout to allow body scroll unlock and menu close animation to start/finish
+    if (href === '#shop') {
+      onNavigateToShop();
+      return;
+    }
+
+    // Small timeout
     setTimeout(() => {
       const element = document.querySelector(href);
       if (element) {
@@ -180,12 +187,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onOpenAdmin }) => {
         {/* Full Screen Menu - Visible on ALL screens when open */}
         {isMenuOpen && (
           <div className="fixed inset-0 w-screen h-screen bg-mystic-dark/98 z-[60] flex flex-col justify-center items-center backdrop-blur-xl animate-fade-in">
-            <div className="flex flex-col w-full max-w-sm px-6 gap-6">
+            <div className="flex flex-col w-[min(90%,450px)] px-6 gap-[1vh]">
               {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-xl text-gray-200 hover:text-mystic-gold py-4 tracking-[0.3em] transition-colors border-b border-white/5 w-full text-center cursor-pointer"
+                  className="text-[clamp(1rem,4.5vw,1.5rem)] md:text-[clamp(1.2rem,3vh,2rem)] text-gray-200 hover:text-mystic-gold py-3 md:py-4 tracking-[0.3em] transition-colors border-b border-white/5 w-full text-center cursor-pointer font-medium"
                   onClick={(e) => handleNavClick(e, item.href)}
                 >
                   {item.label}

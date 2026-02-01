@@ -11,7 +11,7 @@ const TempleHistory: React.FC = () => {
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     <span className="text-mystic-gold text-xs tracking-[0.3em] uppercase block mb-2">Heritage</span>
-                    <h2 className="text-3xl md:text-5xl font-bold text-white font-serif">宮廟沿革</h2>
+                    <h2 className="text-[clamp(1.875rem,5vw,3rem)] font-bold text-white font-serif">宮廟沿革</h2>
                     <div className="w-16 h-1 bg-mystic-gold mx-auto mt-6"></div>
                 </div>
 

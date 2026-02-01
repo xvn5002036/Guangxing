@@ -17,7 +17,7 @@ const Services: React.FC = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
             <span className="text-gray-500 tracking-[0.2em] uppercase text-sm">Online Services</span>
-            <h2 className="text-3xl font-bold text-white mt-2">濟世服務 & 線上點燈</h2>
+            <h2 className="text-[clamp(1.875rem,5vw,2.5rem)] font-bold text-white mt-2">濟世服務 & 線上點燈</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">

@@ -2,8 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase'; // Import Supabase Client
-import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Loader2, Users, Info, Settings, Network, Layout, Home, Printer, Image, HelpCircle } from 'lucide-react';
-import { GalleryItem, Registration } from '../types';
+import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Loader2, Users, Info, Settings, Network, Layout, Home, Printer, Image, HelpCircle, BookOpen, ShoppingBag } from 'lucide-react';
+import { GalleryItem, Registration, DigitalProduct, ScriptureOrder } from '../types';
 import { GalleryManager } from './admin/GalleryManager';
 
 interface AdminPanelProps {
@@ -21,10 +21,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         orgMembers, addOrgMember, updateOrgMember, deleteOrgMember,
         faqs, addFaq, updateFaq, deleteFaq,
         siteSettings, updateSiteSettings,
+        scriptures, addScripture, updateScripture, deleteScripture,
+        scriptureOrders, fetchScriptureOrders,
         resetData, signOut
     } = useData();
 
-    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS'>('DASHBOARD');
+    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS' | 'SCRIPTURES' | 'ORDERS'>('DASHBOARD');
     const [generalSubTab, setGeneralSubTab] = useState<'VISUAL' | 'CONFIG'>('VISUAL');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -47,7 +49,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Generic Delete Handler
 
-    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION', id: string) => {
+    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'SCRIPTURE', id: string) => {
         if (!window.confirm('確定要刪除此項目嗎？此動作無法復原。')) return;
 
         try {
@@ -58,6 +60,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             else if (type === 'ORG') await deleteOrgMember(id);
             else if (type === 'FAQ') await deleteFaq(id);
             else if (type === 'REGISTRATION') await deleteRegistration(id);
+            else if (type === 'SCRIPTURE') await deleteScripture(id);
         } catch (error: any) {
             console.error("Delete failed:", error);
             if (error.code === '23503') { // Foreign Key Violation
@@ -156,9 +159,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             case 'EVENTS': return events;
             case 'NEWS': return news;
             case 'SERVICES': return services;
-            case 'SERVICES': return services;
             case 'ORG': return orgMembers;
             case 'FAQS': return faqs;
+            case 'SCRIPTURES': return scriptures;
             default: return [];
         }
     })();
@@ -190,28 +193,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         if (activeTab === 'SERVICES') return check((item as any).title) || check((item as any).price);
         if (activeTab === 'ORG') return check((item as any).name) || check((item as any).title);
         if (activeTab === 'FAQS') return check((item as any).question) || check((item as any).answer);
+        if (activeTab === 'SCRIPTURES') return check((item as any).title) || check((item as any).description);
 
         return true;
     });
 
     // Dashboard Statistics Calculation
     const stats = {
-        totalRevenue: registrations.reduce((sum, reg) => sum + (reg.amount || 0), 0),
-        registrationsCount: registrations.length,
+        registrationRevenue: registrations.reduce((sum, reg) => sum + (reg.amount || 0), 0),
+        orderRevenue: scriptureOrders.reduce((sum, ord) => sum + (ord.amount || 0), 0),
+        totalRevenue: 0, // Calculated below
+        ritualCount: registrations.length,
+        digitalSalesCount: scriptureOrders.length,
         unprocessedCount: registrations.filter(r => !r.isProcessed).length,
         todayNewCount: registrations.filter(r => {
             const today = new Date();
             const regDate = new Date(r.createdAt);
-            return regDate.getDate() === today.getDate() &&
-                regDate.getMonth() === today.getMonth() &&
-                regDate.getFullYear() === today.getFullYear();
+            return regDate.toDateString() === today.toDateString();
+        }).length + scriptureOrders.filter(o => {
+            const today = new Date();
+            const ordDate = new Date(o.createdAt);
+            return ordDate.toDateString() === today.toDateString();
         }).length
     };
+    stats.totalRevenue = stats.registrationRevenue + stats.orderRevenue;
 
-    // Recent 5 Registrations
-    const recentRegistrations = [...registrations]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
+    // Unified Recent Activity (Latest 10 items)
+    const recentActivities = [
+        ...registrations.map(r => ({ ...r, type: 'RITUAL' as const })),
+        ...scriptureOrders.map(o => ({ ...o, type: 'PRODUCT' as const, name: userProfile?.id === o.userId ? (userProfile?.name || '會員') : '購買信眾', serviceTitle: o.product?.title || '數位商品' }))
+    ]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
 
 
     // Pagination Logic
@@ -307,6 +320,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             configEvent: siteSettings.configEvent || { showBirth: true, showTime: false, showAddress: true, showIdNumber: true }
         });
     }, [siteSettings, activeTab]);
+
+    // Fetch orders when tab is active
+    useEffect(() => {
+        if (activeTab === 'ORDERS') {
+            fetchScriptureOrders();
+        }
+    }, [activeTab]);
 
     // Derived state for determining if we should show the dashboard
     // We trust the Context (isAdmin) OR our local override (forceDashboard)
@@ -423,6 +443,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     if (isAdding) await addOrgMember(editForm); else await updateOrgMember(editingId!, editForm);
                 } else if (activeTab === 'FAQS') {
                     if (isAdding) await addFaq(editForm); else await updateFaq(editingId!, editForm);
+                } else if (activeTab === 'SCRIPTURES') {
+                    if (isAdding) await addScripture(editForm); else await updateScripture(editingId!, editForm);
                 }
             }
 
@@ -614,7 +636,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         { id: 'SERVICES', icon: Briefcase, label: '服務項目' },
                         { id: 'GALLERY', icon: Image, label: '活動花絮' },
                         { id: 'FAQS', icon: HelpCircle, label: '常見問題' },
-                        { id: 'REGISTRATIONS', icon: Users, label: '報名管理' }
+                        { id: 'REGISTRATIONS', icon: Users, label: '報名管理' },
+                        { id: 'SCRIPTURES', icon: BookOpen, label: '數位商品管理' },
+                        { id: 'ORDERS', icon: ShoppingBag, label: '數位商品訂單' }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => {
                             setActiveTab(tab.id as any);
@@ -643,11 +667,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         activeTab === 'NEWS' ? '最新消息管理' :
                                             activeTab === 'EVENTS' ? '行事曆管理' :
                                                 activeTab === 'SERVICES' ? '服務項目設定' :
-                                                    activeTab === 'FAQS' ? '常見問題管理' : '活動花絮管理'}
+                                                    activeTab === 'FAQS' ? '常見問題管理' :
+                                                        activeTab === 'SCRIPTURES' ? '數位商品管理 (經文/電子書)' :
+                                                            activeTab === 'ORDERS' ? '數位商品訂單紀錄' : '活動花絮管理'}
                     </h2>
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
-                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && (
-                            <button onClick={() => { setEditingId(null); setIsAdding(true); setEditForm(activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'ORDERS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && (
+                            <button onClick={() => { setEditingId(null); setIsAdding(true); setEditForm(activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
                                 <Plus size={18} /> 新增項目
                             </button>
                         )}
@@ -658,78 +684,125 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 {activeTab === 'DASHBOARD' && (
                     <div className="space-y-8 animate-fade-in-up">
                         {/* Stats Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                             <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <Users size={64} />
                                 </div>
-                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">總報名人數</h3>
-                                <div className="text-3xl font-bold text-white">{stats.registrationsCount} <span className="text-sm font-normal text-gray-500">人</span></div>
+                                <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">總報名人數</h3>
+                                <div className="text-3xl font-bold text-white">{stats.ritualCount} <span className="text-sm font-normal text-gray-500 italic">人</span></div>
                             </div>
+
                             <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Briefcase size={64} />
+                                    <ShoppingBag size={64} />
                                 </div>
-                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">今日新增報名</h3>
-                                <div className="text-3xl font-bold text-green-400">+{stats.todayNewCount} <span className="text-sm font-normal text-gray-500">人</span></div>
+                                <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">數位商品銷量</h3>
+                                <div className="text-3xl font-bold text-white">{stats.digitalSalesCount} <span className="text-sm font-normal text-gray-500 italic">件</span></div>
                             </div>
+
                             <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Settings size={64} />
+                                    <Calendar size={64} />
                                 </div>
-                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">未辦理案件</h3>
-                                <div className="text-3xl font-bold text-red-400">{stats.unprocessedCount} <span className="text-sm font-normal text-gray-500">件</span></div>
+                                <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">今日新增動態</h3>
+                                <div className="text-3xl font-bold text-mystic-gold">+{stats.todayNewCount}</div>
                             </div>
+
                             <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <Network size={64} />
                                 </div>
-                                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">總金額 (Total Revenue)</h3>
-                                <div className="text-3xl font-bold text-mystic-gold">NT$ {stats.totalRevenue.toLocaleString()}</div>
+                                <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">未辦理案件</h3>
+                                <div className="text-3xl font-bold text-red-500">{stats.unprocessedCount} <span className="text-sm font-normal text-gray-500 italic">件</span></div>
+                            </div>
+
+                            {/* Revenue Breakdown */}
+                            <div className="bg-mystic-charcoal p-6 rounded-sm border border-white/10 relative overflow-hidden group hover:border-mystic-gold/50 transition-colors md:col-span-2">
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">法會報名總額</h3>
+                                        <div className="text-2xl font-bold text-white">NT$ {stats.registrationRevenue.toLocaleString()}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">數位商城總額</h3>
+                                        <div className="text-2xl font-bold text-white">NT$ {stats.orderRevenue.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div className="mt-4 h-2 bg-black rounded-full overflow-hidden flex">
+                                    <div className="h-full bg-mystic-gold" style={{ width: `${(stats.registrationRevenue / (stats.totalRevenue || 1)) * 100}%` }}></div>
+                                    <div className="h-full bg-white opacity-20" style={{ width: `${(stats.orderRevenue / (stats.totalRevenue || 1)) * 100}%` }}></div>
+                                </div>
+                            </div>
+
+                            <div className="bg-mystic-charcoal p-6 rounded-sm border border-mystic-gold/30 shadow-[0_0_20px_rgba(197,160,89,0.1)] relative overflow-hidden group hover:border-mystic-gold transition-colors md:col-span-2">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Layout size={64} />
+                                </div>
+                                <h3 className="text-mystic-gold text-[10px] font-bold uppercase tracking-widest mb-2">全站累計總營收 (TOTAL REVENUE)</h3>
+                                <div className="text-4xl font-bold text-mystic-gold">NT$ {stats.totalRevenue.toLocaleString()}</div>
                             </div>
                         </div>
 
                         {/* Recent Activity */}
                         <div className="bg-mystic-charcoal border border-white/10 rounded-sm p-6">
-                            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
                                 <div className="w-1 h-6 bg-mystic-gold"></div>
-                                最新報名動態
+                                全站最新動態
+                                <span className="text-[10px] bg-white/5 text-gray-500 px-2 py-0.5 rounded-full font-normal tracking-widest uppercase ml-auto">顯示最近 10 筆</span>
                             </h3>
                             <div className="overflow-x-auto -mx-6 px-6">
-                                <table className="w-full text-left text-sm min-w-[500px]">
-                                    <thead className="bg-black/20 text-gray-400 uppercase tracking-widest text-xs">
+                                <table className="w-full text-left text-sm min-w-[600px]">
+                                    <thead className="bg-black/20 text-gray-400 uppercase tracking-widest text-[10px]">
                                         <tr>
                                             <th className="p-4 whitespace-nowrap">時間</th>
-                                            <th className="p-4 whitespace-nowrap">信眾姓名</th>
-                                            <th className="p-4 whitespace-nowrap">服務項目</th>
+                                            <th className="p-4 whitespace-nowrap">類型</th>
+                                            <th className="p-4 whitespace-nowrap">對象 / 項目</th>
                                             <th className="p-4 whitespace-nowrap">金額</th>
                                             <th className="p-4 text-right whitespace-nowrap">狀態</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {recentRegistrations.length > 0 ? recentRegistrations.map(reg => (
-                                            <tr key={reg.id} className="hover:bg-white/5 transition-colors">
-                                                <td className="p-4 text-gray-400">{new Date(reg.createdAt).toLocaleDateString()} {new Date(reg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                                <td className="p-4 font-bold text-white">{reg.name}</td>
-                                                <td className="p-4 text-gray-300">{reg.serviceTitle}</td>
-                                                <td className="p-4 font-mono text-mystic-gold">NT$ {reg.amount}</td>
-                                                <td className="p-4 text-right">
-                                                    <span className={`px-2 py-1 rounded text-xs ${reg.isProcessed ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-                                                        {reg.isProcessed ? '已辦理' : '未辦理'}
+                                        {recentActivities.length > 0 ? recentActivities.map(item => (
+                                            <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                                                <td className="p-4 text-gray-400 text-xs">{new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest ${item.type === 'RITUAL' ? 'bg-mystic-gold/10 text-mystic-gold border border-mystic-gold/20' : 'bg-blue-900/20 text-blue-400 border border-blue-900/30'}`}>
+                                                        {item.type === 'RITUAL' ? '法會報名' : '商城訂單'}
                                                     </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="font-bold text-white">{ (item as any).name || '購買者' }</div>
+                                                    <div className="text-xs text-gray-500 mt-0.5">{ (item as any).serviceTitle || '數位商品' }</div>
+                                                </td>
+                                                <td className="p-4 font-mono text-mystic-gold">NT$ {item.amount.toLocaleString()}</td>
+                                                <td className="p-4 text-right">
+                                                    {item.type === 'RITUAL' ? (
+                                                        <span className={`px-2 py-1 rounded text-[10px] ${(item as any).isProcessed ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                                                            {(item as any).isProcessed ? '已辦理' : '未辦理'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`px-2 py-1 rounded text-[10px] ${(item as any).status === 'PAID' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                                                            {(item as any).status === 'PAID' ? '已付款' : '待付款'}
+                                                        </span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         )) : (
                                             <tr>
-                                                <td colSpan={5} className="p-8 text-center text-gray-500">目前尚無任何報名資料</td>
+                                                <td colSpan={5} className="p-8 text-center text-gray-500">目前尚無任何動態</td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="mt-4 text-center">
-                                <button onClick={() => setActiveTab('REGISTRATIONS')} className="text-xs text-gray-400 hover:text-white border-b border-dashed border-gray-600 hover:border-white pb-0.5 transition-all">
-                                    查看所有報名紀錄
+                            <div className="mt-6 flex justify-center gap-4">
+                                <button onClick={() => setActiveTab('REGISTRATIONS')} className="text-[10px] text-gray-500 hover:text-mystic-gold transition-all uppercase tracking-[0.2em]">
+                                    → 查看報名紀錄
+                                </button>
+                                <div className="w-px h-3 bg-white/10"></div>
+                                <button onClick={() => setActiveTab('ORDERS')} className="text-[10px] text-gray-500 hover:text-mystic-gold transition-all uppercase tracking-[0.2em]">
+                                    → 查看商城訂單
                                 </button>
                             </div>
                         </div>
@@ -1019,6 +1092,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">問題 (Question)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.question || ''} onChange={e => setEditForm({ ...editForm, question: e.target.value })} /></div>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">解答 (Answer)</label><textarea rows={5} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.answer || ''} onChange={e => setEditForm({ ...editForm, answer: e.target.value })} /></div>
                                         </>
+                                    ) : activeTab === 'SCRIPTURES' ? (
+                                        <>
+                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">商品名稱 / 標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
+                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">分類</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.category || '數位道藏'} onChange={e => setEditForm({ ...editForm, category: e.target.value })}><option value="數位道藏">數位道藏</option><option value="精選電子書">精選電子書</option><option value="法會手冊">法會手冊</option></select></div>
+                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">價格 (NT$)</label><input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.price || ''} onChange={e => setEditForm({ ...editForm, price: parseInt(e.target.value) })} /></div>
+                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">檔案類型</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.fileType || 'PDF'} onChange={e => setEditForm({ ...editForm, fileType: e.target.value })}><option value="PDF">PDF</option><option value="Word">Word</option><option value="Excel">Excel</option><option value="PPT">PPT</option></select></div>
+                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">檔案路徑 (Storage Path)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.filePath || ''} onChange={e => setEditForm({ ...editForm, filePath: e.target.value })} placeholder="例如: heart-sutra.pdf" /></div>
+                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">預覽圖片連結 (URL)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.previewUrl || ''} onChange={e => setEditForm({ ...editForm, previewUrl: e.target.value })} /></div>
+                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">描述內容</label><textarea rows={4} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
+                                        </>
                                     ) : (
                                         <>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">標題/名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || editForm.name || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
@@ -1272,6 +1355,54 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
                                                     <td className="p-4 text-white font-bold">{item.question}</td><td className="p-4 text-gray-400 line-clamp-1">{item.answer.substring(0, 50)}...</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('FAQ', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
+                                            ))}
+                                            {activeTab === 'SCRIPTURES' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
+                                                    <td className="p-4 flex gap-4">
+                                                        <div className="w-10 h-10 bg-mystic-charcoal rounded flex items-center justify-center border border-white/10">
+                                                            {item.previewUrl ? (
+                                                                <img src={item.previewUrl} alt={item.title} className="w-full h-full object-cover rounded" />
+                                                            ) : (
+                                                                <BookOpen size={20} className="text-mystic-gold" />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-white">{item.title}</div>
+                                                            <div className="text-xs text-gray-500 uppercase">{item.fileType}</div>
+                                                            <div className="mt-1"><span className="text-[10px] bg-mystic-gold/10 text-mystic-gold px-1.5 py-0.5 rounded border border-mystic-gold/30">{item.category || '數位商品'}</span></div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-gray-400">
+                                                        <div className="text-mystic-gold font-mono font-bold">NT$ {item.price}</div>
+                                                        <div className="text-[10px] truncate max-w-[200px]">{item.filePath}</div>
+                                                    </td>
+                                                    <td className="p-4 text-right flex justify-end gap-2">
+                                                        <button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button>
+                                                        <button onClick={() => handleDelete('SCRIPTURE', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {activeTab === 'ORDERS' && (scriptureOrders || []).map((order: any) => (
+                                                <tr key={order.id} className="hover:bg-white/5">
+                                                    <td className="p-4"></td>
+                                                    <td className="p-4">
+                                                        <div className="font-bold text-white">{order.product?.title || '未知商品'}</div>
+                                                        <div className="text-[10px] text-gray-500 font-mono">{order.merchantTradeNo}</div>
+                                                    </td>
+                                                    <td className="p-4 text-gray-400">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-white">NT$ {order.amount}</span>
+                                                            <span className={`text-[10px] ${order.status === 'PAID' ? 'text-green-400' : 'text-red-400'}`}>
+                                                                {order.status === 'PAID' ? '已付款' : '未付款'}
+                                                            </span>
+                                                            <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <div className="text-[10px] text-gray-600">UserID: {order.userId.substring(0, 8)}...</div>
+                                                    </td>
+                                                </tr>
                                             ))}
                                         </tbody>
                                     </table>

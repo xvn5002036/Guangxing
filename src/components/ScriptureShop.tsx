@@ -1,0 +1,195 @@
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, BookOpen, CheckCircle2, Loader2, Info } from 'lucide-react';
+
+import { useData } from '../context/DataContext';
+import { DigitalProduct } from '../types';
+
+export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
+    const { scriptures: products } = useData();
+    const [myPurchasedIds, setMyPurchasedIds] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(false);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [activeCategory, setActiveCategory] = useState<string>('ALL');
+
+    useEffect(() => {
+        const fetchLibrary = async () => {
+            if (!userId) {
+                setMyPurchasedIds(new Set());
+                return;
+            }
+            try {
+                const libRes = await fetch(`/api/my-library?userId=${userId}`);
+                if (libRes.ok) {
+                    const lib = await libRes.json();
+                    const purchasedSet = new Set(lib.map((item: any) => item.product?.id));
+                    setMyPurchasedIds(purchasedSet);
+                }
+            } catch (error) {
+                console.error('Fetch Library Error:', error);
+            }
+        };
+
+        fetchLibrary();
+    }, [userId]);
+
+    const handleBuy = async (product: DigitalProduct) => {
+        if (!userId) {
+            alert('請先登入會員再進行請購');
+            return;
+        }
+
+        setProcessingId(product.id);
+        try {
+            const response = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    productId: product.id,
+                    amount: product.price,
+                    itemNames: product.title
+                })
+            });
+
+            if (!response.ok) throw new Error('建立訂單失敗');
+
+            const htmlForm = await response.text();
+            
+            // 建立一個隱藏的容器來執行綠界跳轉表單
+            const div = document.createElement('div');
+            div.innerHTML = htmlForm;
+            document.body.appendChild(div);
+            
+            // 手動觸發表單送出 (因為 innerHTML 插入的 script 不會自動執行)
+            const form = div.querySelector('form');
+            if (form) {
+                form.submit();
+            } else {
+                throw new Error('找不到跳轉表單');
+            }
+        } catch (error) {
+            console.error('Purchase Error:', error);
+            alert('建立訂單失敗，請稍後再試');
+            setProcessingId(null);
+        }
+    };
+
+    if (loading) return (
+        <div className="flex justify-center p-20">
+            <Loader2 className="animate-spin text-mystic-gold" size={40} />
+        </div>
+    );
+
+    return (
+        <div className="p-6 bg-black min-h-screen text-white">
+            <div className="max-w-6xl mx-auto">
+                <header className="mb-12 text-center">
+                    <h1 className="text-4xl font-bold tracking-[0.3em] text-mystic-gold uppercase mb-4">精選數位商城</h1>
+                    <div className="w-24 h-1 bg-mystic-gold mx-auto mb-6"></div>
+                    <p className="text-gray-400 max-w-2xl mx-auto italic">
+                        「書中自有黃金屋，書中自有顏如玉。」—— 線上恭請數位道藏與宗教電子書，隨時恭敬修持。
+                    </p>
+                </header>
+
+                {/* Category Filters */}
+                <div className="flex justify-center gap-4 mb-12">
+                    {['ALL', '數位道藏', '精選電子書', '法會手冊'].map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`px-6 py-2 rounded-full text-sm font-bold tracking-widest transition-all border ${
+                                activeCategory === cat 
+                                ? 'bg-mystic-gold text-black border-mystic-gold' 
+                                : 'text-gray-400 border-white/10 hover:border-mystic-gold/50'
+                            }`}
+                        >
+                            {cat === 'ALL' ? '全部商品' : cat}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {products.filter(p => activeCategory === 'ALL' || p.category === activeCategory).map((product) => {
+                        const isPurchased = myPurchasedIds.has(product.id);
+                        
+                        return (
+                            <div key={product.id} className="relative group bg-mystic-charcoal/50 border border-white/5 overflow-hidden rounded-sm hover:border-mystic-gold/40 transition-all duration-500">
+                                {/* Preview Image / Icon Placeholder */}
+                                <div className="aspect-[4/3] bg-black relative flex items-center justify-center overflow-hidden">
+                                    {product.previewUrl ? (
+                                        <img src={product.previewUrl} alt={product.title} className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700" />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-mystic-gold/20">
+                                            <BookOpen size={64} strokeWidth={1} />
+                                            <span className="mt-4 text-[10px] tracking-[0.3em] uppercase">Digital Collection</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-mystic-charcoal to-transparent"></div>
+                                    <div className="absolute top-4 left-4 bg-black/80 border border-mystic-gold/30 px-3 py-1 text-[10px] text-mystic-gold font-bold tracking-widest uppercase">
+                                        {product.fileType}
+                                    </div>
+                                </div>
+
+                                <div className="p-6 relative">
+                                    <div className="mb-1 text-xs text-mystic-gold font-bold uppercase tracking-widest opacity-70">
+                                        {product.category || '數位經文'}
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-mystic-gold transition-colors">{product.title}</h3>
+                                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                                        {product.description || '恭請道藏經文數位版，永久存儲於您的個人帳戶中，隨時隨地恭敬觀閱。'}
+                                    </p>
+
+                                    <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
+                                        <div className="text-2xl font-bold text-mystic-gold">
+                                            <span className="text-sm font-normal mr-1">NT$</span>
+                                            {product.price.toLocaleString()}
+                                        </div>
+                                        
+                                        {isPurchased ? (
+                                            <button 
+                                                disabled
+                                                className="bg-green-900/20 text-green-400 border border-green-900/50 px-6 py-2 rounded-sm flex items-center gap-2 font-bold"
+                                            >
+                                                <CheckCircle2 size={18} /> 已開通
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => handleBuy(product)}
+                                                disabled={processingId === product.id}
+                                                className="bg-mystic-gold text-black px-6 py-2 rounded-sm flex items-center gap-2 font-bold hover:bg-white transition-all active:scale-95 disabled:opacity-50"
+                                            >
+                                                {processingId === product.id ? <Loader2 className="animate-spin" size={18} /> : <ShoppingCart size={18} />}
+                                                即刻請購
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {isPurchased && (
+                                    <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-none"></div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="mt-20 p-8 bg-mystic-charcoal/30 border border-white/5 rounded-sm">
+                    <div className="flex items-start gap-4">
+                        <div className="bg-mystic-gold/10 p-3 rounded-full">
+                            <Info className="text-mystic-gold" />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-2">請購須知</h4>
+                            <ul className="text-sm text-gray-500 space-y-2 list-disc pl-4">
+                                <li>所有數位商品均為電子版本 (PDF/Office)，一旦請購成功並開通權限，恕不接受退款。</li>
+                                <li>商品檔案將永久保存於您的「會員專區 - 個人數位藏書」中。</li>
+                                <li>為尊重版權，內容僅供個人修持觀閱，請勿將檔案私自散布、轉發或用於任何商業用途。</li>
+                                <li>系統將自動阻擋重複購買，每位會員僅需請購一次即可永久擁有。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};

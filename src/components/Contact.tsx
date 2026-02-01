@@ -37,7 +37,7 @@ const Contact: React.FC = () => {
                     {/* Info */}
                     <div className="w-full lg:w-1/3 space-y-8">
                         <div>
-                            <h2 className="text-3xl font-bold text-white mb-6">交通指引 & 聯絡</h2>
+                            <h2 className="text-[clamp(1.875rem,4vw,2.25rem)] font-bold text-white mb-6">交通指引 & 聯絡</h2>
                             <p className="text-gray-400 mb-8">歡迎蒞臨{siteSettings.templeName}參香祈福，或透過線上方式與我們聯繫。</p>
                         </div>
 

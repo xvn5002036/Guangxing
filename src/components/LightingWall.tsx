@@ -61,7 +61,7 @@ const LightingWall: React.FC = () => {
             <div className="container mx-auto px-6 relative z-10">
                 <div className="text-center mb-12">
                     <span className="text-mystic-gold text-xs tracking-[0.3em] uppercase block mb-2">Blessing Wall</span>
-                    <h2 className="text-3xl md:text-5xl font-bold text-white font-serif">線上光明燈牆</h2>
+                    <h2 className="text-[clamp(1.875rem,5vw,3rem)] font-bold text-white font-serif">線上光明燈牆</h2>
                     <p className="text-gray-500 mt-4 text-sm max-w-lg mx-auto">
                         每一盞燈，都是一份虔誠的祈願。當您完成報名並經廟方受理後，您的名字將在此點亮，受神光普照。
                     </p>

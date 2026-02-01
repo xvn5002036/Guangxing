@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem } from '../types';
+import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem, DigitalProduct, ScriptureOrder } from '../types';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 // Helper to get formatted date for current month
@@ -150,6 +150,14 @@ interface DataContextType {
     getRegistrationsByPhone: (phone: string) => Registration[];
 
     updateSiteSettings: (settings: Partial<SiteSettings>) => void;
+    
+    // Scriptures
+    scriptures: DigitalProduct[];
+    scriptureOrders: ScriptureOrder[];
+    addScripture: (item: Omit<DigitalProduct, 'id' | 'createdAt'>) => Promise<void>;
+    updateScripture: (id: string, item: Partial<DigitalProduct>) => Promise<void>;
+    deleteScripture: (id: string) => Promise<void>;
+    fetchScriptureOrders: () => Promise<void>;
 
     resetData: () => void;
 }
@@ -166,6 +174,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>([]);
+    const [scriptures, setScriptures] = useState<DigitalProduct[]>([]);
+    const [scriptureOrders, setScriptureOrders] = useState<ScriptureOrder[]>([]);
 
     // === SUPABASE SYNCHRONIZATION ===
 
@@ -285,6 +295,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('registrations', setRegistrations, 'created_at', false), []);
     useEffect(() => syncTable('faqs', setFaqs, 'created_at', false, INITIAL_FAQS as any), []);
     useEffect(() => syncTable('gallery_albums', setGalleryAlbums, 'created_at', false), []);
+    useEffect(() => syncTable('digital_products', setScriptures, 'created_at', false), []);
 
 
     // === ACTIONS ===
@@ -741,6 +752,88 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const addScripture = async (item: Omit<DigitalProduct, 'id' | 'createdAt'>) => {
+        if (isSupabaseConfigured()) {
+            const dbItem = {
+                title: item.title,
+                description: item.description,
+                price: item.price,
+                file_type: item.fileType,
+                file_path: item.filePath,
+                preview_url: item.previewUrl,
+                category: item.category
+            };
+            const { error } = await supabase.from('digital_products').insert([dbItem]);
+            if (error) throw error;
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` } as DigitalProduct;
+            setScriptures(prev => [newItem, ...prev]);
+        }
+    };
+
+    const updateScripture = async (id: string, item: Partial<DigitalProduct>) => {
+        if (isSupabaseConfigured()) {
+            const dbItem: any = {};
+            if (item.title !== undefined) dbItem.title = item.title;
+            if (item.description !== undefined) dbItem.description = item.description;
+            if (item.price !== undefined) dbItem.price = item.price;
+            if (item.fileType !== undefined) dbItem.file_type = item.fileType;
+            if (item.filePath !== undefined) dbItem.file_path = item.filePath;
+            if (item.previewUrl !== undefined) dbItem.preview_url = item.previewUrl;
+            if (item.category !== undefined) dbItem.category = item.category;
+
+            const { error } = await supabase.from('digital_products').update(dbItem).eq('id', id);
+            if (error) throw error;
+        } else {
+            setScriptures(prev => prev.map(s => s.id === id ? { ...s, ...item } : s));
+        }
+    };
+
+    const deleteScripture = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('digital_products').delete().eq('id', id);
+            if (error) throw error;
+        } else {
+            setScriptures(prev => prev.filter(s => s.id !== id));
+        }
+    };
+
+    const fetchScriptureOrders = async () => {
+        if (isSupabaseConfigured()) {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*, product:digital_products!product_id(*)')
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                // Map snake_case to camelCase
+                const mapped = data.map((o: any) => ({
+                    id: o.id,
+                    userId: o.user_id,
+                    productId: o.product_id,
+                    amount: o.amount,
+                    status: o.status,
+                    merchantTradeNo: o.merchant_trade_no,
+                    paymentDate: o.payment_date,
+                    paymentType: o.payment_type,
+                    createdAt: o.created_at,
+                    product: o.product ? {
+                        id: o.product.id,
+                        title: o.product.title,
+                        description: o.product.description,
+                        price: o.product.price,
+                        fileType: o.product.file_type,
+                        filePath: o.product.file_path,
+                        previewUrl: o.product.preview_url,
+                        category: o.product.category,
+                        createdAt: o.product.created_at
+                    } : undefined
+                }));
+                setScriptureOrders(mapped);
+            }
+        }
+    };
+
     const resetData = async () => {
         if (window.confirm('確定要重置所有資料嗎？(警告：此操作不可逆)')) {
             if (isSupabaseConfigured()) {
@@ -855,6 +948,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
 
             updateSiteSettings,
+            scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, fetchScriptureOrders,
             resetData
         }}>
             {children}

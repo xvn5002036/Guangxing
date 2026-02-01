@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { User, Package, Calendar, MapPin, LogOut, ChevronRight, Printer } from 'lucide-react';
+import { User, Package, Calendar, MapPin, LogOut, ChevronRight, Printer, BookOpen } from 'lucide-react';
 import AuthModal from './AuthModal';
+import { MemberLibrary } from './MemberLibrary';
 
 interface MemberCenterProps {
     onBack: () => void;
@@ -9,7 +10,7 @@ interface MemberCenterProps {
 
 const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
     const { user, userProfile, signOut, registrations, siteSettings } = useData();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS' | 'SCRIPTURES'>('PROFILE');
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
     // Filter registrations for current user
@@ -135,6 +136,13 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                 <Package size={18} />
                                 祈福紀錄
                             </button>
+                            <button
+                                onClick={() => setActiveTab('SCRIPTURES')}
+                                className={`w-full text-left p-4 flex items-center gap-3 transition-colors ${activeTab === 'SCRIPTURES' ? 'bg-mystic-gold/10 text-mystic-gold border-l-2 border-mystic-gold' : 'text-gray-400 hover:bg-white/5'}`}
+                            >
+                                <BookOpen size={18} />
+                                我的經文庫
+                            </button>
                         </div>
                     </div>
 
@@ -237,6 +245,12 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                         ))}
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'SCRIPTURES' && user && (
+                            <div className="animate-fade-in-up">
+                                <MemberLibrary userId={user.id} />
                             </div>
                         )}
                     </div>

@@ -27,11 +27,11 @@ const Hero: React.FC = () => {
           </div>
         </div>
 
-        <h1 className="text-6xl md:text-9xl font-bold text-white mb-6 tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] font-calligraphy">
+        <h1 className="text-[clamp(3rem,12vw,9rem)] font-bold text-white mb-6 tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] font-calligraphy leading-tight">
           {siteSettings.heroTitle}
         </h1>
 
-        <div className="flex items-center justify-center gap-4 text-mystic-gold tracking-[0.6em] text-sm md:text-xl font-light uppercase mb-12">
+        <div className="flex items-center justify-center gap-4 text-mystic-gold tracking-[0.6em] text-[clamp(0.75rem,2.5vw,1.25rem)] font-light uppercase mb-12">
           <span className="h-[1px] w-12 md:w-24 bg-gradient-to-r from-transparent to-mystic-gold"></span>
           {siteSettings.heroSubtitle}
           <span className="h-[1px] w-12 md:w-24 bg-gradient-to-l from-transparent to-mystic-gold"></span>

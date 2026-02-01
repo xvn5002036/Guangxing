@@ -51,7 +51,7 @@ const Organization: React.FC = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
             <span className="text-mystic-gold text-xs tracking-[0.3em] uppercase block mb-2">Structure</span>
-            <h2 className="text-3xl md:text-5xl font-bold text-white font-serif">組織架構</h2>
+            <h2 className="text-[clamp(1.875rem,5vw,3rem)] font-bold text-white font-serif">組織架構</h2>
             <div className="w-12 h-1 bg-mystic-gold mx-auto mt-4 rounded-full"></div>
         </div>
 

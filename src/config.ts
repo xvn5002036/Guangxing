@@ -1,3 +1,4 @@
 export const SUPABASE_URL = 'https://gmswwklptwtxceomjrbm.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_SbF7J4kDf6jA1-yOzrtX2w_C0WBVg1C';
 export const GEMINI_API_KEY = 'sb_publishable_SbF7J4kDf6jA1-yOzrtX2w_C0WBVg1C';
+export const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdtc3d3a2xwdHd0eGNlb21qcmJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTUwMDQ1OSwiZXhwIjoyMDg1MDc2NDU5fQ.McxefJX66CG0_Mo_0dfWBBuef3gQm3EGouTKnzIPXFA';

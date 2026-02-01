@@ -54,7 +54,7 @@ const Gallery: React.FC = () => {
             <div className="container mx-auto px-6">
                 <div className="text-center mb-16">
                     <span className="text-mystic-gold text-xs tracking-[0.3em] uppercase block mb-2">Gallery</span>
-                    <h2 className="text-3xl font-bold text-white">活動花絮</h2>
+                    <h2 className="text-[clamp(1.875rem,5vw,2.5rem)] font-bold text-white">活動花絮</h2>
                     {selectedAlbumId && (
                         <button
                             onClick={() => setSelectedAlbumId(null)}
