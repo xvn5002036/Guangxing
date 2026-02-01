@@ -157,7 +157,9 @@ interface DataContextType {
     addScripture: (item: Omit<DigitalProduct, 'id' | 'createdAt'>) => Promise<void>;
     updateScripture: (id: string, item: Partial<DigitalProduct>) => Promise<void>;
     deleteScripture: (id: string) => Promise<void>;
+    deleteScriptureWithOrders: (id: string) => Promise<void>;
     fetchScriptureOrders: () => Promise<void>;
+    deleteScriptureOrder: (id: string) => Promise<void>;
 
     resetData: () => void;
 }
@@ -320,9 +322,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('news').delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setNews(prev => prev.filter(n => n.id !== id));
         }
+        setNews(prev => prev.filter(item => item.id !== id));
     };
 
     const addEvent = async (item: Omit<TempleEvent, 'id'>) => {
@@ -382,9 +383,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('events').delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setEvents(prev => prev.filter(e => e.id !== id));
         }
+        setEvents(prev => prev.filter(item => item.id !== id));
     };
 
     const addService = async (item: Omit<ServiceItem, 'id'>) => {
@@ -444,9 +444,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('services').delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setServices(prev => prev.filter(s => s.id !== id));
         }
+        setServices(prev => prev.filter(item => item.id !== id));
     };
 
     const toGalleryDbItem = (item: any) => {
@@ -493,9 +492,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('gallery').delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setGallery(prev => prev.filter(g => g.id !== id));
         }
+        setGallery(prev => prev.filter(item => item.id !== id));
     };
 
     const addGalleryAlbum = async (album: Omit<GalleryAlbum, 'id'>) => {
@@ -607,9 +605,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('org_members').delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setOrgMembers(prev => prev.filter(m => m.id !== id));
         }
+        setOrgMembers(prev => prev.filter(item => item.id !== id));
     };
 
 
@@ -632,9 +629,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('faqs').delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setFaqs(prev => prev.filter(f => f.id !== id));
         }
+        setFaqs(prev => prev.filter(item => item.id !== id));
     };
 
     const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
@@ -693,9 +689,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from("registrations").delete().eq('id', id);
             if (error) throw error;
-        } else {
-            setRegistrations(prev => prev.filter(r => r.id !== id));
         }
+        setRegistrations(prev => prev.filter(r => r.id !== id));
     };
 
     const getRegistrationsByPhone = (phone: string) => registrations.filter(r => r.phone === phone);
@@ -790,12 +785,36 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const deleteScripture = async (id: string) => {
-        if (isSupabaseConfigured()) {
-            const { error } = await supabase.from('digital_products').delete().eq('id', id);
-            if (error) throw error;
-        } else {
-            setScriptures(prev => prev.filter(s => s.id !== id));
+        // Use Backend API for robust deletion (handles FK and RLS issues)
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            const err: any = new Error(errorData.details || errorData.error || '刪除失敗');
+            if (errorData.code) err.code = errorData.code;
+            throw err;
         }
+        
+        // Update local state immediately for fast UI
+        setScriptures(prev => prev.filter(s => s.id !== id));
+    };
+
+    const deleteScriptureWithOrders = async (id: string) => {
+        // The Backend API already handles order cleanup, so we can use the same endpoint
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            const err: any = new Error(errorData.details || errorData.error || '強制刪除失敗');
+            if (errorData.code) err.code = errorData.code;
+            throw err;
+        }
+
+        // Update local state for both products and orders
+        setScriptureOrders(prev => prev.filter(o => o.productId !== id));
+        setScriptures(prev => prev.filter(s => s.id !== id));
     };
 
     const fetchScriptureOrders = async () => {
@@ -832,6 +851,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setScriptureOrders(mapped);
             }
         }
+    };
+
+    const deleteScriptureOrder = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('orders').delete().eq('id', id);
+            if (error) throw error;
+        }
+        // Optimistic update for both modes to ensure immediate UI feedback
+        setScriptureOrders(prev => prev.filter(o => o.id !== id));
     };
 
     const resetData = async () => {
@@ -948,7 +976,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
 
             updateSiteSettings,
-            scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, fetchScriptureOrders,
+            scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders, fetchScriptureOrders, deleteScriptureOrder,
             resetData
         }}>
             {children}

@@ -21,8 +21,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         orgMembers, addOrgMember, updateOrgMember, deleteOrgMember,
         faqs, addFaq, updateFaq, deleteFaq,
         siteSettings, updateSiteSettings,
-        scriptures, addScripture, updateScripture, deleteScripture,
-        scriptureOrders, fetchScriptureOrders,
+        scriptures, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders,
+        scriptureOrders, fetchScriptureOrders, deleteScriptureOrder,
         resetData, signOut
     } = useData();
 
@@ -49,7 +49,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Generic Delete Handler
 
-    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'SCRIPTURE', id: string) => {
+    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'SCRIPTURE' | 'ORDER', id: string) => {
         if (!window.confirm('確定要刪除此項目嗎？此動作無法復原。')) return;
 
         try {
@@ -61,10 +61,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             else if (type === 'FAQ') await deleteFaq(id);
             else if (type === 'REGISTRATION') await deleteRegistration(id);
             else if (type === 'SCRIPTURE') await deleteScripture(id);
+            else if (type === 'ORDER') await deleteScriptureOrder(id);
         } catch (error: any) {
             console.error("Delete failed:", error);
             if (error.code === '23503') { // Foreign Key Violation
-                alert('無法刪除：此項目已被其他資料引用 (例如已有人報名此活動)。\n請先刪除相關聯的資料後再試。');
+                let msg = '無法刪除：此項目已被其他資料引用。';
+                if (type === 'SCRIPTURE') {
+                    if (window.confirm('此商品已有訂單。是否要「連同所有訂單一併強制刪除」？\n(警告：相關購買記錄將會永久消失，此動作無法復原)')) {
+                        try {
+                            await deleteScriptureWithOrders(id);
+                            alert('商品及其關聯訂單已強制刪除');
+                            return; // Success, skip generic alert
+                        } catch (forceError: any) {
+                            alert(`強制刪除失敗：${forceError.message || '未知錯誤'}`);
+                        }
+                    } else {
+                        msg = '無法刪除：已有訂單引用此商品。請先至「數位商品訂單」分頁刪除相關訂單後再試。';
+                    }
+                } else if (type === 'EVENT') {
+                    msg = '無法刪除：已有使用者報名此活動。請先刪除報名清單後再試。';
+                } else if (type === 'SERVICE') {
+                    msg = '無法刪除：此服務已有報名記錄。請先處理報名資料再試。';
+                }
+                alert(msg);
             } else {
                 alert(`刪除失敗：${error.message || '未知錯誤'}`);
             }
@@ -162,6 +181,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             case 'ORG': return orgMembers;
             case 'FAQS': return faqs;
             case 'SCRIPTURES': return scriptures;
+            case 'ORDERS': return scriptureOrders;
             default: return [];
         }
     })();
@@ -194,6 +214,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         if (activeTab === 'ORG') return check((item as any).name) || check((item as any).title);
         if (activeTab === 'FAQS') return check((item as any).question) || check((item as any).answer);
         if (activeTab === 'SCRIPTURES') return check((item as any).title) || check((item as any).description);
+        if (activeTab === 'ORDERS') {
+            const i = item as any;
+            return check(i.product?.title) || check(i.merchantTradeNo) || check(i.userId);
+        }
 
         return true;
     });
@@ -273,6 +297,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     else if (activeTab === 'SERVICES') await deleteService(id);
                     else if (activeTab === 'ORG') await deleteOrgMember(id);
                     else if (activeTab === 'FAQS') await deleteFaq(id);
+                    else if (activeTab === 'ORDERS') await deleteScriptureOrder(id);
+                    else if (activeTab === 'SCRIPTURES') {
+                        try {
+                            await deleteScripture(id);
+                        } catch (error: any) {
+                            if (error.code === '23503') {
+                                if (window.confirm(`商品 (ID: ${(id as string).substring(0, 8)}...) 已有訂單引用。是否要連同所有訂單一併強制刪除？`)) {
+                                    await deleteScriptureWithOrders(id);
+                                } else {
+                                    throw error;
+                                }
+                            } else {
+                                throw error;
+                            }
+                        }
+                    }
                     // Albums are not batch deleted for safety usually, but we could add ALBUM here if needed
 
                     successCount++;
@@ -289,8 +329,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             }
 
             if (failCount > 0) {
-                alert(`批次處理完成。成功刪除: ${successCount} 筆，失敗: ${failCount} 筆。\n(失敗原因通常是資料庫關聯限制)`);
-            } else {
+                alert(`批次處理完成。成功刪除: ${successCount} 筆，失敗: ${failCount} 筆。\n\n提示：失敗原因通常是資料庫關聯限制（例如經文已有訂單，或活動已有報名）。請先刪除關聯資料後再重試。`);
+            }
+ else {
                 alert('已完成批次刪除');
             }
         }
@@ -1271,12 +1312,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 <Trash2 size={16} /> 刪除選取 ({selectedItems.size})
                                             </button>
                                         )}
-                                        <button
-                                            onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }}
-                                            className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors"
-                                        >
-                                            <Plus size={16} /> 新增項目
-                                        </button>
+                                        {activeTab !== 'ORDERS' && (
+                                            <button
+                                                onClick={() => { setIsAdding(true); setEditingId(null); setEditForm({}); }}
+                                                className="bg-mystic-gold text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors"
+                                            >
+                                                <Plus size={16} /> 新增項目
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -1383,9 +1426,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     </td>
                                                 </tr>
                                             ))}
-                                            {activeTab === 'ORDERS' && (scriptureOrders || []).map((order: any) => (
-                                                <tr key={order.id} className="hover:bg-white/5">
-                                                    <td className="p-4"></td>
+                                            {activeTab === 'ORDERS' && (paginatedItems as any[]).map((order: any) => (
+                                                <tr key={order.id} className={`hover:bg-white/5 ${selectedItems.has(order.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="cursor-pointer"
+                                                            checked={selectedItems.has(order.id)}
+                                                            onChange={() => handleSelectOne(order.id)}
+                                                        />
+                                                    </td>
                                                     <td className="p-4">
                                                         <div className="font-bold text-white">{order.product?.title || '未知商品'}</div>
                                                         <div className="text-[10px] text-gray-500 font-mono">{order.merchantTradeNo}</div>
@@ -1399,8 +1449,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                             <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="p-4 text-right">
+                                                    <td className="p-4 text-right flex justify-end items-center gap-4">
                                                         <div className="text-[10px] text-gray-600">UserID: {order.userId.substring(0, 8)}...</div>
+                                                        <button 
+                                                            onClick={() => handleDelete('ORDER', order.id)} 
+                                                            className="p-2 bg-red-900/20 text-red-400 rounded hover:bg-red-900/40 transition-colors"
+                                                            title="刪除此訂單"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}

@@ -329,7 +329,51 @@ app.get('/api/my-library', async (req, res) => {
 });
 
 /**
- * 5. 取得安全下載連結 (Signed URL)
+ * 5. 刪除數位商品 (及其關聯訂單)
+ * DELETE /api/products/:id
+ */
+app.delete('/api/products/:id', async (req, res) => {
+    if (!supabase) {
+        return res.status(500).json({ error: 'Database not initialized.' });
+    }
+    const { id } = req.params;
+
+    try {
+        // 1. 刪除相關訂單 (purchases 表有 ON DELETE CASCADE on order_id，所以會一併刪除)
+        const { error: orderError } = await supabase
+            .from('orders')
+            .delete()
+            .eq('product_id', id);
+
+        if (orderError) {
+            console.error('Delete Orders Error:', orderError);
+            throw orderError;
+        }
+
+        // 2. 刪除商品主表
+        const { error: productError } = await supabase
+            .from('digital_products')
+            .delete()
+            .eq('id', id);
+
+        if (productError) {
+            console.error('Delete Product Error:', productError);
+            throw productError;
+        }
+
+        res.json({ success: true, message: '商品及其關聯資料已成功刪除' });
+    } catch (error) {
+        console.error('Delete API Error:', error);
+        res.status(500).json({ 
+            error: 'Failed to delete product',
+            details: error.message || error,
+            code: error.code // Include Supabase error code (e.g., '23503')
+        });
+    }
+});
+
+/**
+ * 6. 取得安全下載連結 (Signed URL)
  * GET /api/download/:productId?userId=...
  */
 app.get('/api/download/:productId', async (req, res) => {
