@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Book, Download, Eye, Loader2, FileText, BookOpen, X, Printer } from 'lucide-react';
+import { Book, Download, Eye, Loader2, FileText, BookOpen, X, Printer, Copy, Check } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import JSZip from 'jszip';
 import { supabase } from '../services/supabase';
 
@@ -17,6 +19,51 @@ interface PurchasedItem {
         attachments?: any[];
     }
 }
+
+
+// Custom Code Component with Copy Functionality
+const CodeBlock = ({ inline, className, children, ...props }: any) => {
+    const [isCopied, setIsCopied] = useState(false);
+    const text = String(children).replace(/\n$/, '');
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent triggering parent clicks
+        navigator.clipboard.writeText(text);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    if (inline) {
+        return (
+            <code 
+                className={`${className} cursor-pointer hover:bg-mystic-gold/20 active:bg-mystic-gold/40 transition-colors rounded px-1 relative group`} 
+                onClick={handleCopy} 
+                title="點擊複製"
+                {...props}
+            >
+                {children}
+                {isCopied && <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] bg-black text-white px-2 py-1 rounded shadow-lg animate-fade-in-up whitespace-nowrap z-50">已複製</span>}
+            </code>
+        );
+    }
+
+    return (
+        <div className="relative group my-4 not-prose">
+            <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                    onClick={handleCopy} 
+                    className="p-1.5 rounded bg-gray-800/10 hover:bg-gray-800/20 text-gray-500 hover:text-black backdrop-blur-sm border border-gray-200"
+                    title="複製程式碼"
+                >
+                    {isCopied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                </button>
+            </div>
+            <code className={`${className} block bg-gray-100 p-4 rounded-lg border border-gray-200 overflow-x-auto text-sm font-mono text-gray-800`} {...props}>
+                {children}
+            </code>
+        </div>
+    );
+};
 
 export const MemberLibrary: React.FC<{ userId: string }> = ({ userId }) => {
     const [purchases, setPurchases] = useState<PurchasedItem[]>([]);
@@ -335,8 +382,16 @@ export const MemberLibrary: React.FC<{ userId: string }> = ({ userId }) => {
                         <div className="flex-1 bg-white rounded-lg overflow-y-auto shadow-2xl p-8 md:p-12 container mx-auto">
                             <article 
                                 className="prose prose-lg max-w-none text-black selection:bg-mystic-gold/30"
-                                dangerouslySetInnerHTML={{ __html: readingContent }}
-                            />
+                            >
+                                <ReactMarkdown 
+                                    rehypePlugins={[rehypeRaw]}
+                                    components={{
+                                        code: CodeBlock
+                                    }}
+                                >
+                                    {readingContent}
+                                </ReactMarkdown>
+                            </article>
                         </div>
                         <div className="py-4 text-center text-[10px] text-gray-500">
                             廣行宮道藏圖書館 - 此為數位資產，僅供本宮信眾修持，嚴禁轉載與商業用途。

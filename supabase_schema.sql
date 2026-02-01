@@ -181,6 +181,46 @@ create table public.site_settings (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 2.10 Digital Products (Scriptures)
+create table public.digital_products (
+  id uuid primary key default uuid_generate_v4(),
+  title text not null,
+  author text,
+  description text,
+  content text,
+  price numeric default 0,
+  file_type text default 'HTML',
+  file_path text,
+  preview_url text,
+  category text,
+  attachments jsonb default '[]'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 2.11 Orders (Scripture Orders)
+create table public.orders (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id),
+  product_id uuid references public.digital_products(id),
+  amount numeric not null,
+  status text check (status in ('PAID', 'PENDING', 'CANCELLED', 'FAILED')) default 'PENDING',
+  merchant_trade_no text,
+  payment_date timestamp with time zone,
+  payment_type text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 2.12 Purchases (Unlock Records)
+create table public.purchases (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) not null,
+  product_id uuid references public.digital_products(id) not null,
+  order_id uuid references public.orders(id),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, product_id)
+);
+
 -- ==========================================
 -- 3. ROW LEVEL SECURITY (RLS) & POLICIES
 -- ==========================================
@@ -196,6 +236,9 @@ alter table public.gallery_albums enable row level security;
 alter table public.org_members enable row level security;
 alter table public.faqs enable row level security;
 alter table public.site_settings enable row level security;
+alter table public.digital_products enable row level security;
+alter table public.orders enable row level security;
+alter table public.purchases enable row level security;
 
 -- 3.1 Profiles Policies
 create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
@@ -248,6 +291,22 @@ create policy "Admins can update registrations" on public.registrations
 create policy "Admins can delete registrations" on public.registrations 
   for delete using (public.is_admin());
 
+-- 3.4 Digital Products
+create policy "Public can view digital products" on public.digital_products for select using (true);
+create policy "Admins can manage digital products" on public.digital_products for all using (public.is_admin());
+
+-- 3.5 Purchases
+create policy "Users can view own purchases" on public.purchases for select using (auth.uid() = user_id or public.is_admin());
+create policy "Admins can manage purchases" on public.purchases for all using (public.is_admin());
+
+-- 3.6 Orders
+create policy "Users can view own orders" on public.orders 
+  for select using (auth.uid() = user_id or public.is_admin());
+create policy "Users can insert own orders" on public.orders 
+  for insert with check (auth.uid() = user_id or public.is_admin());
+create policy "Admins can manage orders" on public.orders 
+  for all using (public.is_admin());
+
 
 -- ==========================================
 -- 4. REALTIME & TRIGGERS
@@ -264,6 +323,9 @@ alter publication supabase_realtime add table org_members;
 alter publication supabase_realtime add table registrations;
 alter publication supabase_realtime add table site_settings;
 alter publication supabase_realtime add table faqs;
+alter publication supabase_realtime add table digital_products;
+alter publication supabase_realtime add table orders;
+alter publication supabase_realtime add table purchases;
 
 -- 4.2 Auto-Create Profile Trigger
 create or replace function public.handle_new_user() 

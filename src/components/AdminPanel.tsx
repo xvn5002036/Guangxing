@@ -2,13 +2,60 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase'; // Import Supabase Client
-import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Loader2, Users, Info, Settings, Network, Layout, Home, Printer, Image, HelpCircle, BookOpen, ShoppingBag } from 'lucide-react';
+import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Loader2, Users, Info, Settings, Network, Layout, Home, Printer, Image, HelpCircle, BookOpen, ShoppingBag, Copy, Check } from 'lucide-react';
 import { GalleryItem, Registration, DigitalProduct, ScriptureOrder } from '../types';
 import { GalleryManager } from './admin/GalleryManager';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+
 
 interface AdminPanelProps {
     onClose: () => void;
 }
+
+// Custom Code Component with Copy Functionality
+const CodeBlock = ({ inline, className, children, ...props }: any) => {
+    const [isCopied, setIsCopied] = useState(false);
+    const text = String(children).replace(/\n$/, '');
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent triggering parent clicks
+        navigator.clipboard.writeText(text);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    if (inline) {
+        return (
+            <code 
+                className={`${className} cursor-pointer hover:bg-mystic-gold/20 active:bg-mystic-gold/40 transition-colors rounded px-1 relative group`} 
+                onClick={handleCopy} 
+                title="點擊複製 (Click to Copy)"
+                {...props}
+            >
+                {children}
+                {isCopied && <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] bg-black text-white px-1 rounded animate-fade-in-up">已複製</span>}
+            </code>
+        );
+    }
+
+    return (
+        <div className="relative group my-4">
+            <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                    onClick={handleCopy} 
+                    className="p-1.5 rounded bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white backdrop-blur-sm border border-white/10"
+                    title="複製程式碼"
+                >
+                    {isCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                </button>
+            </div>
+            <code className={`${className} block bg-black/30 p-4 rounded-lg border border-white/5 overflow-x-auto`} {...props}>
+                {children}
+            </code>
+        </div>
+    );
+};
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const {
@@ -46,6 +93,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    
+    // Markdown Preview State
+    const [previewMode, setPreviewMode] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Markdown Helper Function
+    const handleInsert = (prefix: string, suffix: string = '') => {
+        const textarea = textareaRef.current;
+        if (!textarea) {
+            setEditForm((prev: any) => ({ ...prev, content: (prev.content || '') + prefix + suffix }));
+            return;
+        }
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = editForm.content || '';
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        const newText = before + prefix + selection + suffix + after;
+        
+        setEditForm({ ...editForm, content: newText });
+        
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
+    };
 
     // Generic Delete Handler
 
@@ -475,9 +551,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     else await updateEvent(editingId!, editForm);
                 } else if (activeTab === 'SERVICES') {
                     if (isAdding) await addService(editForm); else await updateService(editingId!, editForm);
-                } else if (activeTab === 'GALLERY') {
-                    // Handled by GalleryManager, should not trigger here
-                    console.warn("Should not save Gallery item here");
                 } else if (activeTab === 'REGISTRATIONS') {
                     await updateRegistration(editingId!, editForm);
                 } else if (activeTab === 'ORG') {
@@ -1149,47 +1222,82 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all" value={editForm.price || 0} onChange={e => setEditForm({ ...editForm, price: parseInt(e.target.value) || 0 })} placeholder="請輸入金額 (0 表示免費)" />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">內文 (必填，支援 HTML)</label>
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">內文 (支援 Markdown 語法)</label>
                                                     
-                                                    {/* Formatting Toolbar */}
-                                                    <div className="flex gap-2 mb-2">
+                                                    {/* Markdown / Preview Toggle */}
+                                                    <div className="flex gap-2 mb-2 border-b border-white/10">
                                                         <button
                                                             type="button"
-                                                            onClick={() => setEditForm(prev => ({ ...prev, content: (prev.content || '') + '<br/><br/>' }))}
-                                                            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-gray-300"
+                                                            onClick={() => setPreviewMode(false)}
+                                                            className={`text-xs px-4 py-2 rounded-t font-bold transition-colors ${!previewMode ? 'bg-mystic-gold text-black' : 'text-gray-400 hover:text-white'}`}
                                                         >
-                                                            + 增加空行
+                                                            編輯 (Markdown)
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                const text = editForm.content || '';
-                                                                // Convert double newlines to paragraphs
-                                                                const formatted = text.split('\n\n').map((p: string) => `<p>${p.trim()}</p>`).join('\n');
-                                                                setEditForm(prev => ({ ...prev, content: formatted }));
-                                                            }}
-                                                            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-gray-300"
+                                                            onClick={() => setPreviewMode(true)}
+                                                            className={`text-xs px-4 py-2 rounded-t font-bold transition-colors ${previewMode ? 'bg-mystic-gold text-black' : 'text-gray-400 hover:text-white'}`}
                                                         >
-                                                            自動分段 (P tag)
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setEditForm(prev => ({ ...prev, content: (prev.content || '') + '<blockquote>引用文字</blockquote>' }))}
-                                                            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-gray-300"
-                                                        >
-                                                            + 引用區塊
+                                                            預覽結果
                                                         </button>
                                                     </div>
 
-                                                    <textarea 
-                                                        id="scripture-content-editor" 
-                                                        rows={12} 
-                                                        className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all font-mono text-sm leading-loose" 
-                                                        value={editForm.content || ''} 
-                                                        onChange={e => setEditForm({ ...editForm, content: e.target.value })} 
-                                                        placeholder="在此輸入道藏原文... 可使用上方按鈕調整排版" 
-                                                    />
-                                                    <p className="text-[10px] text-gray-500">* 提示：若覺得文字太擠，請多按幾次 Enter 並點擊「增加空行」或「自動分段」。</p>
+                                                    {!previewMode ? (
+                                                        <div className="space-y-2">
+                                                            {/* Markdown Toolbar */}
+                                                            <div className="flex flex-wrap gap-2 text-[10px] text-gray-400 bg-white/5 p-3 rounded border border-white/10">
+                                                                <div className="flex gap-1 pr-2 border-r border-white/10">
+                                                                    <button type="button" onClick={() => handleInsert('# ', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">標題1</button>
+                                                                    <button type="button" onClick={() => handleInsert('## ', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">標題2</button>
+                                                                    <button type="button" onClick={() => handleInsert('### ', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">標題3</button>
+                                                                </div>
+                                                                <div className="flex gap-1 pr-2 border-r border-white/10">
+                                                                    <button type="button" onClick={() => handleInsert('**', '**')} className="hover:text-white px-2 py-1 rounded bg-black/40 font-bold">粗體</button>
+                                                                    <button type="button" onClick={() => handleInsert('*', '*')} className="hover:text-white px-2 py-1 rounded bg-black/40 italic">斜體</button>
+                                                                    <button type="button" onClick={() => handleInsert('~~', '~~')} className="hover:text-white px-2 py-1 rounded bg-black/40 line-through">刪除線</button>
+                                                                </div>
+                                                                <div className="flex gap-1 pr-2 border-r border-white/10">
+                                                                    <button type="button" onClick={() => handleInsert('> ', '\n')} className="hover:text-white px-2 py-1 rounded bg-black/40">引用</button>
+                                                                    <button type="button" onClick={() => handleInsert('`', '`')} className="hover:text-white px-2 py-1 rounded bg-black/40">代碼</button>
+                                                                    <button type="button" onClick={() => handleInsert('```\n', '\n```')} className="hover:text-white px-2 py-1 rounded bg-black/40">區塊</button>
+                                                                </div>
+                                                                <div className="flex gap-1 pr-2 border-r border-white/10">
+                                                                    <button type="button" onClick={() => handleInsert('- ', '\n')} className="hover:text-white px-2 py-1 rounded bg-black/40">列表</button>
+                                                                    <button type="button" onClick={() => handleInsert('1. ', '\n')} className="hover:text-white px-2 py-1 rounded bg-black/40">編號</button>
+                                                                    <button type="button" onClick={() => handleInsert('- [ ] ', '\n')} className="hover:text-white px-2 py-1 rounded bg-black/40">待辦</button>
+                                                                </div>
+                                                                <div className="flex gap-1">
+                                                                    <button type="button" onClick={() => handleInsert('[標題](連結网址)', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">連結</button>
+                                                                    <button type="button" onClick={() => handleInsert('![](', ')') } className="hover:text-white px-2 py-1 rounded bg-black/40">圖片</button>
+                                                                    <button type="button" onClick={() => handleInsert('---\n', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">分隔線</button>
+                                                                    <button type="button" onClick={() => handleInsert('| 標題1 | 標題2 |\n|---|---|\n| 內容1 | 內容2 |', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">表格</button>
+                                                                </div>
+                                                            </div>
+                                                            <textarea 
+                                                                ref={textareaRef}
+                                                                id="scripture-content-editor" 
+                                                                rows={18} 
+                                                                className="w-full bg-black border border-white/10 p-4 text-white focus:border-mystic-gold outline-none transition-all font-mono text-sm leading-relaxed" 
+                                                                value={editForm.content || ''} 
+                                                                onChange={e => setEditForm({ ...editForm, content: e.target.value })} 
+                                                                placeholder="# 在此輸入標題&#10;您可以使用上方工具列快速插入語法...&#10;&#10;**粗體重點**&#10;> 這是引用區塊" 
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-full bg-white text-black p-8 rounded min-h-[400px] overflow-y-auto">
+                                                            <article className="prose prose-lg max-w-none">
+                                                                <ReactMarkdown 
+                                                                    rehypePlugins={[rehypeRaw]}
+                                                                    components={{
+                                                                        code: CodeBlock
+                                                                    }}
+                                                                >
+                                                                    {editForm.content || '*無內容*'}
+                                                                </ReactMarkdown>
+                                                            </article>
+                                                        </div>
+                                                    )}
+                                                    <p className="text-[10px] text-gray-500 mt-2">* 提示：支援 Markdown 語法，右側可切換預覽模式查看實際排版效果。</p>
                                                 </div>
                                             </div>
 
@@ -1411,7 +1519,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             </div>
                         )}
                         {/* Shared Search & Actions for Non-Registration Tabs */}
-                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
+                        {activeTab !== 'REGISTRATIONS' && (
                             <div className="flex flex-col gap-4 mb-4 bg-white/5 p-4 rounded border border-white/10">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
@@ -1457,7 +1565,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         )}
 
                         {/* Shared Table for Non-Registration Tabs */}
-                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'GENERAL' && (
+                        {activeTab !== 'REGISTRATIONS' && (
                             <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
                                 <div className="flex-1 overflow-x-auto">
                                     <table className="w-full text-left text-sm min-w-[650px]">
