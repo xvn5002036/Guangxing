@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "cd server && node server.js",
+    "dev:all": "npx.cmd concurrently \"npm.cmd run dev\" \"npm.cmd run dev:server\"",
     "build": "vite build",
     "preview": "vite preview"
   },

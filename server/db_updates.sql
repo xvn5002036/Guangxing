@@ -46,8 +46,11 @@ CREATE POLICY "Public can view products" ON public.digital_products FOR SELECT U
 CREATE POLICY "Admins can manage products" ON public.digital_products FOR ALL USING (public.is_admin());
 
 -- Policies for Orders
+CREATE POLICY "Admins can manage orders" ON public.orders
+    FOR ALL USING (public.is_admin());
+
 CREATE POLICY "Users can view own orders" ON public.orders
-    FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
+    FOR SELECT USING (auth.uid() = user_id);
 
 -- Policies for Purchases
 CREATE POLICY "Users can view own purchases" ON public.purchases

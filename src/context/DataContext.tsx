@@ -855,10 +855,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const deleteScriptureOrder = async (id: string) => {
         if (isSupabaseConfigured()) {
-            const { error } = await supabase.from('orders').delete().eq('id', id);
-            if (error) throw error;
+            const { error, count } = await supabase
+                .from('orders')
+                .delete()
+                .eq('id', id);
+            
+            if (error) {
+                console.error("Error deleting order:", error);
+                throw error;
+            }
         }
-        // Optimistic update for both modes to ensure immediate UI feedback
+        
+        // Update local state immediately for fast UI
         setScriptureOrders(prev => prev.filter(o => o.id !== id));
     };
 
