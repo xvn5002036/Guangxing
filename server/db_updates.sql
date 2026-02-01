@@ -16,12 +16,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
 CREATE TABLE IF NOT EXISTS public.digital_products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
+    author TEXT,                   -- New: Author of the scripture
+    content TEXT,                  -- New: Main HTML content
     description TEXT,
     category TEXT, -- e.g., 'DAOZANG'
     price NUMERIC NOT NULL DEFAULT 0,
-    file_path TEXT NOT NULL, -- Path in Supabase Storage
+    file_path TEXT,                -- Modified: Now optional, using attachments instead
     preview_url TEXT,
     file_type TEXT, -- e.g., 'pdf', 'docx', 'xlsx'
+    attachments JSONB DEFAULT '[]'::jsonb, -- New: List of attachment objects
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

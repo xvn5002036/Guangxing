@@ -22,7 +22,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         faqs, addFaq, updateFaq, deleteFaq,
         siteSettings, updateSiteSettings,
         scriptures, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders,
-        scriptureOrders, fetchScriptureOrders, deleteScriptureOrder,
+        scriptureOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
         resetData, signOut
     } = useData();
 
@@ -678,8 +678,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         { id: 'GALLERY', icon: Image, label: '活動花絮' },
                         { id: 'FAQS', icon: HelpCircle, label: '常見問題' },
                         { id: 'REGISTRATIONS', icon: Users, label: '報名管理' },
-                        { id: 'SCRIPTURES', icon: BookOpen, label: '數位商品管理' },
-                        { id: 'ORDERS', icon: ShoppingBag, label: '數位商品訂單' }
+                        { id: 'SCRIPTURES', icon: BookOpen, label: '道藏藏書管理' },
+                        { id: 'ORDERS', icon: ShoppingBag, label: '道藏收藏訂單' }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => {
                             setActiveTab(tab.id as any);
@@ -715,7 +715,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'ORDERS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && (
                             <button onClick={() => { setEditingId(null); setIsAdding(true); setEditForm(activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
-                                <Plus size={18} /> 新增項目
+                                <Plus size={18} /> 新增藏書
                             </button>
                         )}
                     </div>
@@ -738,7 +738,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <ShoppingBag size={64} />
                                 </div>
-                                <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">數位商品銷量</h3>
+                                <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">道藏收藏總量</h3>
                                 <div className="text-3xl font-bold text-white">{stats.digitalSalesCount} <span className="text-sm font-normal text-gray-500 italic">件</span></div>
                             </div>
 
@@ -766,7 +766,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         <div className="text-2xl font-bold text-white">NT$ {stats.registrationRevenue.toLocaleString()}</div>
                                     </div>
                                     <div className="text-right">
-                                        <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">數位商城總額</h3>
+                                        <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">道藏收藏總額</h3>
                                         <div className="text-2xl font-bold text-white">NT$ {stats.orderRevenue.toLocaleString()}</div>
                                     </div>
                                 </div>
@@ -1134,15 +1134,140 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">解答 (Answer)</label><textarea rows={5} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.answer || ''} onChange={e => setEditForm({ ...editForm, answer: e.target.value })} /></div>
                                         </>
                                     ) : activeTab === 'SCRIPTURES' ? (
-                                        <>
-                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">商品名稱 / 標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">分類</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.category || '數位道藏'} onChange={e => setEditForm({ ...editForm, category: e.target.value })}><option value="數位道藏">數位道藏</option><option value="精選電子書">精選電子書</option><option value="法會手冊">法會手冊</option></select></div>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">價格 (NT$)</label><input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.price || ''} onChange={e => setEditForm({ ...editForm, price: parseInt(e.target.value) })} /></div>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">檔案類型</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.fileType || 'PDF'} onChange={e => setEditForm({ ...editForm, fileType: e.target.value })}><option value="PDF">PDF</option><option value="Word">Word</option><option value="Excel">Excel</option><option value="PPT">PPT</option></select></div>
-                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">檔案路徑 (Storage Path)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.filePath || ''} onChange={e => setEditForm({ ...editForm, filePath: e.target.value })} placeholder="例如: heart-sutra.pdf" /></div>
-                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">預覽圖片連結 (URL)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.previewUrl || ''} onChange={e => setEditForm({ ...editForm, previewUrl: e.target.value })} /></div>
-                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">描述內容</label><textarea rows={4} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
-                                        </>
+                                        <div className="md:col-span-2 space-y-8 bg-mystic-charcoal text-white p-8 rounded-lg border border-white/10 shadow-2xl">
+                                            <div className="space-y-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">標題 (必填)</label>
+                                                    <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="輸入經文標題" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">作者 (選項)</label>
+                                                    <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all" value={editForm.author || ''} onChange={e => setEditForm({ ...editForm, author: e.target.value })} placeholder="輸入作者名稱" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">費用 (NT$)</label>
+                                                    <input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all" value={editForm.price || 0} onChange={e => setEditForm({ ...editForm, price: parseInt(e.target.value) || 0 })} placeholder="請輸入金額 (0 表示免費)" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">內文 (必填，支援 HTML)</label>
+                                                    
+                                                    {/* Formatting Toolbar */}
+                                                    <div className="flex gap-2 mb-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditForm(prev => ({ ...prev, content: (prev.content || '') + '<br/><br/>' }))}
+                                                            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-gray-300"
+                                                        >
+                                                            + 增加空行
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const text = editForm.content || '';
+                                                                // Convert double newlines to paragraphs
+                                                                const formatted = text.split('\n\n').map((p: string) => `<p>${p.trim()}</p>`).join('\n');
+                                                                setEditForm(prev => ({ ...prev, content: formatted }));
+                                                            }}
+                                                            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-gray-300"
+                                                        >
+                                                            自動分段 (P tag)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditForm(prev => ({ ...prev, content: (prev.content || '') + '<blockquote>引用文字</blockquote>' }))}
+                                                            className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded text-gray-300"
+                                                        >
+                                                            + 引用區塊
+                                                        </button>
+                                                    </div>
+
+                                                    <textarea 
+                                                        id="scripture-content-editor" 
+                                                        rows={12} 
+                                                        className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all font-mono text-sm leading-loose" 
+                                                        value={editForm.content || ''} 
+                                                        onChange={e => setEditForm({ ...editForm, content: e.target.value })} 
+                                                        placeholder="在此輸入道藏原文... 可使用上方按鈕調整排版" 
+                                                    />
+                                                    <p className="text-[10px] text-gray-500">* 提示：若覺得文字太擠，請多按幾次 Enter 並點擊「增加空行」或「自動分段」。</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-6 border-t border-white/10">
+                                                <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-4">上傳圖片到經文</h4>
+                                                <div className="flex flex-col gap-4 bg-black/40 p-6 rounded border border-white/5">
+                                                    <div className="flex items-center gap-4">
+                                                        <input 
+                                                            type="file" 
+                                                            accept="image/*" 
+                                                            className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-mystic-gold/10 file:text-mystic-gold hover:file:bg-mystic-gold/20 cursor-pointer"
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                try {
+                                                                    const fileName = `${Date.now()}_${file.name}`;
+                                                                    const { data, error } = await supabase.storage.from('scriptures').upload(`previews/${fileName}`, file);
+                                                                    if (error) throw error;
+                                                                    const { data: { publicUrl } } = supabase.storage.from('scriptures').getPublicUrl(data.path);
+                                                                    const imgHtml = `\n<img src="${publicUrl}" alt="${file.name}" style="max-width: 100%; height: auto; display: block; margin: 10px auto;" />\n`;
+                                                                    setEditForm({ ...editForm, content: (editForm.content || '') + imgHtml });
+                                                                    alert('圖片上傳成功並已插入內文末端');
+                                                                } catch (err: any) {
+                                                                    alert(`上傳失敗: ${err.message}`);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 italic">上傳成功後，會自動將圖片 HTML 插入到上方「內文」欄位的最末端。</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-6 border-t border-white/10">
+                                                <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-4">附件管理</h4>
+                                                <div className="space-y-4">
+                                                    {(editForm.attachments || []).map((att: any, idx: number) => (
+                                                        <div key={att.id || idx} className="flex items-center gap-3 bg-black/40 p-3 rounded border border-white/5">
+                                                            <div className="flex-1">
+                                                                <input className="w-full bg-transparent border-none text-sm font-bold text-white focus:ring-0" value={att.name} onChange={e => {
+                                                                    const newAtts = [...(editForm.attachments || [])];
+                                                                    newAtts[idx].name = e.target.value;
+                                                                    setEditForm({ ...editForm, attachments: newAtts });
+                                                                }} />
+                                                                <div className="text-[10px] text-gray-500 truncate">{att.url}</div>
+                                                            </div>
+                                                            <button onClick={() => {
+                                                                const newAtts = (editForm.attachments || []).filter((_: any, i: number) => i !== idx);
+                                                                setEditForm({ ...editForm, attachments: newAtts });
+                                                            }} className="text-red-400 hover:bg-red-400/10 p-2 rounded transition-colors"><Trash2 size={16} /></button>
+                                                        </div>
+                                                    ))}
+                                                    <button 
+                                                        onClick={() => {
+                                                            const fileInput = document.createElement('input');
+                                                            fileInput.type = 'file';
+                                                            fileInput.onchange = async (e: any) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                try {
+                                                                    const fileName = `${Date.now()}_${file.name}`;
+                                                                    const { data, error } = await supabase.storage.from('scriptures').upload(`docs/${fileName}`, file);
+                                                                    if (error) throw error;
+                                                                    const { data: { publicUrl } } = supabase.storage.from('scriptures').getPublicUrl(data.path);
+                                                                    const newAtt = { id: Date.now().toString(), name: file.name, url: publicUrl, type: file.type };
+                                                                    setEditForm({ ...editForm, attachments: [...(editForm.attachments || []), newAtt] });
+                                                                } catch (err: any) {
+                                                                    alert(`上傳失敗: ${err.message}`);
+                                                                }
+                                                            };
+                                                            fileInput.click();
+                                                        }}
+                                                        className="w-full py-3 border-2 border-dashed border-white/10 rounded-lg text-gray-500 font-bold hover:border-mystic-gold hover:text-mystic-gold transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <Plus size={18} /> 新增附件
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">標題/名稱</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || editForm.name || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
@@ -1402,7 +1527,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             {activeTab === 'SCRIPTURES' && paginatedItems.map((item: any) => (
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
-                                                    <td className="p-4 flex gap-4">
+                                                     <td className="p-4 flex gap-4">
                                                         <div className="w-10 h-10 bg-mystic-charcoal rounded flex items-center justify-center border border-white/10">
                                                             {item.previewUrl ? (
                                                                 <img src={item.previewUrl} alt={item.title} className="w-full h-full object-cover rounded" />
@@ -1412,13 +1537,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         </div>
                                                         <div>
                                                             <div className="font-bold text-white">{item.title}</div>
-                                                            <div className="text-xs text-gray-500 uppercase">{item.fileType}</div>
-                                                            <div className="mt-1"><span className="text-[10px] bg-mystic-gold/10 text-mystic-gold px-1.5 py-0.5 rounded border border-mystic-gold/30">{item.category || '數位商品'}</span></div>
+                                                            <div className="text-xs text-gray-400">作者: {item.author || '未註記'}</div>
+                                                            <div className="mt-1 flex gap-2">
+                                                                <span className="text-[10px] bg-mystic-gold/10 text-mystic-gold px-1.5 py-0.5 rounded border border-mystic-gold/30">{item.category || '道藏藏書'}</span>
+                                                                {item.attachments && item.attachments.length > 0 && (
+                                                                    <span className="text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30">附件: {item.attachments.length}</span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="p-4 text-gray-400">
-                                                        <div className="text-mystic-gold font-mono font-bold">NT$ {item.price}</div>
-                                                        <div className="text-[10px] truncate max-w-[200px]">{item.filePath}</div>
+                                                        <div className="text-xs line-clamp-2 max-w-[250px]">{item.content ? '已建立內文 (HTML)' : '無內文'}</div>
+                                                        <div className="text-[10px] text-gray-500 font-mono mt-1">ID: {item.id.substring(0, 8)}</div>
                                                     </td>
                                                     <td className="p-4 text-right flex justify-end gap-2">
                                                         <button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button>
@@ -1443,11 +1573,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4 text-gray-400">
                                                         <div className="flex flex-col">
                                                             <span className="text-white">NT$ {order.amount}</span>
-                                                            <span className={`text-[10px] ${order.status === 'PAID' ? 'text-green-400' : 'text-red-400'}`}>
+                                                              <span className={`text-[10px] ${order.status === 'PAID' ? 'text-green-400' : 'text-red-400'}`}>
                                                                 {order.status === 'PAID' ? '已付款' : '未付款'}
-                                                            </span>
-                                                            <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
-                                                        </div>
+                                                              </span>
+                                                              <button 
+                                                                  onClick={async () => {
+                                                                      const newStatus = order.status === 'PAID' ? 'PENDING' : 'PAID';
+                                                                      if (window.confirm(`確定要將狀態改為 ${newStatus === 'PAID' ? '已付款' : '未付款'} 嗎？${newStatus === 'PAID' ? '系統將自動發貨。' : ''}`)) {
+                                                                          try {
+                                                                              await updateScriptureOrder(order.id, { status: newStatus });
+                                                                          } catch (err: any) {
+                                                                              alert(`更換狀態失敗: ${err.message}`);
+                                                                          }
+                                                                      }
+                                                                  }}
+                                                                  className={`mt-1 text-[10px] px-2 py-0.5 rounded border ${order.status === 'PAID' ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-green-500/50 text-green-400 hover:bg-green-500/10'} transition-all`}
+                                                              >
+                                                                  {order.status === 'PAID' ? '設為未付款' : '手動確認付款'}
+                                                              </button>
+                                                              <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                          </div>
                                                     </td>
                                                     <td className="p-4 text-right flex justify-end items-center gap-4">
                                                         <div className="text-[10px] text-gray-600">UserID: {order.userId.substring(0, 8)}...</div>

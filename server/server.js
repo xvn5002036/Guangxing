@@ -126,8 +126,8 @@ app.post('/api/create-order', async (req, res) => {
             MerchantTradeDate: merchantTradeDate,
             PaymentType: 'aio',
             TotalAmount: amount.toString(),
-            TradeDesc: 'Digit Scripture Purchase',
-            ItemName: itemNames || '電子經文',
+            TradeDesc: 'Daozang Library Collection Purchase',
+            ItemName: itemNames || '道藏藏書',
             ReturnURL: 'https://your-server.com/api/webhook/ecpay', // 綠界伺服器通知回傳位址 (需為公網 IP/Domain)
             ClientBackURL: 'https://your-frontend.com/profile', // 消費者付款完成後點選「回到特約商店」按鈕的位址
             ChoosePayment: 'ALL',

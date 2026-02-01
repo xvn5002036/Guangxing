@@ -214,15 +214,25 @@ export const COMMON_ROADS: Record<string, string[]> = {
   "板橋區": ["文化路", "中山路", "民生路", "縣民大道", "南雅南路", "重慶路", "四川路"]
 };
 
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+}
+
 export interface DigitalProduct {
   id: string;
   title: string;
+  author?: string;
+  content?: string;
   description: string;
   price: number;
   fileType: string;
   filePath: string;
   previewUrl: string;
   category: string;
+  attachments?: Attachment[];
   createdAt?: string;
 }
 

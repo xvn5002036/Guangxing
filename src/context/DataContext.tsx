@@ -159,6 +159,7 @@ interface DataContextType {
     deleteScripture: (id: string) => Promise<void>;
     deleteScriptureWithOrders: (id: string) => Promise<void>;
     fetchScriptureOrders: () => Promise<void>;
+    updateScriptureOrder: (id: string, updates: Partial<ScriptureOrder>) => Promise<void>;
     deleteScriptureOrder: (id: string) => Promise<void>;
 
     resetData: () => void;
@@ -749,14 +750,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const addScripture = async (item: Omit<DigitalProduct, 'id' | 'createdAt'>) => {
         if (isSupabaseConfigured()) {
-            const dbItem = {
+            const dbItem: any = {
                 title: item.title,
-                description: item.description,
-                price: item.price,
-                file_type: item.fileType,
-                file_path: item.filePath,
-                preview_url: item.previewUrl,
-                category: item.category
+                author: item.author || '',
+                content: item.content || '',
+                description: item.description || '',
+                price: item.price || 0,
+                file_type: item.fileType || 'HTML',
+                file_path: item.filePath || '',
+                preview_url: item.previewUrl || '',
+                category: item.category || '道藏藏書',
+                attachments: item.attachments || []
             };
             const { error } = await supabase.from('digital_products').insert([dbItem]);
             if (error) throw error;
@@ -770,12 +774,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isSupabaseConfigured()) {
             const dbItem: any = {};
             if (item.title !== undefined) dbItem.title = item.title;
+            if (item.author !== undefined) dbItem.author = item.author;
+            if (item.content !== undefined) dbItem.content = item.content;
             if (item.description !== undefined) dbItem.description = item.description;
             if (item.price !== undefined) dbItem.price = item.price;
             if (item.fileType !== undefined) dbItem.file_type = item.fileType;
             if (item.filePath !== undefined) dbItem.file_path = item.filePath;
             if (item.previewUrl !== undefined) dbItem.preview_url = item.previewUrl;
             if (item.category !== undefined) dbItem.category = item.category;
+            if (item.attachments !== undefined) dbItem.attachments = item.attachments;
 
             const { error } = await supabase.from('digital_products').update(dbItem).eq('id', id);
             if (error) throw error;
@@ -868,6 +875,62 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Update local state immediately for fast UI
         setScriptureOrders(prev => prev.filter(o => o.id !== id));
+    };
+
+    const updateScriptureOrder = async (id: string, updates: Partial<ScriptureOrder>) => {
+        if (isSupabaseConfigured()) {
+            const dbUpdates: any = { ...updates };
+            if (updates.userId) { dbUpdates.user_id = updates.userId; delete dbUpdates.userId; }
+            if (updates.productId) { dbUpdates.product_id = updates.productId; delete dbUpdates.productId; }
+            if (updates.merchantTradeNo) { dbUpdates.merchant_trade_no = updates.merchantTradeNo; delete dbUpdates.merchantTradeNo; }
+            
+            // If manually setting to PAID, add payment info
+            if (updates.status === 'PAID') {
+                dbUpdates.payment_date = new Date().toISOString();
+                dbUpdates.payment_type = 'MANUAL';
+            }
+
+            const { error, count } = await supabase
+                .from('orders')
+                .update(dbUpdates)
+                .eq('id', id)
+                .select(); // Ensure we get return value to check RLS
+
+            if (error) {
+                console.error("Order update failed:", error);
+                throw error;
+            }
+            
+            // If count is 0, it means RLS prevented update or ID not found
+            if (count === 0) {
+                console.warn("Order update returned 0 rows affected. RLS may be blocking.");
+            }
+
+
+            // FULFILLMENT LOGIC: If status changed to PAID, grant access
+            if (updates.status === 'PAID') {
+                const order = scriptureOrders.find(o => o.id === id);
+                if (order) {
+                    const { error: fulfillError } = await supabase
+                        .from('purchases')
+                        .upsert({
+                            user_id: order.userId,
+                            product_id: order.productId,
+                            order_id: id
+                        }, { onConflict: 'user_id,product_id' });
+                    
+                    if (fulfillError) {
+                        console.error("Fulfillment failed:", fulfillError);
+                        alert(`【發貨失敗】\n原因：${fulfillError.message}\n詳情：${fulfillError.details || '無'}\n請確認 SQL 腳本 fix_rls.sql 已執行。`);
+                    }
+                }
+            }
+            
+            // Refetch to ensure consistency
+            await fetchScriptureOrders();
+        } else {
+            setScriptureOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+        }
     };
 
     const resetData = async () => {
@@ -984,7 +1047,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
 
             updateSiteSettings,
-            scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders, fetchScriptureOrders, deleteScriptureOrder,
+            scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
             resetData
         }}>
             {children}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, BookOpen, CheckCircle2, Loader2, Info } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 import { useData } from '../context/DataContext';
 import { DigitalProduct } from '../types';
@@ -18,10 +19,13 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                 return;
             }
             try {
-                const libRes = await fetch(`/api/my-library?userId=${userId}`);
-                if (libRes.ok) {
-                    const lib = await libRes.json();
-                    const purchasedSet = new Set(lib.map((item: any) => item.product?.id));
+                const { data, error } = await supabase
+                    .from('purchases')
+                    .select('product_id')
+                    .eq('user_id', userId);
+                
+                if (data) {
+                    const purchasedSet = new Set(data.map((item: any) => item.product_id));
                     setMyPurchasedIds(purchasedSet);
                 }
             } catch (error) {
@@ -84,10 +88,10 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
         <div className="p-6 bg-black min-h-screen text-white">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-12 text-center">
-                    <h1 className="text-4xl font-bold tracking-[0.3em] text-mystic-gold uppercase mb-4">精選數位商城</h1>
+                    <h1 className="text-4xl font-bold tracking-[0.3em] text-mystic-gold uppercase mb-4">道藏經圖書館</h1>
                     <div className="w-24 h-1 bg-mystic-gold mx-auto mb-6"></div>
                     <p className="text-gray-400 max-w-2xl mx-auto italic">
-                        「書中自有黃金屋，書中自有顏如玉。」—— 線上恭請數位道藏與宗教電子書，隨時恭敬修持。
+                        「道可道，非常道。」—— 歡迎進入廣行宮道藏圖書館。此處收錄歷代珍貴道藏經典與數位電子書，僅限會員收藏與恭敬研讀。
                     </p>
                 </header>
 
@@ -103,7 +107,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                 : 'text-gray-400 border-white/10 hover:border-mystic-gold/50'
                             }`}
                         >
-                            {cat === 'ALL' ? '全部商品' : cat}
+                            {cat === 'ALL' ? '全館藏書' : cat}
                         </button>
                     ))}
                 </div>
@@ -132,11 +136,11 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
 
                                 <div className="p-6 relative">
                                     <div className="mb-1 text-xs text-mystic-gold font-bold uppercase tracking-widest opacity-70">
-                                        {product.category || '數位經文'}
+                                        {product.category || '道藏經典'}
                                     </div>
                                     <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-mystic-gold transition-colors">{product.title}</h3>
                                     <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                                        {product.description || '恭請道藏經文數位版，永久存儲於您的個人帳戶中，隨時隨地恭敬觀閱。'}
+                                        {product.description || '本道藏經文已進行數位化修復，適配手機、平板與電腦閱讀。收藏後可永久於個人圖庫中研讀。'}
                                     </p>
 
                                     <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
@@ -159,7 +163,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                                 className="bg-mystic-gold text-black px-6 py-2 rounded-sm flex items-center gap-2 font-bold hover:bg-white transition-all active:scale-95 disabled:opacity-50"
                                             >
                                                 {processingId === product.id ? <Loader2 className="animate-spin" size={18} /> : <ShoppingCart size={18} />}
-                                                即刻請購
+                                                請購收藏
                                             </button>
                                         )}
                                     </div>
@@ -179,12 +183,12 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                             <Info className="text-mystic-gold" />
                         </div>
                         <div>
-                            <h4 className="text-lg font-bold text-white mb-2">請購須知</h4>
+                            <h4 className="text-lg font-bold text-white mb-2">圖書館收藏與閱讀須知</h4>
                             <ul className="text-sm text-gray-500 space-y-2 list-disc pl-4">
-                                <li>所有數位商品均為電子版本 (PDF/Office)，一旦請購成功並開通權限，恕不接受退款。</li>
-                                <li>商品檔案將永久保存於您的「會員專區 - 個人數位藏書」中。</li>
-                                <li>為尊重版權，內容僅供個人修持觀閱，請勿將檔案私自散布、轉發或用於任何商業用途。</li>
-                                <li>系統將自動阻擋重複購買，每位會員僅需請購一次即可永久擁有。</li>
+                                <li>所有道藏商品均為數位電子版本 (PDF/EPUB)，一經收藏開通權限，恕不接受退款。</li>
+                                <li>收藏之經典將永久保存於您的「會員中心 - 個人道藏圖庫」中。</li>
+                                <li>為尊重版權與信仰，內容僅供個人修持觀閱，請勿將檔案私自散布、轉發或用於商業用途。</li>
+                                <li>系統設有防重複機制，每位會員僅需收藏一次即可永久擁有閱讀權限。</li>
                             </ul>
                         </div>
                     </div>
