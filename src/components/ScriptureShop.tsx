@@ -211,17 +211,63 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                 </div>
                             </div>
 
-                            <div className="bg-mystic-gold/10 p-4 rounded text-sm text-mystic-gold/80 border border-mystic-gold/20">
+                            {/* Payment Report Form */}
+                             <form 
+                                onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    const form = e.target as HTMLFormElement;
+                                    const lastFive = (form.elements.namedItem('lastFive') as HTMLInputElement).value;
+                                    
+                                    if (!lastFive || lastFive.length !== 5) {
+                                        alert('請輸入正確的帳號末五碼');
+                                        return;
+                                    }
+
+                                    try {
+                                        // Create Order directly (RLS allows insert own)
+                                        const { error } = await supabase.from('orders').insert({
+                                            user_id: userId,
+                                            product_id: selectedProduct.id,
+                                            amount: selectedProduct.price,
+                                            status: 'PENDING',
+                                            payment_type: 'BANK_TRANSFER',
+                                            merchant_trade_no: `BANK_${lastFive}_${Date.now()}` // Store Last 5 here
+                                        });
+
+                                        if (error) throw error;
+
+                                        alert('已送出匯款通知！\n管理員確認後將自動開通權限，請稍候。');
+                                        setShowBankModal(false);
+                                    } catch (err: any) {
+                                        console.error(err);
+                                        alert('送出失敗：' + err.message);
+                                    }
+                                }}
+                                className="space-y-4 pt-4 border-t border-white/10"
+                            >
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">匯款後請輸入「帳號末五碼」</label>
+                                    <input 
+                                        name="lastFive"
+                                        type="text" 
+                                        maxLength={5}
+                                        placeholder="例如：12345"
+                                        className="w-full bg-black border border-white/20 rounded p-3 text-white focus:border-mystic-gold outline-none text-center tracking-widest font-mono"
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-mystic-gold text-black font-bold py-3 rounded hover:bg-white transition-colors"
+                                >
+                                    已匯款，送出申請
+                                </button>
+                            </form>
+
+                            {/* <div className="bg-mystic-gold/10 p-4 rounded text-sm text-mystic-gold/80 border border-mystic-gold/20">
                                 <p className="font-bold mb-1">匯款後下一步：</p>
                                 <p>請將「匯款明細」截圖或告知「帳號末五碼」，傳送至官方 LINE 或聯絡管理員，我們將為您開通權限。</p>
-                            </div>
-
-                            <button
-                                onClick={() => setShowBankModal(false)}
-                                className="w-full bg-mystic-gold text-black font-bold py-3 rounded hover:bg-white transition-colors"
-                            >
-                                我已了解，稍後匯款
-                            </button>
+                            </div> */}
                         </div>
                     </div>
                 </div>

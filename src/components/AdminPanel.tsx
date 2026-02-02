@@ -1676,7 +1676,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="font-bold text-white">{order.product?.title || '未知商品'}</div>
-                                                        <div className="text-[10px] text-gray-500 font-mono">{order.merchantTradeNo}</div>
+                                                        <div className="text-[10px] text-gray-500 font-mono">
+                                                            {order.merchantTradeNo && order.merchantTradeNo.startsWith('BANK_') 
+                                                                ? <span className="text-mystic-gold font-bold">匯款末五碼: {order.merchantTradeNo.split('_')[1]}</span>
+                                                                : order.merchantTradeNo}
+                                                        </div>
                                                     </td>
                                                     <td className="p-4 text-gray-400">
                                                         <div className="flex flex-col">
@@ -1684,20 +1688,49 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                               <span className={`text-[10px] ${order.status === 'PAID' ? 'text-green-400' : 'text-red-400'}`}>
                                                                 {order.status === 'PAID' ? '已付款' : '未付款'}
                                                               </span>
-                                                              <button 
+                                                              <button
                                                                   onClick={async () => {
                                                                       const newStatus = order.status === 'PAID' ? 'PENDING' : 'PAID';
-                                                                      if (window.confirm(`確定要將狀態改為 ${newStatus === 'PAID' ? '已付款' : '未付款'} 嗎？${newStatus === 'PAID' ? '系統將自動發貨。' : ''}`)) {
+                                                                      let confirmMsg = newStatus === 'PAID' 
+                                                                        ? `確定要確認此訂單已付款嗎？\n(將自動為會員 ${order.userId.substring(0,4)}... 開通閱讀權限)` 
+                                                                        : `確定要取消付款狀態嗎？\n(將會移除會員的閱讀權限)`;
+
+                                                                      if (window.confirm(confirmMsg)) {
                                                                           try {
+                                                                              // 1. Update Order Status
                                                                               await updateScriptureOrder(order.id, { status: newStatus });
+                                                                              
+                                                                              // 2. Sync Access Rights (Purchases Table)
+                                                                              if (newStatus === 'PAID') {
+                                                                                  // Grant Access
+                                                                                  const { error: pError } = await supabase.from('purchases').insert({
+                                                                                      user_id: order.userId,
+                                                                                      product_id: order.productId,
+                                                                                      order_id: order.id
+                                                                                  });
+                                                                                  // Ignore 'duplicate key' error (23505) just in case
+                                                                                  if (pError && pError.code !== '23505') throw pError;
+                                                                                  
+                                                                                  alert('付款確認成功！權限已立即開通。');
+                                                                              } else {
+                                                                                  // Revoke Access
+                                                                                  const { error: dError } = await supabase
+                                                                                      .from('purchases')
+                                                                                      .delete()
+                                                                                      .match({ order_id: order.id });
+                                                                                  
+                                                                                  if (dError) console.error('Revoke access warning:', dError);
+                                                                                  alert('已取消付款狀態，權限已移除。');
+                                                                              }
                                                                           } catch (err: any) {
-                                                                              alert(`更換狀態失敗: ${err.message}`);
+                                                                              console.error(err);
+                                                                              alert(`操作失敗: ${err.message}`);
                                                                           }
                                                                       }
                                                                   }}
                                                                   className={`mt-1 text-[10px] px-2 py-0.5 rounded border ${order.status === 'PAID' ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-green-500/50 text-green-400 hover:bg-green-500/10'} transition-all`}
                                                               >
-                                                                  {order.status === 'PAID' ? '設為未付款' : '手動確認付款'}
+                                                                  {order.status === 'PAID' ? '設為未付款 (移除權限)' : '手動確認付款 (開通權限)'}
                                                               </button>
                                                               <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
                                                           </div>
