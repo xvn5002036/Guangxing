@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { User, Package, Calendar, MapPin, LogOut, ChevronRight, Printer, BookOpen } from 'lucide-react';
+import { User, Package, Calendar, MapPin, LogOut, ChevronRight, Printer, BookOpen, Sparkles, ExternalLink } from 'lucide-react';
 import AuthModal from './AuthModal';
 import { MemberLibrary } from './MemberLibrary';
 
@@ -9,9 +9,36 @@ interface MemberCenterProps {
 }
 
 const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
-    const { user, userProfile, signOut, registrations, siteSettings } = useData();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS' | 'SCRIPTURES'>('PROFILE');
+    const { user, userProfile, signOut, registrations, siteSettings, addRegistration } = useData();
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS' | 'SCRIPTURES' | 'FORTUNE'>('PROFILE');
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+
+    // --- Zodiac & Tai Sui Logic ---
+    const getZodiac = (year: number) => {
+        const zodiacs = ['猴', '雞', '狗', '豬', '鼠', '牛', '虎', '兔', '龍', '蛇', '馬', '羊'];
+        return zodiacs[year % 12];
+    };
+
+    const getTaiSuiStatus = (birthYear: number, targetYear: number) => {
+        const zodiacIndex = birthYear % 12;
+        const targetIndex = targetYear % 12;
+        const diff = (targetIndex - zodiacIndex + 12) % 12;
+
+        if (diff === 0) return { status: '值太歲', description: '本命年，運勢起伏較大，宜靜不宜動。', severity: 'high' };
+        if (diff === 6) return { status: '沖太歲', description: '沖者動也，易有變動、奔波勞碌。', severity: 'high' };
+        if (diff === 3) return { status: '刑太歲', description: '刑者傷也，易有是非口舌、官非。', severity: 'medium' };
+        if (diff === 9) return { status: '害太歲', description: '害者陷害，易犯小人、被陷害。', severity: 'medium' };
+        if (diff === 2 || diff === 11) return { status: '破太歲', description: '破者破耗，易有錢財破損。', severity: 'low' }; // 破 sometimes varies by sect, keeping simple
+        return null;
+    };
+    
+    const currentYear = new Date().getFullYear();
+    // Use user birth year or default to current year for demo consistency if missing
+    // Parsing "1987" from string "1987"
+    const birthYear = userProfile?.birthYear ? parseInt(userProfile.birthYear) : null;
+    const myZodiac = birthYear ? getZodiac(birthYear) : '未知';
+    const taiSuiInfo = birthYear ? getTaiSuiStatus(birthYear, currentYear) : null;
+    // --------------------------------
 
     // Filter registrations for current user
     // Note: In a real app with RLS, the main registrations array might only contain user's data
@@ -143,6 +170,13 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                 <BookOpen size={18} />
                                 我的經文庫
                             </button>
+                            <button
+                                onClick={() => setActiveTab('FORTUNE')}
+                                className={`w-full text-left p-4 flex items-center gap-3 transition-colors ${activeTab === 'FORTUNE' ? 'bg-mystic-gold/10 text-mystic-gold border-l-2 border-mystic-gold' : 'text-gray-400 hover:bg-white/5'}`}
+                            >
+                                <Sparkles size={18} />
+                                線上安太歲/算命
+                            </button>
                         </div>
                     </div>
 
@@ -251,6 +285,165 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                         {activeTab === 'SCRIPTURES' && user && (
                             <div className="animate-fade-in-up">
                                 <MemberLibrary userId={user.id} />
+                            </div>
+                        )}
+
+                        {activeTab === 'FORTUNE' && (
+                            <div className="bg-zinc-900 border border-white/5 rounded-lg p-6 md:p-8 animate-fade-in-up">
+                                <h3 className="text-xl font-bold text-white mb-6 pb-4 border-b border-white/10 flex items-center gap-2">
+                                    <Sparkles className="text-mystic-gold" size={20} />
+                                    我的流年運勢 ({currentYear}年)
+                                </h3>
+
+                                {!birthYear ? (
+                                    <div className="text-center py-10">
+                                        <div className="text-gray-400 mb-4">請先完善個人生日資料，以獲取準確運勢分析。</div>
+                                        <button 
+                                            onClick={() => setIsEditProfileOpen(true)}
+                                            className="bg-mystic-gold text-black px-6 py-2 rounded font-bold hover:bg-yellow-500 transition-colors"
+                                        >
+                                            填寫生日資料
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* Left: Status Card */}
+                                        <div className="space-y-6">
+                                            <div className="bg-black/40 border border-white/10 rounded-xl p-6 relative overflow-hidden group hover:border-mystic-gold/30 transition-colors">
+                                                <div className="absolute top-0 right-0 p-4 opacity-10 font-serif text-8xl font-bold text-white select-none">
+                                                    {myZodiac}
+                                                </div>
+                                                
+                                                <div className="relative z-10">
+                                                    <div className="text-gray-400 text-sm mb-1">您的生肖</div>
+                                                    <div className="text-4xl font-bold text-white mb-4 flex items-center gap-3">
+                                                        {myZodiac}
+                                                        <span className="text-sm bg-white/10 px-2 py-1 rounded text-gray-300 font-normal">
+                                                            {birthYear}年生
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="w-full h-px bg-white/10 my-4"></div>
+
+                                                    <div className="text-gray-400 text-sm mb-1">流年運勢狀態</div>
+                                                    {taiSuiInfo ? (
+                                                        <div>
+                                                            <div className={`text-3xl font-bold mb-2 ${taiSuiInfo.severity === 'high' ? 'text-red-500' : 'text-yellow-500'}`}>
+                                                                {taiSuiInfo.status}
+                                                            </div>
+                                                            <p className="text-gray-300">
+                                                                {taiSuiInfo.description}
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <div className="text-3xl font-bold text-green-400 mb-2">運勢平穩</div>
+                                                            <p className="text-gray-300">
+                                                                今年無沖犯太歲，運勢相對平穩，可多行善積德，增長福氣。
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Action Section */}
+                                            {taiSuiInfo && (
+                                                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 flex items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-red-500/20 p-2 rounded-full text-red-400">
+                                                            <Sparkles size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-red-200">建議安太歲祈福</div>
+                                                            <div className="text-xs text-red-300/70">化解流年煞氣，保佑平安順遂</div>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (!userProfile?.fullName || !userProfile?.phone) {
+                                                                alert('請先完善個人資料（姓名、電話）才能報名。');
+                                                                setIsEditProfileOpen(true);
+                                                                return;
+                                                            }
+
+                                                            const confirm = window.confirm(`確定要為【${userProfile.fullName}】報名安太歲嗎？\n費用：$600`);
+                                                            if (confirm) {
+                                                                // Extract/Default birth info
+                                                                const birthYear = userProfile.birthYear || '';
+                                                                const birthMonth = userProfile.birthMonth || '';
+                                                                const birthDay = userProfile.birthDay || '';
+                                                                const birthHour = userProfile.birthHour || '';
+                                                                
+                                                                // Add Registration
+                                                                addRegistration({
+                                                                    serviceTitle: '線上安太歲',
+                                                                    name: userProfile.fullName,
+                                                                    phone: userProfile.phone,
+                                                                    amount: 600,
+                                                                    status: 'PENDING',
+                                                                    isProcessed: false,
+                                                                    paymentMethod: 'CASH', // default or TBD
+                                                                    // Add birth info for the ritual
+                                                                    birthYear: birthYear,
+                                                                    birthMonth: birthMonth,
+                                                                    birthDay: birthDay,
+                                                                    birthHour: birthHour,
+                                                                    city: userProfile.city || '',
+                                                                    district: userProfile.district || '',
+                                                                    addressDetail: userProfile.address || '',
+                                                                    userId: user.id
+                                                                } as any); // Type cast if strict type check fails on optional fields or ID
+
+                                                                alert('報名申請已送出！請至「祈福紀錄」查看或進行付款。');
+                                                                setActiveTab('ORDERS');
+                                                            }
+                                                        }}
+                                                        className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm font-bold shadow-lg shadow-red-900/20 transition-all active:scale-95 whitespace-nowrap"
+                                                    >
+                                                        一鍵報名 ($600)
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Right: Info / Services */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-lg font-bold text-mystic-gold border-l-4 border-mystic-gold pl-3">
+                                                本宮相關服務
+                                            </h4>
+                                            
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <div className="bg-zinc-800 p-4 rounded hover:bg-zinc-700 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex justify-between items-center group">
+                                                    <div>
+                                                        <div className="font-bold text-white mb-1 group-hover:text-mystic-gold transition-colors">安太歲燈</div>
+                                                        <div className="text-xs text-gray-500">適合犯太歲者，祈求流年平安</div>
+                                                    </div>
+                                                    <ChevronRight size={16} className="text-gray-600 group-hover:text-white" />
+                                                </div>
+                                                <div className="bg-zinc-800 p-4 rounded hover:bg-zinc-700 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex justify-between items-center group">
+                                                    <div>
+                                                        <div className="font-bold text-white mb-1 group-hover:text-mystic-gold transition-colors">光明燈 / 平安燈</div>
+                                                        <div className="text-xs text-gray-500">照亮前程，增長智慧與福報</div>
+                                                    </div>
+                                                    <ChevronRight size={16} className="text-gray-600 group-hover:text-white" />
+                                                </div>
+                                                <div className="bg-zinc-800 p-4 rounded hover:bg-zinc-700 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex justify-between items-center group">
+                                                    <div>
+                                                        <div className="font-bold text-white mb-1 group-hover:text-mystic-gold transition-colors">制解 / 祭改</div>
+                                                        <div className="text-xs text-gray-500">消災解厄，去除霉運</div>
+                                                    </div>
+                                                    <ChevronRight size={16} className="text-gray-600 group-hover:text-white" />
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-8 pt-6 border-t border-white/10 text-center">
+                                                <p className="text-sm text-gray-400 mb-4">
+                                                    若您有其他命理諮詢需求，歡迎親臨本宮或預約老師諮詢。
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
