@@ -28,33 +28,37 @@ const __dirname = path.dirname(__filename);
 // Resolve path relative to THIS file (server/server.js) -> Go up one level to root -> src/config.ts
 const configTsPath = path.resolve(__dirname, '../src/config.ts');
 
-if (fs.existsSync(configTsPath)) {
-    try {
-        const content = fs.readFileSync(configTsPath, 'utf-8');
-        console.log(`Reading config from: ${configTsPath}`);
-        
-        // Extract SUPABASE_URL
-        if (!process.env.SUPABASE_URL) {
-            const urlMatch = content.match(/SUPABASE_URL\s*=\s*(['"`])(.*?)\1/);
-            if (urlMatch) {
-                process.env.SUPABASE_URL = urlMatch[2];
-                console.log('Using SUPABASE_URL from src/config.ts');
+// Optimization: Skip file system reads if Env Var is already present (Vercel)
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (fs.existsSync(configTsPath)) {
+        try {
+            const content = fs.readFileSync(configTsPath, 'utf-8');
+            console.log(`Reading config from: ${configTsPath}`);
+            
+            // Extract SUPABASE_URL
+            if (!process.env.SUPABASE_URL) {
+                const urlMatch = content.match(/SUPABASE_URL\s*=\s*(['"`])(.*?)\1/);
+                if (urlMatch) {
+                    process.env.SUPABASE_URL = urlMatch[2];
+                    console.log('Using SUPABASE_URL from src/config.ts');
+                }
             }
-        }
-        // Extract SUPABASE_SERVICE_ROLE_KEY
-        // Note: Check for both const name and value in quotes
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            const keyMatch = content.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(['"`])(.*?)\1/);
-            if (keyMatch) {
-                process.env.SUPABASE_SERVICE_ROLE_KEY = keyMatch[2];
-                console.log('Using SUPABASE_SERVICE_ROLE_KEY from src/config.ts');
+            // Extract SUPABASE_SERVICE_ROLE_KEY
+            if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+                const keyMatch = content.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(['"`])(.*?)\1/);
+                if (keyMatch) {
+                    process.env.SUPABASE_SERVICE_ROLE_KEY = keyMatch[2];
+                    console.log('Using SUPABASE_SERVICE_ROLE_KEY from src/config.ts');
+                }
             }
+        } catch (err) {
+            console.error('Failed to parse src/config.ts:', err.message);
         }
-    } catch (err) {
-        console.error('Failed to parse src/config.ts:', err.message);
+    } else {
+        console.warn(`Config file not found at: ${configTsPath}`);
     }
 } else {
-    console.warn(`Config file not found at: ${configTsPath}`);
+    console.log('Environment variables already set. Skipping config.ts load.');
 }
 
 const app = express();
