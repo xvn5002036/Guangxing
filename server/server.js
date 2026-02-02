@@ -480,10 +480,18 @@ app.get('/api/diag', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log('===========================================================');
-    console.log(`🚀 Backend server running at http://localhost:${port}`);
-    console.log(`📂 Config Source: ${fs.existsSync(configTsPath) ? 'src/config.ts' : 'Env/Default'}`);
-    console.log(`🔑 Supabase Key Present: ${!!process.env.SUPABASE_SERVICE_ROLE_KEY}`);
-    console.log('===========================================================');
-});
+// Only start server if running directly (Local Development)
+// In Vercel, this file is imported, so we don't want to listen on a port
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    app.listen(port, () => {
+        console.log('===========================================================');
+        console.log(`🚀 Backend server running at http://localhost:${port}`);
+        console.log(`📂 Config Source: ${fs.existsSync(configTsPath) ? 'src/config.ts' : 'Env/Default'}`);
+        console.log(`🔑 Supabase Key Present: ${!!process.env.SUPABASE_SERVICE_ROLE_KEY}`);
+        console.log('===========================================================');
+    });
+}
+
+// Export for Vercel Serverless Functions
+export default app;
