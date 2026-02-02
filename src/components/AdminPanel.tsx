@@ -95,6 +95,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     
+    // Ref for main content scrolling
+    const mainContentRef = useRef<HTMLDivElement>(null);
+
     // Markdown Preview State
     const [previewMode, setPreviewMode] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -563,6 +566,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         setEditingId(item.id);
         setEditForm({ ...item });
         setIsAdding(false);
+        // Scroll the container, not the window
+        if (mainContentRef.current) {
+            mainContentRef.current.scrollTo({ top: 0, behavior: 'instant' });
+        }
     };
 
 
@@ -812,7 +819,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 </div>
             </div>
 
-            <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-black w-full pb-20 md:pb-8">
+            <div ref={mainContentRef} className="flex-1 p-4 md:p-8 overflow-y-auto bg-black w-full pb-20 md:pb-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
                     <h2 className="text-xl md:text-2xl font-bold text-white border-l-4 border-mystic-gold pl-4 transition-all">
                         {activeTab === 'DASHBOARD' ? '後台管理總覽 (Dashboard)' :
