@@ -101,6 +101,8 @@ app.post('/api/create-order', async (req, res) => {
         // A. 建立訂單編號 (綠界要求 20 碼以內，建議包含時間戳記防重複)
         const merchantTradeNo = 'GX' + Date.now();
 
+        console.log(`[CREATE-ORDER] Processing order for User: ${userId}, Product: ${productId}, Amount: ${amount}`);
+
         // B. 存入資料庫 (orders 表)
         const { data: order, error: dbError } = await supabase
             .from('orders')
@@ -117,9 +119,11 @@ app.post('/api/create-order', async (req, res) => {
             .single();
 
         if (dbError) {
-            console.error('Database Insertion Error (Orders):', dbError);
+            console.error('[CREATE-ORDER] Database Insertion Error:', JSON.stringify(dbError, null, 2));
             throw dbError;
         }
+
+        console.log('[CREATE-ORDER] Order created in DB:', order.id);
 
         if (!order) {
             throw new Error('Order creation failed: No data returned from database.');
