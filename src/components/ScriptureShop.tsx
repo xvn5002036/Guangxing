@@ -71,9 +71,10 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             } else {
                 throw new Error('找不到跳轉表單');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Purchase Error:', error);
-            alert('建立訂單失敗，請稍後再試');
+            // Show detailed error to user for debugging
+            alert(`建立訂單失敗: ${error.message || '未知錯誤'}`);
             setProcessingId(null);
         }
     };
