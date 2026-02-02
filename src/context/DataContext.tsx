@@ -784,7 +784,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 file_path: item.filePath || '',
                 preview_url: item.previewUrl || '',
                 category: item.category || '道藏藏書',
-                attachments: item.attachments || []
+                attachments: item.attachments || [],
+                tags: item.tags || [],
+                is_limited_time: item.isLimitedTime || false,
+                promotion_end_date: item.promotionEndDate || null
             };
             const { error } = await supabase.from('digital_products').insert([dbItem]);
             if (error) throw error;
@@ -806,6 +809,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (item.filePath !== undefined) dbItem.file_path = item.filePath;
             if (item.previewUrl !== undefined) dbItem.preview_url = item.previewUrl;
             if (item.category !== undefined) dbItem.category = item.category;
+            if (item.tags !== undefined) dbItem.tags = item.tags;
+            if (item.isLimitedTime !== undefined) dbItem.is_limited_time = item.isLimitedTime;
+            if (item.promotionEndDate !== undefined) dbItem.promotion_end_date = item.promotionEndDate;
             if (item.attachments !== undefined) dbItem.attachments = item.attachments;
 
             const { error } = await supabase.from('digital_products').update(dbItem).eq('id', id);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, BookOpen, CheckCircle2, Loader2, Info } from 'lucide-react';
+import { ShoppingCart, BookOpen, CheckCircle2, Loader2, Info, Search, Timer, Tag } from 'lucide-react';
 import { supabase } from '../services/supabase';
 
 import { useData } from '../context/DataContext';
@@ -10,8 +10,15 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
     const [myPurchasedIds, setMyPurchasedIds] = useState<Set<string>>(new Set());
     const [myPendingIds, setMyPendingIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
-    const [processingId, setProcessingId] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<string>('ALL');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [recommendations, setRecommendations] = useState<DigitalProduct[]>([]);
+
+    useEffect(() => {
+        if (products.length > 0) {
+            setRecommendations([...products].sort(() => 0.5 - Math.random()).slice(0, 3));
+        }
+    }, [products]);
 
     useEffect(() => {
         const fetchLibrary = async () => {
@@ -22,7 +29,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             }
             try {
                 // 1. Fetch Purchases (Paid)
-                const { data: purchases, error: pError } = await supabase
+                const { data: purchases } = await supabase
                     .from('purchases')
                     .select('product_id')
                     .eq('user_id', userId);
@@ -32,7 +39,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                 }
 
                 // 2. Fetch Pending Orders
-                const { data: orders, error: oError } = await supabase
+                const { data: orders } = await supabase
                     .from('orders')
                     .select('product_id')
                     .eq('user_id', userId)
@@ -59,7 +66,6 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                     table: 'purchases',
                     filter: `user_id=eq.${userId}`
                 }, (payload) => {
-                    console.log('Purchase Approved!', payload);
                     setMyPurchasedIds(prev => {
                         const next = new Set(prev);
                         next.add(payload.new.product_id);
@@ -79,12 +85,10 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
         }
     }, [userId]);
 
-
-
     const [showBankModal, setShowBankModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<DigitalProduct | null>(null);
 
-    // Bank Details - You can move this to config or database later
+    // Bank Details
     const BANK_INFO = {
         bankName: '000 測試銀行',
         branch: '測試分行',
@@ -104,19 +108,16 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             return;
         }
 
-        // 1. Prevent Duplicate Purchase
         if (myPurchasedIds.has(product.id)) {
             alert('您已收藏此經典，無需重複請購。');
             return;
         }
 
-        // 2. Prevent Duplicate Pending Application
         if (myPendingIds.has(product.id)) {
             alert('您已送出申請，管理員審核中。\n請勿重複提交，以免影響作業流程。');
             return;
         }
 
-        // 3. Handle Free Items (Price === 0)
         if (product.price === 0) {
             if (!confirm(`確認免費收藏「${product.title}」？`)) return;
 
@@ -141,9 +142,8 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                     order_id: orderData.id
                 });
                 
-                if (purchaseError && purchaseError.code !== '23505') throw purchaseError; // Ignore duplicate
+                if (purchaseError && purchaseError.code !== '23505') throw purchaseError;
 
-                // C. Update Local State
                 const newSet = new Set(myPurchasedIds);
                 newSet.add(product.id);
                 setMyPurchasedIds(newSet);
@@ -158,10 +158,19 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             return;
         }
 
-        // 4. Paid Items -> Bank Transfer
         setSelectedProduct(product);
         setShowBankModal(true);
     };
+
+    // Filter Logic
+    const filteredProducts = products.filter(p => {
+        const matchesCategory = activeCategory === 'ALL' || p.category === activeCategory;
+        const matchesSearch = !searchTerm || 
+            p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.author && p.author.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (p.tags && p.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
+        return matchesCategory && matchesSearch;
+    });
 
     return (
         <div className="p-6 bg-black min-h-screen text-white relative">
@@ -174,8 +183,20 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                     </p>
                 </header>
 
+                {/* Search Bar */}
+                <div className="max-w-md mx-auto mb-8 relative animate-fade-in-up">
+                    <input 
+                        type="text" 
+                        placeholder="搜尋經文、作者或標籤..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-mystic-charcoal border border-white/20 rounded-full py-3 px-12 text-white focus:border-mystic-gold outline-none shadow-lg text-center transition-all focus:bg-black placeholder-gray-600"
+                    />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+                </div>
+
                 {/* Category Filters */}
-                <div className="flex justify-center gap-4 mb-12">
+                <div className="flex justify-center flex-wrap gap-4 mb-12">
                     {['ALL', '數位道藏', '精選電子書', '法會手冊'].map(cat => (
                         <button
                             key={cat}
@@ -192,7 +213,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {products.filter(p => activeCategory === 'ALL' || p.category === activeCategory).map((product) => {
+                    {filteredProducts.map((product) => {
                         const isPurchased = myPurchasedIds.has(product.id);
                         const isPending = myPendingIds.has(product.id);
                         
@@ -212,14 +233,30 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                     <div className="absolute top-4 left-4 bg-black/80 border border-mystic-gold/30 px-3 py-1 text-[10px] text-mystic-gold font-bold tracking-widest uppercase">
                                         {product.fileType}
                                     </div>
+
+                                    {/* Limited Time Badge */}
+                                    {product.isLimitedTime && product.promotionEndDate && new Date(product.promotionEndDate) > new Date() && (
+                                        <div className="absolute top-4 right-4 bg-red-900/90 border border-red-500/50 px-3 py-1 text-[10px] text-red-200 font-bold tracking-widest uppercase flex items-center gap-1 shadow-lg z-10 rounded">
+                                            <Timer size={12} /> {new Date(product.promotionEndDate).toLocaleDateString()} 截止
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="p-6 relative">
-                                    <div className="mb-1 text-xs text-mystic-gold font-bold uppercase tracking-widest opacity-70">
-                                        {product.category || '道藏經典'}
+                                    <div className="mb-2 flex flex-wrap gap-2">
+                                        <span className="text-xs text-mystic-gold font-bold uppercase tracking-widest opacity-70">
+                                            {product.category || '道藏經典'}
+                                        </span>
+                                        {/* Tags Display */}
+                                        {product.tags && product.tags.map(tag => (
+                                            <span key={tag} className="text-[10px] bg-white/10 text-gray-400 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                                <Tag size={8} /> {tag}
+                                            </span>
+                                        ))}
                                     </div>
+
                                     <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-mystic-gold transition-colors">{product.title}</h3>
-                                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                                    <p className="text-gray-500 text-sm mb-6 leading-relaxed line-clamp-2">
                                         {product.description || '本道藏經文已進行數位化修復，適配手機、平板與電腦閱讀。收藏後可永久於個人圖庫中研讀。'}
                                     </p>
 
@@ -262,6 +299,44 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                         );
                     })}
                 </div>
+
+                {/* Recommendations Section */}
+                {recommendations.length > 0 && (
+                    <div className="mt-20 border-t border-white/10 pt-12 animate-fade-in">
+                        <h3 className="text-2xl font-bold text-center mb-8 tracking-widest text-gray-400 uppercase">
+                            — 猜你喜歡 —
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {recommendations.map(product => (
+                                <div key={product.id} 
+                                    onClick={() => {
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        setSelectedProduct(product); // Optional
+                                    }}
+                                    className="bg-white/5 p-4 rounded border border-white/5 hover:border-mystic-gold/30 cursor-pointer transition-all group"
+                                >
+                                    <div className="aspect-video bg-black mb-4 overflow-hidden rounded-sm relative">
+                                        {product.previewUrl ? (
+                                            <img src={product.previewUrl} className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-opacity" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-600">
+                                                <BookOpen size={24} />
+                                            </div>
+                                        )}
+                                        {product.isLimitedTime && (
+                                            <div className="absolute top-2 right-2 bg-red-900/80 text-white text-[10px] px-2 py-0.5 rounded">限時</div>
+                                        )}
+                                    </div>
+                                    <h4 className="font-bold text-white group-hover:text-mystic-gold transition-colors truncate">{product.title}</h4>
+                                    <div className="flex justify-between items-center mt-2">
+                                        <span className="text-xs text-gray-500">{product.category}</span>
+                                        <span className="text-sm text-mystic-gold font-mono">NT$ {product.price}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="mt-20 p-8 bg-mystic-charcoal/30 border border-white/5 rounded-sm">
                     <div className="flex items-start gap-4">

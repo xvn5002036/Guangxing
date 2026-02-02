@@ -1326,6 +1326,43 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <label className="text-xs text-gray-500 uppercase tracking-widest">費用 (NT$)</label>
                                                     <input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all" value={editForm.price || 0} onChange={e => setEditForm({ ...editForm, price: parseInt(e.target.value) || 0 })} placeholder="請輸入金額 (0 表示免費)" />
                                                 </div>
+
+                                                {/* Tags Input */}
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">標籤 (以逗號分隔)</label>
+                                                    <input
+                                                        className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none transition-all"
+                                                        value={editForm.tags ? editForm.tags.join(', ') : ''}
+                                                        onChange={e => setEditForm({ ...editForm, tags: e.target.value.split(/[,，]/).map((t: string) => t.trim()).filter(Boolean) })}
+                                                        placeholder="例如: 經文, 祈福, 消災"
+                                                    />
+                                                </div>
+
+                                                {/* Promotion Settings */}
+                                                <div className="bg-black/20 p-4 rounded border border-white/5 space-y-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="isLimitedTime"
+                                                            className="w-4 h-4 rounded border-gray-600 bg-black text-mystic-gold focus:ring-mystic-gold cursor-pointer"
+                                                            checked={editForm.isLimitedTime || false}
+                                                            onChange={e => setEditForm({ ...editForm, isLimitedTime: e.target.checked })}
+                                                        />
+                                                        <label htmlFor="isLimitedTime" className="text-sm font-bold text-gray-300 select-none cursor-pointer">設定為限時商品</label>
+                                                    </div>
+
+                                                    {editForm.isLimitedTime && (
+                                                        <div className="space-y-1 animate-fade-in">
+                                                            <label className="text-xs text-mystic-gold uppercase tracking-widest">截止時間</label>
+                                                            <input
+                                                                type="datetime-local"
+                                                                className="w-full bg-black border border-mystic-gold/50 p-3 text-white focus:border-mystic-gold outline-none"
+                                                                value={editForm.promotionEndDate ? new Date(editForm.promotionEndDate).toISOString().slice(0, 16) : ''}
+                                                                onChange={e => setEditForm({ ...editForm, promotionEndDate: new Date(e.target.value).toISOString() })}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <div className="space-y-1">
                                                     <label className="text-xs text-gray-500 uppercase tracking-widest">內文 (支援 Markdown 語法)</label>
                                                     

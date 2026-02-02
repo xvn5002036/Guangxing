@@ -233,6 +233,9 @@ export interface DigitalProduct {
   previewUrl: string;
   category: string;
   attachments?: Attachment[];
+  tags?: string[];
+  isLimitedTime?: boolean;
+  promotionEndDate?: string;
   createdAt?: string;
 }
 
