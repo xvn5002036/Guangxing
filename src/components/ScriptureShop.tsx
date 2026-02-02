@@ -55,7 +55,17 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                 })
             });
 
-            if (!response.ok) throw new Error('建立訂單失敗');
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMessage = `Server Error (${response.status})`;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.details || errorJson.error || errorMessage;
+                } catch (e) {
+                    errorMessage += `: ${errorText.substring(0, 100)}`;
+                }
+                throw new Error(errorMessage);
+            }
 
             const htmlForm = await response.text();
             
