@@ -107,6 +107,12 @@ interface DataContextType {
     orgMembers: OrgMember[];
     faqs: FAQItem[];
     siteSettings: SiteSettings;
+    
+    // Members & Access
+    profiles: any[]; // Using any to avoid import cycles or complex type mapping
+    purchases: any[];
+    grantScriptureAccess: (userId: string, productId: string) => Promise<void>;
+    revokeScriptureAccess: (userId: string, productId: string) => Promise<void>;
 
     // Auth
     user: any;
@@ -185,6 +191,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [scriptures, setScriptures] = useState<DigitalProduct[]>([]);
     const [scriptureOrders, setScriptureOrders] = useState<ScriptureOrder[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    
+    // Member Management State
+    const [profiles, setProfiles] = useState<any[]>([]);
+    const [purchases, setPurchases] = useState<any[]>([]);
 
     // === SUPABASE SYNCHRONIZATION ===
 
@@ -306,6 +316,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('gallery_albums', setGalleryAlbums, 'created_at', false), []);
     useEffect(() => syncTable('digital_products', setScriptures, 'created_at', false), []);
     useEffect(() => syncTable('notifications', setNotifications, 'created_at', false), []);
+    useEffect(() => syncTable('profiles', setProfiles, 'created_at', false), []);
+    useEffect(() => syncTable('purchases', setPurchases, 'created_at', false), []);
 
     // Notification Actions
     const markNotificationAsRead = async (id: string) => {
@@ -994,6 +1006,68 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    // Grant Access Logic
+    const grantScriptureAccess = async (userId: string, productId: string) => {
+        console.log(`Granting access: User ${userId}, Product ${productId}`);
+        if (isSupabaseConfigured()) {
+             // Upsert to avoid duplicates. Use select to get the inserted/returned row for state update.
+             const { data, error } = await supabase.from('purchases').upsert({
+                 user_id: userId,
+                 product_id: productId,
+                 order_id: null // Manual grant
+             }, { onConflict: 'user_id,product_id' }).select().single();
+             
+             if (error) {
+                 console.error("Grant access error:", error);
+                 throw error;
+             }
+             
+             // Immediate state update
+             if (data) {
+                 // Map snake_case to camelCase for local consistency if needed, 
+                 // but existing syncTable maps to camelCase automatically.
+                 // We should match the format used by syncTable (which maps keys).
+                 // Let's manually reconstruct it or check syncTable mapping.
+                 // syncTable uses a helper: const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
+                 
+                 const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
+                 const mapKeys = (o: any) => {
+                     const newO: any = {};
+                     for (const key in o) {
+                         newO[toCamel(key)] = o[key];
+                     }
+                     return newO;
+                 };
+                 
+                 const mappedPurchase = mapKeys(data);
+                 setPurchases(prev => {
+                     // Avoid duplicates in state
+                     if (prev.some(p => p.id === mappedPurchase.id)) return prev;
+                     return [...prev, mappedPurchase];
+                 });
+             }
+        } else {
+             // Local demo logic
+             const newPurchase = { id: `local_p_${Date.now()}`, userId: userId, productId: productId, createdAt: new Date().toISOString() };
+             setPurchases(prev => [...prev, newPurchase]);
+        }
+    };
+
+    const revokeScriptureAccess = async (userId: string, productId: string) => {
+        console.log(`Revoking access: User ${userId}, Product ${productId}`);
+        if (isSupabaseConfigured()) {
+             const { error } = await supabase.from('purchases').delete().match({ user_id: userId, product_id: productId });
+             if (error) {
+                 console.error("Revoke access error:", error);
+                 throw error;
+             }
+             // Immediate state update: Remove from local state
+             setPurchases(prev => prev.filter(p => !( (p.userId === userId || p.user_id === userId) && (p.productId === productId || p.product_id === productId) )));
+        } else {
+             setPurchases(prev => prev.filter(p => !( (p.userId === userId || p.user_id === userId) && (p.productId === productId || p.product_id === productId) )));
+        }
+    };
+
     // === AUTHENTICATION ===
     const [user, setUser] = useState<any>(null); // Supabase User
     const [userProfile, setUserProfile] = useState<any>(null); // Should be UserProfile type, but use any to avoid mismatches for agile dev
@@ -1087,6 +1161,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
 
             updateSiteSettings,
+            
+            // Members & Access
+            profiles, purchases, grantScriptureAccess, revokeScriptureAccess,
+            
             scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
             notifications, markNotificationAsRead, deleteNotification,
             resetData

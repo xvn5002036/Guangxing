@@ -71,10 +71,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         scriptures, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders,
         scriptureOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
         notifications, markNotificationAsRead, deleteNotification,
+        profiles, purchases, grantScriptureAccess, revokeScriptureAccess,
         resetData, signOut
     } = useData();
 
-    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS' | 'SCRIPTURES' | 'ORDERS'>('DASHBOARD');
+    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS' | 'SCRIPTURES' | 'ORDERS' | 'MEMBERS'>('DASHBOARD');
     const [generalSubTab, setGeneralSubTab] = useState<'VISUAL' | 'CONFIG'>('VISUAL');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -800,7 +801,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         { id: 'FAQS', icon: HelpCircle, label: '常見問題' },
                         { id: 'REGISTRATIONS', icon: Users, label: '報名管理' },
                         { id: 'SCRIPTURES', icon: BookOpen, label: '道藏藏書管理' },
-                        { id: 'ORDERS', icon: ShoppingBag, label: '道藏收藏訂單' }
+                        { id: 'ORDERS', icon: ShoppingBag, label: '道藏收藏訂單' },
+                        { id: 'MEMBERS', icon: Users, label: '會員管理' }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => {
                             setActiveTab(tab.id as any);
@@ -831,10 +833,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 activeTab === 'SERVICES' ? '服務項目設定' :
                                                     activeTab === 'FAQS' ? '常見問題管理' :
                                                         activeTab === 'SCRIPTURES' ? '數位商品管理 (經文/電子書)' :
-                                                            activeTab === 'ORDERS' ? '數位商品訂單紀錄' : '活動花絮管理'}
+                                                            activeTab === 'ORDERS' ? '數位商品訂單紀錄' : 
+                                                                activeTab === 'MEMBERS' ? '會員資料與權限管理' : '活動花絮管理'}
                     </h2>
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
-                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'ORDERS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && (
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'ORDERS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && activeTab !== 'MEMBERS' && (
                             <button onClick={() => { setEditingId(null); setIsAdding(true); setEditForm(activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
                                 <Plus size={18} /> 新增藏書
                             </button>
@@ -1667,6 +1670,165 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 </div>
                             </div>
                         )}
+                        {/* Members Tab */}
+                        {activeTab === 'MEMBERS' && (
+                            <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
+                                <div className="flex-1 overflow-x-auto">
+                                    <table className="w-full text-left text-sm min-w-[700px]">
+                                        <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
+                                            <tr>
+                                                <th className="p-4 whitespace-nowrap">會員資訊</th>
+                                                <th className="p-4 whitespace-nowrap">聯絡方式</th>
+                                                <th className="p-4 whitespace-nowrap">加入時間</th>
+                                                <th className="p-4 whitespace-nowrap">已擁有藏書</th>
+                                                <th className="p-4 text-right whitespace-nowrap">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {profiles.map((profile: any) => {
+                                                const userPurchases = purchases.filter((p: any) => p.userId === profile.id || p.user_id === profile.id);
+                                                return (
+                                                    <tr key={profile.id} className="hover:bg-white/5 transition-colors">
+                                                        <td className="p-4">
+                                                            <div className="font-bold text-white">{profile.fullName || '未設定姓名'}</div>
+                                                            <div className="text-xs text-gray-500 font-mono">{profile.email}</div>
+                                                        </td>
+                                                        <td className="p-4 text-gray-400">
+                                                            <div>{profile.phone || '-'}</div>
+                                                            <div className="text-[10px]">{profile.city}{profile.district}</div>
+                                                        </td>
+                                                        <td className="p-4 text-gray-400 text-xs">
+                                                            {new Date(profile.createdAt).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <span className="bg-mystic-gold/10 text-mystic-gold px-2 py-1 rounded text-xs border border-mystic-gold/20 font-bold">
+                                                                {userPurchases.length} 本
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-4 text-right">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setEditingId(profile.id);
+                                                                    setEditForm({ ...profile });
+                                                                    setIsAdding(true); // Reuse isAdding to show modal
+                                                                }}
+                                                                className="bg-blue-900/40 text-blue-400 px-3 py-1.5 rounded hover:bg-blue-800/40 transition-colors text-xs flex items-center gap-1 ml-auto"
+                                                            >
+                                                                <Settings size={14} /> 管理權限
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {profiles.length === 0 && (
+                                                <tr><td colSpan={5} className="p-8 text-center text-gray-500">目前無會員資料</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Member Access Management Modal */}
+                        {activeTab === 'MEMBERS' && isAdding && editingId && (
+                            <div className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+                                <div className="bg-mystic-charcoal w-full max-w-2xl rounded-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                            <Users className="text-mystic-gold" /> 管理會員權限
+                                        </h3>
+                                        <button onClick={() => { setIsAdding(false); setEditingId(null); }} className="text-gray-400 hover:text-white"><X size={24} /></button>
+                                    </div>
+                                    <div className="p-6 overflow-y-auto">
+                                        <div className="flex items-center gap-4 mb-6 bg-white/5 p-4 rounded border border-white/5">
+                                            <div className="w-12 h-12 bg-mystic-gold/20 rounded-full flex items-center justify-center text-mystic-gold font-bold text-xl">
+                                                {(editForm.fullName || 'U').charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-lg text-white">{editForm.fullName || '未設定姓名'}</div>
+                                                <div className="text-sm text-gray-400">{editForm.email}</div>
+                                                <div className="text-xs text-gray-500 mt-1">ID: {editForm.id}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <h4 className="text-sm font-bold text-mystic-gold mb-3 uppercase tracking-widest border-b border-white/10 pb-2">已擁有的藏書權限</h4>
+                                            <div className="space-y-2">
+                                                {purchases.filter((p: any) => p.userId === editForm.id || p.user_id === editForm.id).map((p: any) => {
+                                                    const product = scriptures.find(s => s.id === (p.productId || p.product_id));
+                                                    return (
+                                                        <div key={p.id} className="flex justify-between items-center bg-black/30 p-3 rounded border border-white/5 hover:border-white/10 transition-colors">
+                                                            <div className="flex items-center gap-3">
+                                                                <BookOpen size={16} className="text-gray-500" />
+                                                                <span className="text-white font-bold">{product?.title || '未知藏書'}</span>
+                                                            </div>
+                                                            <button 
+                                                                onClick={async () => {
+                                                                    if (window.confirm(`確定要移除「${product?.title}」的閱讀權限嗎？`)) {
+                                                                        try {
+                                                                            await revokeScriptureAccess(editForm.id, p.productId || p.product_id);
+                                                                            alert('權限已移除');
+                                                                        } catch (e: any) {
+                                                                            alert('移除失敗: ' + e.message);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className="text-red-400 hover:bg-red-900/20 p-2 rounded transition-colors text-xs flex items-center gap-1"
+                                                            >
+                                                                <Trash2 size={14} /> 移除
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {purchases.filter((p: any) => p.userId === editForm.id || p.user_id === editForm.id).length === 0 && (
+                                                    <p className="text-sm text-gray-500 italic py-2">目前沒有任何權限</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h4 className="text-sm font-bold text-green-400 mb-3 uppercase tracking-widest border-b border-white/10 pb-2">手動新增權限</h4>
+                                            <div className="flex gap-2">
+                                                <select 
+                                                    className="flex-1 bg-black border border-white/20 text-white rounded p-2 outline-none focus:border-green-500"
+                                                    id="scriptureSelect"
+                                                >
+                                                    <option value="">請選擇要授權的藏書...</option>
+                                                    {scriptures
+                                                        .filter(s => !purchases.some((p: any) => (p.userId === editForm.id || p.user_id === editForm.id) && (p.productId === s.id || p.product_id === s.id)))
+                                                        .map(s => (
+                                                            <option key={s.id} value={s.id}>{s.title} (${s.price})</option>
+                                                        ))
+                                                    }
+                                                </select>
+                                                <button 
+                                                    onClick={async () => {
+                                                        const select = document.getElementById('scriptureSelect') as HTMLSelectElement;
+                                                        const productId = select.value;
+                                                        if (!productId) return alert('請選擇藏書');
+                                                        
+                                                        try {
+                                                            await grantScriptureAccess(editForm.id, productId);
+                                                            alert('授權成功！');
+                                                            select.value = '';
+                                                        } catch (e: any) {
+                                                            alert('授權失敗: ' + e.message);
+                                                        }
+                                                    }}
+                                                    className="bg-green-700 text-white px-4 py-2 rounded font-bold hover:bg-green-600 transition-colors flex items-center gap-2"
+                                                >
+                                                    <Plus size={18} /> 授予權限
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 border-t border-white/10 bg-black/40 flex justify-end">
+                                        <button onClick={() => { setIsAdding(false); setEditingId(null); }} className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">關閉</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Shared Search & Actions for Non-Registration Tabs */}
                         {activeTab !== 'REGISTRATIONS' && (
                             <div className="flex flex-col gap-4 mb-4 bg-white/5 p-4 rounded border border-white/10">
