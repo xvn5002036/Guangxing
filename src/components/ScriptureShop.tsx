@@ -73,8 +73,8 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             }
         } catch (error: any) {
             console.error('Purchase Error:', error);
-            // Show detailed error to user for debugging
-            alert(`建立訂單失敗: ${error.message || '未知錯誤'}`);
+            // Show detailed error including User ID for debugging
+            alert(`【除錯資訊】\nUser ID: ${userId || '無'}\nError: ${error.message || '未知錯誤'}\n\n如果不清楚，請截圖給我。`);
             setProcessingId(null);
         }
     };
