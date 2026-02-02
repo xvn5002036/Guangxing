@@ -55,11 +55,61 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
         </div>
     );
 
-    const handleBuy = (product: DigitalProduct) => {
+    const handleBuy = async (product: DigitalProduct) => {
         if (!userId) {
             alert('請先登入會員再進行請購');
             return;
         }
+
+        // 1. Prevent Duplicate Purchase
+        if (myPurchasedIds.has(product.id)) {
+            alert('您已收藏此經典，無需重複請購。');
+            return;
+        }
+
+        // 2. Handle Free Items (Price === 0)
+        if (product.price === 0) {
+            if (!confirm(`確認免費收藏「${product.title}」？`)) return;
+
+            setLoading(true);
+            try {
+                // A. Create Order (PAID)
+                const { data: orderData, error: orderError } = await supabase.from('orders').insert({
+                    user_id: userId,
+                    product_id: product.id,
+                    amount: 0,
+                    status: 'PAID',
+                    payment_type: 'FREE',
+                    merchant_trade_no: `FREE_${Date.now()}`
+                }).select().single();
+
+                if (orderError) throw orderError;
+
+                // B. Grant Access (Insert Purchase)
+                const { error: purchaseError } = await supabase.from('purchases').insert({
+                    user_id: userId,
+                    product_id: product.id,
+                    order_id: orderData.id
+                });
+                
+                if (purchaseError && purchaseError.code !== '23505') throw purchaseError; // Ignore duplicate
+
+                // C. Update Local State
+                const newSet = new Set(myPurchasedIds);
+                newSet.add(product.id);
+                setMyPurchasedIds(newSet);
+
+                alert('收藏成功！您可以立即開始閱讀。');
+            } catch (err: any) {
+                console.error(err);
+                alert('收藏失敗，請稍後再試：' + err.message);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        // 3. Paid Items -> Bank Transfer
         setSelectedProduct(product);
         setShowBankModal(true);
     };
