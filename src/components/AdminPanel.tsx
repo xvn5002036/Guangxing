@@ -247,20 +247,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         ...services.map(s => s.title)
     ]));
 
+    // Filter Logic for Orders
+    const [orderFilter, setOrderFilter] = useState<'PENDING' | 'PAID'>('PENDING');
+
     // Generic Data Filtering Logic
     const activeListData = (() => {
+        let data: any[] = [];
         switch (activeTab) {
-            case 'REGISTRATIONS': return registrations;
-            case 'EVENTS': return events;
-            case 'NEWS': return news;
-            case 'SERVICES': return services;
-            case 'ORG': return orgMembers;
-            case 'FAQS': return faqs;
-            case 'SCRIPTURES': return scriptures;
-            case 'ORDERS': return scriptureOrders;
-            default: return [];
+            case 'REGISTRATIONS': data = registrations; break;
+            case 'EVENTS': data = events.filter(e => e.type === 'FESTIVAL' || e.type === 'RITUAL'); break;
+            case 'NEWS': data = news; break;
+            case 'SERVICES': data = services; break;
+            case 'ORG': data = orgMembers; break;
+            case 'FAQS': data = faqs; break;
+            case 'SCRIPTURES': data = scriptures; break;
+             case 'GALLERY': data = galleryAlbums; break;
+            case 'ORDERS': 
+                 // Filter Orders based on status
+                 data = scriptureOrders.filter(o => o.status === orderFilter);
+                 break;
+            default: data = [];
         }
+        return data;
     })();
+
 
     const filteredActiveData = activeListData.filter(item => {
         // Special logic for Registrations (keep existing filters)
@@ -1537,6 +1547,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     </div>
 
                                     <div className="flex items-center gap-3">
+                                        {activeTab === 'ORDERS' && (
+                                            <div className="flex bg-black/40 rounded p-1 border border-white/10 mr-4">
+                                                <button
+                                                    onClick={() => { setOrderFilter('PENDING'); setCurrentPage(1); }}
+                                                    className={`px-4 py-1.5 rounded text-xs font-bold transition-all ${orderFilter === 'PENDING' ? 'bg-mystic-gold text-black' : 'text-gray-400 hover:text-white'}`}
+                                                >
+                                                    未付款 (Pending)
+                                                </button>
+                                                <button
+                                                    onClick={() => { setOrderFilter('PAID'); setCurrentPage(1); }}
+                                                    className={`px-4 py-1.5 rounded text-xs font-bold transition-all ${orderFilter === 'PAID' ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                                >
+                                                    已完成 (Paid)
+                                                </button>
+                                            </div>
+                                        )}
+
                                         {selectedItems.size > 0 && (
                                             <button
                                                 onClick={handleBatchDelete}

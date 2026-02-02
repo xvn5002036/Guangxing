@@ -156,9 +156,9 @@ export const MemberLibrary: React.FC<{ userId: string }> = ({ userId }) => {
                     <title>${readingTitle}</title>
                     <style>
                         @page { size: auto; margin: 0mm; }
-                        body { margin: 20mm; font-family: "Noto Serif TC", serif; line-height: 2; }
-                        h1 { text-align: center; font-size: 24pt; margin-bottom: 40px; padding-top: 20px; }
-                        p { margin-bottom: 20px; text-align: justify; }
+                        body { margin: 20mm; font-family: "Noto Serif TC", serif; line-height: 2; background-color: white !important; color: black !important; }
+                        h1 { text-align: center; font-size: 24pt; margin-bottom: 40px; padding-top: 20px; color: black !important; }
+                        p { margin-bottom: 20px; text-align: justify; color: black !important; }
                         .footer { margin-top: 50px; text-align: center; font-size: 10pt; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
                     </style>
                 </head>
@@ -379,14 +379,20 @@ export const MemberLibrary: React.FC<{ userId: string }> = ({ userId }) => {
                                 </button>
                             </div>
                         </div>
-                        <div className="flex-1 bg-white rounded-lg overflow-y-auto shadow-2xl p-8 md:p-12 container mx-auto">
+                        <div className="flex-1 bg-mystic-charcoal rounded-lg overflow-y-auto shadow-2xl p-8 md:p-12 container mx-auto border border-white/10">
                             <article 
-                                className="prose prose-lg max-w-none text-black selection:bg-mystic-gold/30"
+                                className="prose prose-lg prose-invert max-w-none text-gray-300 selection:bg-mystic-gold/30"
                             >
                                 <ReactMarkdown 
                                     rehypePlugins={[rehypeRaw]}
                                     components={{
-                                        code: CodeBlock
+                                        code: CodeBlock,
+                                        h1: ({node, ...props}) => <h1 className="text-mystic-gold" {...props} />,
+                                        h2: ({node, ...props}) => <h2 className="text-white border-b border-mystic-gold/20 pb-2" {...props} />,
+                                        h3: ({node, ...props}) => <h3 className="text-white" {...props} />,
+                                        strong: ({node, ...props}) => <strong className="text-white" {...props} />,
+                                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-mystic-gold pl-4 italic text-gray-400" {...props} />,
+                                        a: ({node, ...props}) => <a className="text-mystic-gold hover:underline" {...props} />
                                     }}
                                 >
                                     {readingContent}
