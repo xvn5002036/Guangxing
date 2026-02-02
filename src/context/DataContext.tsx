@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem, DigitalProduct, ScriptureOrder } from '../types';
+import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem, DigitalProduct, ScriptureOrder, Notification } from '../types';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 // Helper to get formatted date for current month
@@ -162,6 +162,11 @@ interface DataContextType {
     updateScriptureOrder: (id: string, updates: Partial<ScriptureOrder>) => Promise<void>;
     deleteScriptureOrder: (id: string) => Promise<void>;
 
+    // Notifications
+    notifications: Notification[];
+    markNotificationAsRead: (id: string) => Promise<void>;
+    deleteNotification: (id: string) => Promise<void>;
+
     resetData: () => void;
 }
 
@@ -179,6 +184,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>([]);
     const [scriptures, setScriptures] = useState<DigitalProduct[]>([]);
     const [scriptureOrders, setScriptureOrders] = useState<ScriptureOrder[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
 
     // === SUPABASE SYNCHRONIZATION ===
 
@@ -299,6 +305,24 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('faqs', setFaqs, 'created_at', false, INITIAL_FAQS as any), []);
     useEffect(() => syncTable('gallery_albums', setGalleryAlbums, 'created_at', false), []);
     useEffect(() => syncTable('digital_products', setScriptures, 'created_at', false), []);
+    useEffect(() => syncTable('notifications', setNotifications, 'created_at', false), []);
+
+    // Notification Actions
+    const markNotificationAsRead = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+        } else {
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        }
+    };
+
+    const deleteNotification = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            await supabase.from('notifications').delete().eq('id', id);
+        } else {
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        }
+    };
 
 
     // === ACTIONS ===
@@ -1058,6 +1082,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             updateSiteSettings,
             scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
+            notifications, markNotificationAsRead, deleteNotification,
             resetData
         }}>
             {children}

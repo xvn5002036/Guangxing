@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase'; // Import Supabase Client
 import { X, Plus, Trash2, Edit, Save, LogOut, Calendar, FileText, Briefcase, Loader2, Users, Info, Settings, Network, Layout, Home, Printer, Image, HelpCircle, BookOpen, ShoppingBag, Copy, Check } from 'lucide-react';
-import { GalleryItem, Registration, DigitalProduct, ScriptureOrder } from '../types';
+import { GalleryItem, Registration, DigitalProduct, ScriptureOrder, Notification } from '../types';
 import { GalleryManager } from './admin/GalleryManager';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -70,6 +70,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         siteSettings, updateSiteSettings,
         scriptures, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders,
         scriptureOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
+        notifications, markNotificationAsRead, deleteNotification,
         resetData, signOut
     } = useData();
 
@@ -170,48 +171,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const [selectedEventFilter, setSelectedEventFilter] = useState<string>('ALL');
 
     const handleExportCSV = () => {
-        // Filter data based on current selection
-        const dataToExport = selectedEventFilter === 'ALL'
-            ? registrations
-            : registrations.filter(r => r.serviceTitle === selectedEventFilter);
+        let dataToExport: any[] = [];
+        let filename = '';
+
+        if (activeTab === 'REGISTRATIONS') {
+            dataToExport = selectedEventFilter === 'ALL'
+                ? registrations
+                : registrations.filter(r => r.serviceTitle === selectedEventFilter);
+            filename = `法會報名名單_${selectedEventFilter === 'ALL' ? '全部' : selectedEventFilter}`;
+        } else if (activeTab === 'ORDERS') {
+            dataToExport = scriptureOrders;
+            filename = `數位商品訂單_${orderFilter}`;
+        }
 
         if (dataToExport.length === 0) {
             alert('目前無資料可匯出');
             return;
         }
 
-        // CSV Header
-        const headers = ["報名編號", "日期", "活動/服務名稱", "信眾姓名", "電話", "農曆年", "農曆月", "農曆日", "農曆時", "地址", "金額", "狀態", "備註"];
+        let csvContent = '';
 
-        // CSV Rows
-        const rows = dataToExport.map(reg => [
-            `'${reg.id.substring(reg.id.length - 6)}`, // Add ' to force string in Excel to keep leading zeros if any
-            new Date(reg.createdAt).toLocaleDateString(),
-            reg.serviceTitle,
-            reg.name,
-            reg.phone,
-            reg.birthYear || '',
-            reg.birthMonth || '',
-            reg.birthDay || '',
-            reg.birthHour || '',
-            `${reg.city}${reg.district}${reg.road || ''}${reg.addressDetail || ''}`,
-            reg.amount,
-            reg.isProcessed ? '已辦理' : '未辦理',
-            reg.paymentMethod || ''
-        ]);
+        if (activeTab === 'REGISTRATIONS') {
+            const headers = ["報名編號", "日期", "活動/服務名稱", "信眾姓名", "電話", "農曆年", "農曆月", "農曆日", "農曆時", "地址", "金額", "狀態", "備註"];
+            const rows = dataToExport.map(reg => [
+                `'${reg.id.substring(reg.id.length - 6)}`,
+                new Date(reg.createdAt).toLocaleDateString(),
+                reg.serviceTitle,
+                reg.name,
+                reg.phone,
+                reg.birthYear || '',
+                reg.birthMonth || '',
+                reg.birthDay || '',
+                reg.birthHour || '',
+                `${reg.city}${reg.district}${reg.road || ''}${reg.addressDetail || ''}`,
+                reg.amount,
+                reg.isProcessed ? '已辦理' : '未辦理',
+                reg.paymentMethod || ''
+            ]);
+            csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
+        } else if (activeTab === 'ORDERS') {
+            const headers = ["訂單編號", "日期", "商品名稱", "金額", "購買人ID", "狀態", "交易序號"];
+            const rows = dataToExport.map(ord => [
+                `'${ord.id.substring(0, 8)}`,
+                new Date(ord.createdAt || '').toLocaleDateString(),
+                ord.product?.title || '未知商品',
+                ord.amount,
+                ord.userId,
+                ord.status,
+                ord.merchantTradeNo
+            ]);
+            csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
+        }
 
-        // Combine into CSV string with BOM for UTF-8 (Excel Chinese support)
-        const csvContent = "\uFEFF" + [
-            headers.join(","),
-            ...rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-        ].join("\n");
-
-        // Create download link
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `法會報名名單_${selectedEventFilter === 'ALL' ? '全部' : selectedEventFilter}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.setAttribute("download", `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -327,6 +343,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         }).length
     };
     stats.totalRevenue = stats.registrationRevenue + stats.orderRevenue;
+
+    // Product Ranking
+    const productSalesMap = new Map<string, { title: string; count: number; revenue: number }>();
+    scriptureOrders.forEach(order => {
+        if (order.status === 'PAID' && order.productId) {
+            const current = productSalesMap.get(order.productId) || { title: order.product?.title || 'Unknown', count: 0, revenue: 0 };
+            current.count += 1;
+            current.revenue += order.amount;
+            productSalesMap.set(order.productId, current);
+        }
+    });
+    const topProducts = Array.from(productSalesMap.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    
+    // Notifications Filtering
+    const unreadNotifications = notifications.filter(n => !n.isRead).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Unified Recent Activity (Latest 10 items)
     const recentActivities = [
@@ -865,6 +896,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                 </div>
                                 <h3 className="text-mystic-gold text-[10px] font-bold uppercase tracking-widest mb-2">全站累計總營收 (TOTAL REVENUE)</h3>
                                 <div className="text-4xl font-bold text-mystic-gold">NT$ {stats.totalRevenue.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        {/* Row 2: Notifications & Top Products */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            {/* Notifications */}
+                            <div className="bg-black/40 border border-white/10 rounded-lg p-6">
+                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <Info className="text-blue-400" /> 系統通知 ({unreadNotifications.length})
+                                </h3>
+                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                    {unreadNotifications.length === 0 ? (
+                                        <p className="text-gray-500 text-sm">目前沒有未讀通知</p>
+                                    ) : (
+                                        unreadNotifications.map(notification => (
+                                            <div key={notification.id} className="bg-white/5 p-3 rounded border border-white/5 flex justify-between items-start group hover:bg-white/10 transition-colors">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                                                            notification.type === 'ORDER' ? 'bg-green-900 text-green-300' :
+                                                            notification.type === 'ALERT' ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'
+                                                        }`}>
+                                                            {notification.type}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">{new Date(notification.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <h4 className="font-bold text-sm">{notification.title}</h4>
+                                                    <p className="text-xs text-gray-400 mt-1">{notification.message}</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => markNotificationAsRead(notification.id)}
+                                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded text-gray-400 hover:text-white transition-all"
+                                                    title="標示為已讀"
+                                                >
+                                                    <Check size={14} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Top Selling Products */}
+                            <div className="bg-black/40 border border-white/10 rounded-lg p-6">
+                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <ShoppingBag className="text-mystic-gold" /> 熱銷經文排行
+                                </h3>
+                                <div className="space-y-3">
+                                    {topProducts.map((product, index) => (
+                                        <div key={index} className="flex justify-between items-center bg-white/5 p-3 rounded border-l-4 border-mystic-gold">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl font-bold text-gray-600 w-6 text-center">{index + 1}</span>
+                                                <div>
+                                                    <div className="font-bold">{product.title}</div>
+                                                    <div className="text-xs text-gray-400">已售出 {product.count} 筆</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-mystic-gold font-bold">
+                                                NT$ {product.revenue.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {topProducts.length === 0 && <p className="text-gray-500 text-sm">目前尚無銷售數據</p>}
+                                </div>
                             </div>
                         </div>
 
@@ -1562,6 +1657,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     已完成 (Paid)
                                                 </button>
                                             </div>
+                                        )}
+                                        {activeTab === 'ORDERS' && (
+                                            <button
+                                                onClick={handleExportCSV}
+                                                className="bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-green-700 transition-colors mr-2"
+                                            >
+                                                <FileText size={16} /> 匯出訂單
+                                            </button>
                                         )}
 
                                         {selectedItems.size > 0 && (

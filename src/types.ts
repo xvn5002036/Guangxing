@@ -248,3 +248,13 @@ export interface ScriptureOrder {
   createdAt?: string;
   product?: DigitalProduct;
 }
+
+export interface Notification {
+  id: string;
+  type: 'ORDER' | 'SYSTEM' | 'ALERT';
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  link?: string;
+}

@@ -8,6 +8,7 @@ import { DigitalProduct } from '../types';
 export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
     const { scriptures: products } = useData();
     const [myPurchasedIds, setMyPurchasedIds] = useState<Set<string>>(new Set());
+    const [myPendingIds, setMyPendingIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<string>('ALL');
@@ -16,24 +17,66 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
         const fetchLibrary = async () => {
             if (!userId) {
                 setMyPurchasedIds(new Set());
+                setMyPendingIds(new Set());
                 return;
             }
             try {
-                const { data, error } = await supabase
+                // 1. Fetch Purchases (Paid)
+                const { data: purchases, error: pError } = await supabase
                     .from('purchases')
                     .select('product_id')
                     .eq('user_id', userId);
                 
-                if (data) {
-                    const purchasedSet = new Set(data.map((item: any) => item.product_id));
-                    setMyPurchasedIds(purchasedSet);
+                if (purchases) {
+                    setMyPurchasedIds(new Set(purchases.map((item: any) => item.product_id)));
                 }
+
+                // 2. Fetch Pending Orders
+                const { data: orders, error: oError } = await supabase
+                    .from('orders')
+                    .select('product_id')
+                    .eq('user_id', userId)
+                    .eq('status', 'PENDING');
+
+                if (orders) {
+                    setMyPendingIds(new Set(orders.map((item: any) => item.product_id)));
+                }
+
             } catch (error) {
                 console.error('Fetch Library Error:', error);
             }
         };
 
         fetchLibrary();
+
+        // Realtime Subscription for "Immediate Auto-Refresh"
+        if (userId) {
+            const subscription = supabase
+                .channel('shop_updates')
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'purchases',
+                    filter: `user_id=eq.${userId}`
+                }, (payload) => {
+                    console.log('Purchase Approved!', payload);
+                    setMyPurchasedIds(prev => {
+                        const next = new Set(prev);
+                        next.add(payload.new.product_id);
+                        return next;
+                    });
+                    setMyPendingIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(payload.new.product_id);
+                        return next;
+                    });
+                })
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(subscription);
+            };
+        }
     }, [userId]);
 
 
@@ -67,7 +110,13 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             return;
         }
 
-        // 2. Handle Free Items (Price === 0)
+        // 2. Prevent Duplicate Pending Application
+        if (myPendingIds.has(product.id)) {
+            alert('您已送出申請，管理員審核中。\n請勿重複提交，以免影響作業流程。');
+            return;
+        }
+
+        // 3. Handle Free Items (Price === 0)
         if (product.price === 0) {
             if (!confirm(`確認免費收藏「${product.title}」？`)) return;
 
@@ -109,7 +158,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
             return;
         }
 
-        // 3. Paid Items -> Bank Transfer
+        // 4. Paid Items -> Bank Transfer
         setSelectedProduct(product);
         setShowBankModal(true);
     };
@@ -145,6 +194,7 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {products.filter(p => activeCategory === 'ALL' || p.category === activeCategory).map((product) => {
                         const isPurchased = myPurchasedIds.has(product.id);
+                        const isPending = myPendingIds.has(product.id);
                         
                         return (
                             <div key={product.id} className="relative group bg-mystic-charcoal/50 border border-white/5 overflow-hidden rounded-sm hover:border-mystic-gold/40 transition-all duration-500">
@@ -182,9 +232,16 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                         {isPurchased ? (
                                             <button 
                                                 disabled
-                                                className="bg-green-900/20 text-green-400 border border-green-900/50 px-6 py-2 rounded-sm flex items-center gap-2 font-bold"
+                                                className="bg-green-900/20 text-green-400 border border-green-900/50 px-6 py-2 rounded-sm flex items-center gap-2 font-bold opacity-80 cursor-not-allowed"
                                             >
                                                 <CheckCircle2 size={18} /> 已開通
+                                            </button>
+                                        ) : isPending ? (
+                                            <button 
+                                                disabled
+                                                className="bg-yellow-900/20 text-yellow-400 border border-yellow-900/50 px-6 py-2 rounded-sm flex items-center gap-2 font-bold cursor-not-allowed"
+                                            >
+                                                <Loader2 size={18} className="animate-spin" /> 申請中
                                             </button>
                                         ) : (
                                             <button 
@@ -285,6 +342,11 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                         });
 
                                         if (error) throw error;
+
+                                        // Update local pending state immediately
+                                        const newPending = new Set(myPendingIds);
+                                        newPending.add(selectedProduct.id);
+                                        setMyPendingIds(newPending);
 
                                         alert('已送出匯款通知！\n管理員確認後將自動開通權限，請稍候。');
                                         setShowBankModal(false);
