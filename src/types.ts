@@ -60,7 +60,7 @@ export enum MoonBlockResult {
 }
 
 export interface NewsItem {
-  id?: string;
+  id: string;
   date: string;
   title: string;
   category: string;
@@ -116,7 +116,7 @@ export interface OrgMember {
 }
 
 export interface FAQItem {
-  id?: string;
+  id: string;
   question: string;
   answer: string;
 }

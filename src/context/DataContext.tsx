@@ -797,10 +797,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             method: 'DELETE'
         });
         if (!response.ok) {
-            const errorData = await response.json();
+        if (!response.ok) {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                console.error("Failed to parse error JSON:", e);
+                // Try to get text, or default to status text
+                const text = await response.text().catch(() => '');
+                throw new Error(`Server Error (${response.status}): ${text || response.statusText}`);
+            }
             const err: any = new Error(errorData.details || errorData.error || '刪除失敗');
             if (errorData.code) err.code = errorData.code;
             throw err;
+        }
         }
         
         // Update local state immediately for fast UI

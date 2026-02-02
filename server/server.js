@@ -19,10 +19,20 @@ for (const file of envFiles) {
 }
 
 // Fallback: Try reading from src/config.ts as requested by user
-const configTsPath = path.resolve('..', 'src', 'config.ts');
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Fallback: Try reading from src/config.ts as requested by user
+// Resolve path relative to THIS file (server/server.js) -> Go up one level to root -> src/config.ts
+const configTsPath = path.resolve(__dirname, '../src/config.ts');
+
 if (fs.existsSync(configTsPath)) {
     try {
         const content = fs.readFileSync(configTsPath, 'utf-8');
+        console.log(`Reading config from: ${configTsPath}`);
+        
         // Extract SUPABASE_URL
         if (!process.env.SUPABASE_URL) {
             const urlMatch = content.match(/SUPABASE_URL\s*=\s*(['"`])(.*?)\1/);
@@ -31,7 +41,8 @@ if (fs.existsSync(configTsPath)) {
                 console.log('Using SUPABASE_URL from src/config.ts');
             }
         }
-        // Extract SUPABASE_SERVICE_ROLE_KEY (if present)
+        // Extract SUPABASE_SERVICE_ROLE_KEY
+        // Note: Check for both const name and value in quotes
         if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
             const keyMatch = content.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(['"`])(.*?)\1/);
             if (keyMatch) {
@@ -42,6 +53,8 @@ if (fs.existsSync(configTsPath)) {
     } catch (err) {
         console.error('Failed to parse src/config.ts:', err.message);
     }
+} else {
+    console.warn(`Config file not found at: ${configTsPath}`);
 }
 
 const app = express();
@@ -337,6 +350,7 @@ app.delete('/api/products/:id', async (req, res) => {
         return res.status(500).json({ error: 'Database not initialized.' });
     }
     const { id } = req.params;
+    console.log(`[DELETE] Request for product ID: ${id}`);
 
     try {
         // 1. 刪除相關訂單 (purchases 表有 ON DELETE CASCADE on order_id，所以會一併刪除)
@@ -463,5 +477,9 @@ app.get('/api/diag', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Backend server running at http://localhost:${port}`);
+    console.log('===========================================================');
+    console.log(`🚀 Backend server running at http://localhost:${port}`);
+    console.log(`📂 Config Source: ${fs.existsSync(configTsPath) ? 'src/config.ts' : 'Env/Default'}`);
+    console.log(`🔑 Supabase Key Present: ${!!process.env.SUPABASE_SERVICE_ROLE_KEY}`);
+    console.log('===========================================================');
 });
