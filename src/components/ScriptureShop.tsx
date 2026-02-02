@@ -36,57 +36,17 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
         fetchLibrary();
     }, [userId]);
 
-    const handleBuy = async (product: DigitalProduct) => {
-        if (!userId) {
-            alert('請先登入會員再進行請購');
-            return;
-        }
 
-        setProcessingId(product.id);
-        try {
-            const response = await fetch('/api/create-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId,
-                    productId: product.id,
-                    amount: product.price,
-                    itemNames: product.title
-                })
-            });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                let errorMessage = `Server Error (${response.status})`;
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.details || errorJson.error || errorMessage;
-                } catch (e) {
-                    errorMessage += `: ${errorText.substring(0, 100)}`;
-                }
-                throw new Error(errorMessage);
-            }
+    const [showBankModal, setShowBankModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<DigitalProduct | null>(null);
 
-            const htmlForm = await response.text();
-            
-            // 建立一個隱藏的容器來執行綠界跳轉表單
-            const div = document.createElement('div');
-            div.innerHTML = htmlForm;
-            document.body.appendChild(div);
-            
-            // 手動觸發表單送出 (因為 innerHTML 插入的 script 不會自動執行)
-            const form = div.querySelector('form');
-            if (form) {
-                form.submit();
-            } else {
-                throw new Error('找不到跳轉表單');
-            }
-        } catch (error: any) {
-            console.error('Purchase Error:', error);
-            // Show detailed error including User ID for debugging
-            alert(`【除錯資訊】\nUser ID: ${userId || '無'}\nError: ${error.message || '未知錯誤'}\n\n如果不清楚，請截圖給我。`);
-            setProcessingId(null);
-        }
+    // Bank Details - You can move this to config or database later
+    const BANK_INFO = {
+        bankName: '000 測試銀行',
+        branch: '測試分行',
+        accountNumber: '1234-5678-9012',
+        accountName: '新莊武壇廣行宮'
     };
 
     if (loading) return (
@@ -95,8 +55,17 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
         </div>
     );
 
+    const handleBuy = (product: DigitalProduct) => {
+        if (!userId) {
+            alert('請先登入會員再進行請購');
+            return;
+        }
+        setSelectedProduct(product);
+        setShowBankModal(true);
+    };
+
     return (
-        <div className="p-6 bg-black min-h-screen text-white">
+        <div className="p-6 bg-black min-h-screen text-white relative">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-12 text-center">
                     <h1 className="text-4xl font-bold tracking-[0.3em] text-mystic-gold uppercase mb-4">道藏經圖書館</h1>
@@ -170,10 +139,9 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                                         ) : (
                                             <button 
                                                 onClick={() => handleBuy(product)}
-                                                disabled={processingId === product.id}
-                                                className="bg-mystic-gold text-black px-6 py-2 rounded-sm flex items-center gap-2 font-bold hover:bg-white transition-all active:scale-95 disabled:opacity-50"
+                                                className="bg-mystic-gold text-black px-6 py-2 rounded-sm flex items-center gap-2 font-bold hover:bg-white transition-all active:scale-95"
                                             >
-                                                {processingId === product.id ? <Loader2 className="animate-spin" size={18} /> : <ShoppingCart size={18} />}
+                                                <ShoppingCart size={18} />
                                                 請購收藏
                                             </button>
                                         )}
@@ -205,6 +173,59 @@ export const ScriptureShop: React.FC<{ userId?: string }> = ({ userId }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Bank Transfer Modal */}
+            {showBankModal && selectedProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-mystic-charcoal border border-mystic-gold/30 rounded-lg p-8 max-w-md w-full shadow-2xl relative">
+                        <button 
+                            onClick={() => setShowBankModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                        >
+                            ✕
+                        </button>
+                        
+                        <h3 className="text-2xl font-bold text-mystic-gold mb-6 text-center border-b border-white/10 pb-4">
+                            匯款資訊
+                        </h3>
+
+                        <div className="space-y-6">
+                            <div className="text-center">
+                                <p className="text-gray-400 text-sm mb-2">您即將請購</p>
+                                <p className="text-xl font-bold text-white mb-1">{selectedProduct.title}</p>
+                                <p className="text-2xl text-mystic-gold font-bold">NT$ {selectedProduct.price.toLocaleString()}</p>
+                            </div>
+
+                            <div className="bg-black/40 p-6 rounded-md border border-white/5 space-y-3">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">銀行代碼</span>
+                                    <span className="text-white font-mono">{BANK_INFO.bankName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">銀行帳號</span>
+                                    <span className="text-white font-mono tracking-wider">{BANK_INFO.accountNumber}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">戶名</span>
+                                    <span className="text-white">{BANK_INFO.accountName}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-mystic-gold/10 p-4 rounded text-sm text-mystic-gold/80 border border-mystic-gold/20">
+                                <p className="font-bold mb-1">匯款後下一步：</p>
+                                <p>請將「匯款明細」截圖或告知「帳號末五碼」，傳送至官方 LINE 或聯絡管理員，我們將為您開通權限。</p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowBankModal(false)}
+                                className="w-full bg-mystic-gold text-black font-bold py-3 rounded hover:bg-white transition-colors"
+                            >
+                                我已了解，稍後匯款
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
