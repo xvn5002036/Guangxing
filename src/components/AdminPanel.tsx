@@ -889,8 +889,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     </h2>
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'ORDERS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && activeTab !== 'MEMBERS' && (
-                            <button onClick={() => { setEditingId(null); setIsAdding(true); setEditForm(activeTab === 'NEWS' ? { category: '公告' } : activeTab === 'ORG' ? { category: 'STAFF' } : activeTab === 'FAQS' ? {} : activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : { type: 'FESTIVAL' }); }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
-                                <Plus size={18} /> 新增藏書
+                            <button onClick={() => { 
+                                setEditingId(null); 
+                                setIsAdding(true); 
+                                const initialForm = 
+                                    activeTab === 'NEWS' ? { category: '公告' } : 
+                                    activeTab === 'ORG' ? { category: 'STAFF' } : 
+                                    activeTab === 'FAQS' ? {} : 
+                                    activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : 
+                                    activeTab === 'SERVICES' ? { type: 'LIGHT', price: 0 } :
+                                    activeTab === 'EVENTS' ? { type: 'FESTIVAL' } :
+                                    { type: 'FESTIVAL' };
+                                setEditForm(initialForm); 
+                            }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
+                                <Plus size={18} /> {
+                                    activeTab === 'SERVICES' ? '新增服務項目' :
+                                    activeTab === 'EVENTS' ? '新增活動' :
+                                    activeTab === 'NEWS' ? '新增消息' :
+                                    activeTab === 'SCRIPTURES' ? '新增藏書' : '新增項目'
+                                }
                             </button>
                         )}
                     </div>
