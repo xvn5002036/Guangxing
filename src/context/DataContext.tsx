@@ -1171,6 +1171,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 city: data.city,
                 district: data.district,
                 address: data.address,
+                gender: data.gender,
                 role: data.role,
                 createdAt: data.created_at
             };

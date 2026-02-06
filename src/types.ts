@@ -34,6 +34,7 @@ export interface Registration {
   district: string;
   road: string;
   addressDetail: string;
+  gender?: string; // M or F
   amount: number;
   status: 'PAID' | 'PENDING' | 'CANCELLED';
   isProcessed?: boolean; // New field for administrative handling status
@@ -126,6 +127,7 @@ export interface FieldConfig {
   showTime: boolean;
   showAddress: boolean;
   showIdNumber: boolean;
+  showGender?: boolean;
 }
 
 export interface SiteSettings {
@@ -183,6 +185,7 @@ export interface UserProfile {
   city: string;
   district: string;
   address: string;
+  gender?: string;
   createdAt: string;
 }
 

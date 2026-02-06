@@ -29,7 +29,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         birthHour: '',
         city: '',
         district: '',
-        address: ''
+        address: '',
+        gender: 'M' // Default to Male if not specified
     });
 
     useEffect(() => {
@@ -47,7 +48,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         birthHour: userProfile.birthHour || '',
                         city: userProfile.city || '',
                         district: userProfile.district || '',
-                        address: userProfile.address || ''
+                        address: userProfile.address || '',
+                        gender: userProfile.gender || 'M'
                     });
                 }
             } else {
@@ -114,6 +116,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 city: profileData.city,
                 district: profileData.district,
                 address: profileData.address,
+                gender: profileData.gender,
                 updated_at: new Date(),
             };
 
@@ -256,6 +259,34 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                                             onChange={e => setProfileData({ ...profileData, phone: e.target.value })}
                                             className="w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
                                         />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs text-gray-500 block mb-1">性別</label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer bg-black/30 px-4 py-2 rounded border border-white/10 hover:border-mystic-gold/50 transition-colors flex-1">
+                                            <input
+                                                type="radio"
+                                                name="gender"
+                                                value="M"
+                                                checked={profileData.gender === 'M'}
+                                                onChange={e => setProfileData({ ...profileData, gender: e.target.value })}
+                                                className="accent-mystic-gold"
+                                            />
+                                            <span className="text-white text-sm">男</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer bg-black/30 px-4 py-2 rounded border border-white/10 hover:border-mystic-gold/50 transition-colors flex-1">
+                                            <input
+                                                type="radio"
+                                                name="gender"
+                                                value="F"
+                                                checked={profileData.gender === 'F'}
+                                                onChange={e => setProfileData({ ...profileData, gender: e.target.value })}
+                                                className="accent-mystic-gold"
+                                            />
+                                            <span className="text-white text-sm">女</span>
+                                        </label>
                                     </div>
                                 </div>
 

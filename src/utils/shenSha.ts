@@ -26,7 +26,11 @@ export const getShenShaForPillar = (
     yearZhi: string, 
     monthZhi: string, 
     dayZhi: string,
-    fullChartStems: string[] = []
+    fullChartStems: string[] = [],
+    fullChartBranches: string[] = [], // New: Need full branches for some stars
+    gender: 'M' | 'F' = 'M', // New: Gender for Yuan Chen
+    yearNaYin: string = '', // New: For Tong Zi
+    dayNaYin: string = ''   // New: For Tong Zi
 ) => {
     const starList: string[] = [];
     const nobleStems = [dayGan, yearGan]; 
@@ -279,6 +283,231 @@ export const getShenShaForPillar = (
 
     // --- 4. Special Pillar Combinations ---
     
+    // --- New Stars Added from Suanming.com.tw Request ---
+
+    // 1. Tian Chu Gui Ren (天廚貴人) - Based on Day Stem
+    // Formula: Jia-Si, Yi-Wu, Bing-Zi, Ding-Si, Wu-Wu, Ji-Shen, Geng-Yin, Xin-Wu, Ren-Shen, Gui-Hai
+    const tianChuMap: Record<string, string> = {
+        '甲': '巳', '乙': '午', '丙': '子', '丁': '巳', '戊': '午',
+        '己': '申', '庚': '寅', '辛': '午', '壬': '申', '癸': '亥'
+    };
+    if (tianChuMap[dayGan] === pillarZhi) starList.push('天廚貴人');
+
+    // 2. Tian Guan Gui Ren (天官貴人) - Based on Day Stem
+    // Formula: Jia-Wei, Yi-Chen, Bing-Si, Ding-Yin, Wu-Mao, Ji-You, Geng-Hai, Xin-Shen, Ren-Xu, Gui-Wu
+    const tianGuanMap: Record<string, string> = {
+        '甲': '未', '乙': '辰', '丙': '巳', '丁': '寅', '戊': '卯',
+        '己': '酉', '庚': '亥', '辛': '申', '壬': '戌', '癸': '午'
+    };
+    if (tianGuanMap[dayGan] === pillarZhi) starList.push('天官貴人');
+
+    // 3. De Xiu Gui Ren (德秀貴人) - Based on Month Branch
+    // Checks for specific Stems appearing in the chart. Usually attributes to the Pillar if it contains the stem.
+    // Logic: Month -> Required Stems. If PillarGan is one of them, mark it.
+    // Yin/Wu/Xu (Fire): Bing/Ding (De), Wu/Gui (Xiu)
+    // Shen/Zi/Chen (Water): Ren/Gui (De), Bing/Xin (Xiu)
+    // Si/You/Chou (Metal): Geng/Xin (De), Yi/Geng (Xiu)
+    // Hai/Mao/Wei (Wood): Jia/Yi (De), Ding/Ren (Xiu)
+    const getDeXiu = (mZhi: string, pGan: string) => {
+        if (['寅', '午', '戌'].includes(mZhi)) {
+            if (['丙', '丁'].includes(pGan)) return '德秀貴人'; // De
+            if (['戊', '癸'].includes(pGan)) return '德秀貴人'; // Xiu
+        }
+        if (['申', '子', '辰'].includes(mZhi)) {
+            if (['壬', '癸'].includes(pGan)) return '德秀貴人';
+            if (['丙', '辛'].includes(pGan)) return '德秀貴人';
+        }
+        if (['巳', '酉', '丑'].includes(mZhi)) {
+            if (['庚', '辛'].includes(pGan)) return '德秀貴人';
+            if (['乙', '庚'].includes(pGan)) return '德秀貴人';
+        }
+        if (['亥', '卯', '未'].includes(mZhi)) {
+            if (['甲', '乙'].includes(pGan)) return '德秀貴人';
+            if (['丁', '壬'].includes(pGan)) return '德秀貴人';
+        }
+        return null;
+    };
+    const dx = getDeXiu(monthZhi, pillarGan);
+    if (dx) starList.push(dx);
+
+    // 4. Ci Guan (詞館) - Scholar's Hall
+    // Specific Pillar Match usually involving Day Stem's relation
+    // Mapping: Jia-GengYin, Yi-XinMao, Bing-YiSi, Ding-WuWu, Wu-DingSi, Ji-BingWu, Geng-RenShen, Xin-GuiYou, Ren-GengHai, Gui-XinHai
+    const ciGuanMap: Record<string, string> = {
+        '甲': '庚寅', '乙': '辛卯', '丙': '乙巳', '丁': '戊午', '戊': '丁巳',
+        '己': '丙午', '庚': '壬申', '辛': '癸酉', '壬': '庚亥', '癸': '辛亥'
+    };
+    if (ciGuanMap[dayGan] === (pillarGan + pillarZhi)) starList.push('詞館');
+
+    // 5. Tian Luo Di Wang (天羅地網)
+    // Xu-Hai is Tian Luo, Chen-Si is Di Wang.
+    // Rule: "Mutually Seeing". 
+    // If Pillar is Xu, and Chart has Hai -> Tian Luo.
+    // If Pillar is Hai, and Chart has Xu -> Tian Luo.
+    // If Pillar is Chen, and Chart has Si -> Di Wang.
+    // If Pillar is Si, and Chart has Chen -> Di Wang.
+    const allBranches = fullChartBranches.length > 0 ? fullChartBranches : [yearZhi, monthZhi, dayZhi, pillarZhi]; // Minimal fallback
+    if (pillarZhi === '戌' && allBranches.includes('亥')) starList.push('天羅');
+    if (pillarZhi === '亥' && allBranches.includes('戌')) starList.push('天羅');
+    if (pillarZhi === '辰' && allBranches.includes('巳')) starList.push('地網');
+    if (pillarZhi === '巳' && allBranches.includes('辰')) starList.push('地網');
+
+    // 6. Tian De He (天德合) & Yue De He (月德合)
+    // We already calculated Tian De and Yue De logic effectively by map.
+    // Yue De He: Stem that combines with Yue De Stem.
+    // Tian De He: Stem that combines with Tian De Stem/Branch (converted).
+    // Reuse Yue De map
+    const yueDeMapForHe: Record<string, string> = {
+        '寅': '丙', '午': '丙', '戌': '丙', '申': '壬', '子': '壬', '辰': '壬',
+        '亥': '甲', '卯': '甲', '未': '甲', '巳': '庚', '酉': '庚', '丑': '庚'
+    };
+    const stemCombineMap: Record<string, string> = {
+        '甲': '己', '己': '甲', '乙': '庚', '庚': '乙', '丙': '辛', '辛': '丙',
+        '丁': '壬', '壬': '丁', '戊': '癸', '癸': '戊'
+    };
+    const ydStem = yueDeMapForHe[monthZhi];
+    if (ydStem && stemCombineMap[ydStem] === pillarGan) starList.push('月德合');
+
+    // Tian De He
+    // First find Tian De.
+    const tianDeMapForHe: Record<string, string> = {
+        '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛', '午': '亥', '未': '甲',
+        '申': '癸', '酉': '寅', '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚'
+    };
+    const tdTargetChar = tianDeMapForHe[monthZhi];
+    // If TD is Stem, look for Combine Stem.
+    // If TD is Branch (e.g. Shen, Yin, Hai, Si), look for Branch Combine? or Hidden Stem combine?
+    // Usually Tian De He is strictly Stems. If TD is Branch, we map branch to main Qi Stem?
+    // Or Tian De He uses Zhi Liu He?
+    // Common Formula:
+    // If Tian De is Stem -> Combine Stem.
+    // If Tian De is Branch (Zi, Wu, Mao, You etc? No, De map has Shen, Yin, Hai, Si).
+    // The Map: Yin->Ding(S), Mao->Shen(B), Chen->Ren(S), Si->Xin(S), Wu->Hai(B), Wei->Jia(S)...
+    // Detailed:
+    // If TD is Ding (Stem) -> Ren is He.
+    // If TD is Shen (Branch) -> Si is He (Liu He).
+    // If TD is Ren -> Ding.
+    // If TD is Xin -> Bing.
+    // If TD is Hai (Branch) -> Yin is He.
+    // If TD is Jia -> Ji.
+    // If TD is Gui -> Wu.
+    // If TD is Yin (Branch) -> Hai is He.
+    // If TD is Bing -> Xin.
+    // If TD is Yi -> Geng.
+    // If TD is Si (Branch) -> Shen is He.
+    // If TD is Geng -> Yi.
+    // Logic: Check if TD is Stem or Branch.
+    const isGan = (c: string) => GAN.includes(c);
+    if (tdTargetChar) {
+        if (isGan(tdTargetChar)) {
+            // Target is Stem (e.g. Ding), we need Ren (which is stemCombineMap[Ding])
+            if (stemCombineMap[tdTargetChar] === pillarGan) starList.push('天德合');
+        } else {
+            // Target is Branch (e.g. Shen), we need Si (Liu He)
+            const branchCombineMap: Record<string, string> = {
+                '子': '丑', '丑': '子', '寅': '亥', '亥': '寅', '卯': '戌', '戌': '卯',
+                '辰': '酉', '酉': '辰', '巳': '申', '申': '巳', '午': '未', '未': '午'
+            };
+            if (branchCombineMap[tdTargetChar] === pillarZhi) starList.push('天德合');
+        }
+    }
+
+    // 7. Sang Men (喪門)
+    // Year Branch + 2.
+    // Zi(0) -> Yin(2).
+    const zhiIdx = ZHI.indexOf(yearZhi);
+    if (zhiIdx >= 0) {
+        const smIdx = (zhiIdx + 2) % 12;
+        if (ZHI[smIdx] === pillarZhi) starList.push('喪門');
+    }
+
+    // 8. Xue Ren (血刃)
+    // Month Branch -> Target Branch
+    const xueRenMap: Record<string, string> = {
+        '子': '戌', '丑': '酉', '寅': '申', '卯': '未', '辰': '午', '巳': '巳', // Verify this pattern
+        '午': '辰', '未': '卯', '申': '寅', '酉': '丑', '戌': '子', '亥': '亥' // Reverse order?
+    };
+    // Re-verify Xue Ren: "Zi sees Xu, Chou sees You..." 
+    // This looks like reverse order starting from Xu? 
+    // Zi(1)->Xu(11), Chou(2)->You(10), Yin(3)->Shen(9). Sum is 12 (or 0).
+    // 1+11=12. 2+10=12. 3+9=12. 4+8=12(Mao-Wei). 5+7=12(Chen-Wu). 6+6=12(Si-Si). 
+    // Yes, this is the formula.
+    if (xueRenMap[monthZhi] === pillarZhi) starList.push('血刃');
+
+    // 9. Yuan Chen (元辰)
+    // Year Branch Opposite +/- 1
+    // Yang Nan / Yin Nv: Chong + 1 (Forward)
+    // Yin Nan / Yang Nv: Chong - 1 (Backward)
+    // Year Stem Polarity:
+    const yangStems = ['甲', '丙', '戊', '庚', '壬'];
+    const isYangYear = yangStems.includes(yearGan);
+    const isMale = gender === 'M';
+    
+    // Determine direction
+    // Yang Year Male -> Yang Nan -> Forward
+    // Yin Year Female -> Yin Nv -> Forward
+    // Yin Year Male -> Yin Nan -> Backward
+    // Yang Year Female -> Yang Nv -> Backward
+    let forward = false;
+    if ((isYangYear && isMale) || (!isYangYear && !isMale)) {
+        forward = true;
+    }
+
+    // Chong Index: (year + 6) % 12
+    const chongIdx = (zhiIdx + 6) % 12;
+    let targetIdx = forward ? (chongIdx + 1) : (chongIdx - 1);
+    if (targetIdx < 0) targetIdx += 12;
+    targetIdx = targetIdx % 12;
+    
+    if (ZHI[targetIdx] === pillarZhi) starList.push('元辰');
+
+    // 10. Tong Zi (童子煞)
+    // Season (Month) -> Branch
+    // Spring (Yin/Mao/Chen) -> Yin, Zi
+    // Summer (Si/Wu/Wei) -> Mao, Wei
+    // Fall (Shen/You/Xu) -> Shen, Yin
+    // Winter (Hai/Zi/Chou) -> You, Mao
+    const getSeason = (m: string) => {
+        if (['寅', '卯', '辰'].includes(m)) return 'Spring';
+        if (['巳', '午', '未'].includes(m)) return 'Summer';
+        if (['申', '酉', '戌'].includes(m)) return 'Fall';
+        if (['亥', '子', '丑'].includes(m)) return 'Winter';
+        return '';
+    };
+    const season = getSeason(monthZhi);
+    const tzMap: Record<string, string[]> = {
+        'Spring': ['寅', '子'],
+        'Summer': ['卯', '未'],
+        'Fall': ['申', '寅'],
+        'Winter': ['酉', '卯']
+    };
+    if (tzMap[season]?.includes(pillarZhi)) starList.push('童子煞');
+
+    // Na Yin Tong Zi Logic
+    // Rule:
+    // Metal/Wood (Jin/Mu) -> Wu/Mao
+    // Water/Fire (Shui/Huo) -> You/Xu
+    // Earth (Tu) -> Chen/Si
+    // We check both Year Na Yin and Day Na Yin to cover "Live Tong Zi" variants used by some sites.
+    const checkNaYinTongZi = (ny: string) => {
+        if (!ny) return false;
+        if (ny.includes('金') || ny.includes('木')) {
+            return ['午', '卯'].includes(pillarZhi);
+        }
+        if (ny.includes('水') || ny.includes('火')) {
+            return ['酉', '戌'].includes(pillarZhi);
+        }
+        if (ny.includes('土')) {
+            return ['辰', '巳'].includes(pillarZhi);
+        }
+        return false;
+    };
+
+    if (checkNaYinTongZi(yearNaYin) || checkNaYinTongZi(dayNaYin)) {
+        // Avoid duplicate push if already found by season
+        if (!starList.includes('童子煞')) starList.push('童子煞');
+    }
+
     // Jin Shen (金神)
     if (['乙丑', '己巳', '癸酉'].includes(pillarGan + pillarZhi)) {
         starList.push('金神');
@@ -298,9 +527,12 @@ export const getShenShaForPillar = (
     // San Qi Gui Ren (三奇貴人)
     if (fullChartStems.length === 4) {
         const stems = fullChartStems.join('');
-        if (stems.includes('庚戊甲')) starList.push('天上三奇');
-        if (stems.includes('乙丙丁')) starList.push('地下三奇');
-        if (stems.includes('壬癸辛')) starList.push('人中三奇');
+        // Tian Shang San Qi: Jia Wu Geng
+        if (stems.includes('甲戊庚') || stems.includes('庚戊甲')) starList.push('天上三奇');
+        // Di xia San Qi: Yi Bing Ding
+        if (stems.includes('乙丙丁') || stems.includes('丁丙乙')) starList.push('地下三奇');
+        // Ren Zhong San Qi: Ren Gui Xin
+        if (stems.includes('壬癸辛') || stems.includes('辛癸壬')) starList.push('人中三奇');
     }
     
     return [...new Set(starList)];

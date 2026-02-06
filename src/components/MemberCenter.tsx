@@ -7,6 +7,8 @@ import { MemberLibrary } from './MemberLibrary';
 import { ServiceItem } from '../types';
 import { Solar, Lunar, LunarYear, EightChar } from 'lunar-javascript';
 import { getShenShaForPillar } from '../utils/shenSha';
+import { getChengGuWeight } from '../utils/chengGu';
+import { calculateMingGe } from '../utils/baziPatterns';
 
 interface MemberCenterProps {
     onBack: () => void;
@@ -229,6 +231,20 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                     <div className="space-y-1">
                                         <label className="text-xs text-gray-500">姓名</label>
                                         <div className="text-lg text-gray-200">{userProfile?.fullName || '-'}</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-gray-500">性別</label>
+                                        <div className="text-lg text-gray-200 flex items-center gap-2">
+                                            {userProfile?.gender === 'F' ? (
+                                                <>
+                                                    <span className="text-pink-400">●</span> 女
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="text-blue-400">●</span> 男
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs text-gray-500">聯絡電話</label>
@@ -605,17 +621,48 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
 
                                                 // Full chart stems for San Qi check
                                                 const fullChartStems = [baZi.getYearGan(), baZi.getMonthGan(), baZi.getDayGan(), baZi.getTimeGan()];
+                                                const fullChartBranches = [baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), baZi.getTimeZhi()];
                                                 const yearGan = baZi.getYearGan();
+
+                                                const gender = userProfile?.gender === 'female' || userProfile?.gender === 'F' ? 'F' : 'M';
+                                                const mingGe = calculateMingGe(dayMaster, baZi.getMonthZhi(), baZi.getMonthGan(), fullChartStems);
 
                                                 return (
                                                     <div className="space-y-8 animate-fade-in-up">
                                                         
+                                                        {/* Date Verification Info & Ming Ge Summary */}
+                                                        <div className="bg-zinc-800/50 border border-yellow-500/30 rounded p-4 text-sm text-gray-300 flex flex-col gap-4">
+                                                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-yellow-500 font-bold">目前排盤依據 (農曆):</span>
+                                                                    <span>{lunar.toString()}</span>
+                                                                    <span className={`hidden md:inline-block px-2 py-0.5 rounded text-xs ml-2 font-bold ${gender === 'M' ? 'bg-blue-900/40 text-blue-300' : 'bg-pink-900/40 text-pink-300'}`}>
+                                                                        {gender === 'M' ? '乾造 (男)' : '坤造 (女)'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-blue-400 font-bold">對應國曆日期 (Solar):</span>
+                                                                    <span>{solar.toString()}</span>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="border-t border-white/10 pt-3 flex flex-col md:flex-row justify-between items-center gap-4">
+                                                                <div className="flex items-center gap-2">
+                                                                     <span className="text-red-400 font-bold text-lg">命格:</span>
+                                                                     <span className="text-white text-xl font-bold bg-red-900/30 px-3 py-1 rounded border border-red-500/30">{mingGe}</span>
+                                                                </div>
+                                                                <div className="text-xs text-gray-500">
+                                                                    *若國曆日期不符，請檢查個人資料是否誤填為國曆
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
                                                         {/* Advanced Table */}
                                                         <div className="overflow-x-auto rounded-lg border border-white/10">
                                                             <table className="w-full text-center text-sm md:text-base border-collapse">
                                                                 <thead>
                                                                     <tr className="bg-zinc-800 text-mystic-gold">
-                                                                        <th className="p-3 border border-white/10 w-24">乾造</th>
+                                                                        <th className="p-3 border border-white/10 w-24">{gender === 'M' ? '乾造' : '坤造'}</th>
                                                                         {columns.map(c => <th key={c.title} className="p-3 border border-white/10 text-lg font-bold">{c.title}</th>)}
                                                                     </tr>
                                                                 </thead>
@@ -693,8 +740,8 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                             </div>
                                                                         </td>
                                                                         {columns.map((c, i) => {
-                                                                            // Calculate Shen Sha for this pillar
-                                            const stars = getShenShaForPillar(c.zhi, c.gan, dayMaster, yearGan, baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), fullChartStems);
+                                                                            // Use outer gender variable
+                                            const stars = getShenShaForPillar(c.zhi, c.gan, dayMaster, yearGan, baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), fullChartStems, fullChartBranches, gender, baZi.getYearNaYin(), baZi.getDayNaYin());
                                                                             return (
                                                                                 <td key={i} className="p-2 border border-white/10 text-xs align-top">
                                                                                     <div className="flex flex-col gap-1 items-center">
@@ -746,16 +793,69 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                     );
                                                                 })}
                                                             </div>
-                                                            <div className="mt-6 text-center text-xs md:text-sm text-gray-500 border-t border-white/5 pt-4">
-                                                                <div className="inline-block bg-yellow-900/20 px-4 py-2 rounded text-yellow-500/80">
-                                                                    由於五行僅計算四柱八字數量，未加權計算藏干與月令，僅供基礎參考。
-                                                                </div>
-                                                            </div>
                                                         </div>
 
+                                                        {/* Bone Weight (Cheng Gu) Section */}
+                                                        {(() => {
+                                                            const cg = getChengGuWeight(
+                                                                baZi.getYearGan() + baZi.getYearZhi(), 
+                                                                lunar.getMonth(), // Lunar Month (1-12)
+                                                                lunar.getDay(),   // Lunar Day (1-30)
+                                                                baZi.getTimeZhi() // Time Branch
+                                                            );
+                                                            return (
+                                                                <div className="bg-zinc-800 border border-white/10 rounded-lg p-6 animate-fade-in-up">
+                                                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-white/5 gap-4">
+                                                                        <div>
+                                                                            <h4 className="text-xl font-bold text-mystic-gold flex items-center gap-2">
+                                                                                <span>⚖️</span> 稱骨算命 (袁天罡)
+                                                                            </h4>
+                                                                            <div className="text-sm text-gray-500 mt-1">
+                                                                                骨重不代表命好命壞，而是代表命運的格局與特質。
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-4xl font-serif font-bold text-white bg-black/40 px-6 py-2 rounded-lg border border-mystic-gold/20">
+                                                                            {cg.totalWeight} <span className="text-lg text-gray-500 font-normal">兩</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                                                        <div className="bg-black/20 p-3 rounded text-center border border-white/5">
+                                                                            <div className="text-xs text-gray-500 mb-1">年骨重</div>
+                                                                            <div className="font-bold text-gray-300">{cg.yearWeight.toFixed(1)} 兩</div>
+                                                                        </div>
+                                                                        <div className="bg-black/20 p-3 rounded text-center border border-white/5">
+                                                                            <div className="text-xs text-gray-500 mb-1">月骨重</div>
+                                                                            <div className="font-bold text-gray-300">{cg.monthWeight.toFixed(1)} 兩</div>
+                                                                        </div>
+                                                                        <div className="bg-black/20 p-3 rounded text-center border border-white/5">
+                                                                            <div className="text-xs text-gray-500 mb-1">日骨重</div>
+                                                                            <div className="font-bold text-gray-300">{cg.dayWeight.toFixed(1)} 兩</div>
+                                                                        </div>
+                                                                        <div className="bg-black/20 p-3 rounded text-center border border-white/5">
+                                                                            <div className="text-xs text-gray-500 mb-1">時骨重</div>
+                                                                            <div className="font-bold text-gray-300">{cg.timeWeight.toFixed(1)} 兩</div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="bg-mystic-gold/5 border border-mystic-gold/20 rounded-lg p-5 relative overflow-hidden">
+                                                                        <div className="absolute top-0 right-0 p-4 opacity-5 text-mystic-gold">
+                                                                            <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+                                                                        </div>
+                                                                        <h5 className="font-bold text-mystic-gold mb-3 text-lg">命書批註</h5>
+                                                                        <p className="text-gray-200 leading-loose text-lg font-serif">
+                                                                            {cg.poem}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })()}
+
                                                         {/* Disclaimer */}
-                                                        <div className="text-xs text-gray-600 text-center">
-                                                            註：八字排盤僅供參考，詳細流年運勢建議親臨本宮諮詢專業老師。
+                                                        <div className="mt-6 text-center text-xs md:text-sm text-gray-500 border-t border-white/5 pt-4">
+                                                            <div className="inline-block bg-yellow-900/20 px-4 py-2 rounded text-yellow-500/80">
+                                                                由於五行僅計算四柱八字數量，未加權計算藏干與月令，僅供基礎參考。此外，稱骨算命結果與八字格局無絕對關聯。
+                                                            </div>
                                                         </div>
                                                     </div>
                                             );

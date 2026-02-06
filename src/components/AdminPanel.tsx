@@ -204,12 +204,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         let csvContent = '';
 
         if (activeTab === 'REGISTRATIONS') {
-            const headers = ["報名編號", "日期", "活動/服務名稱", "信眾姓名", "電話", "農曆年", "農曆月", "農曆日", "農曆時", "地址", "金額", "狀態", "備註"];
+            const headers = ["報名編號", "日期", "活動/服務名稱", "信眾姓名", "性別", "電話", "農曆年", "農曆月", "農曆日", "農曆時", "地址", "金額", "狀態", "備註"];
             const rows = dataToExport.map(reg => [
                 `'${reg.id.substring(reg.id.length - 6)}`,
                 new Date(reg.createdAt).toLocaleDateString(),
                 reg.serviceTitle,
                 reg.name,
+                reg.gender === 'F' ? '女' : '男',
                 reg.phone,
                 reg.birthYear || '',
                 reg.birthMonth || '',
@@ -1282,7 +1283,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 {activeTab === 'GALLERY' && <GalleryManager />}
 
                 {/* --- OTHER TABS CONTENT --- */}
-                {activeTab !== 'GENERAL' && activeTab !== 'GALLERY' && (
+                {activeTab !== 'GENERAL' && activeTab !== 'GALLERY' && activeTab !== 'DASHBOARD' && (
                     <>
 
 
@@ -1309,7 +1310,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="md:col-span-2 bg-black/40 p-4 border border-white/10 rounded">
                                                 <h5 className="text-xs text-mystic-gold uppercase tracking-widest font-bold mb-3 border-b border-white/10 pb-2">表單欄位設定</h5>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                    {[{ key: 'showBirth', label: '農曆生辰' }, { key: 'showTime', label: '出生時辰' }, { key: 'showAddress', label: '通訊地址' }, { key: 'showIdNumber', label: '身分證字號' }].map(field => {
+                                                    {[{ key: 'showBirth', label: '農曆生辰' }, { key: 'showTime', label: '出生時辰' }, { key: 'showAddress', label: '通訊地址' }, { key: 'showIdNumber', label: '身分證字號' }, { key: 'showGender', label: '顯示性別' }].map(field => {
                                                         const config = editForm.fieldConfig || {};
                                                         return (
                                                             <div key={field.key} className="flex flex-col gap-2">
@@ -1336,7 +1337,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="md:col-span-2 bg-black/40 p-4 border border-white/10 rounded">
                                                 <h5 className="text-xs text-mystic-gold uppercase tracking-widest font-bold mb-3 border-b border-white/10 pb-2">表單欄位設定</h5>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                    {[{ key: 'showBirth', label: '農曆生辰' }, { key: 'showTime', label: '出生時辰' }, { key: 'showAddress', label: '通訊地址' }, { key: 'showIdNumber', label: '身分證字號' }].map(field => {
+                                                    {[{ key: 'showBirth', label: '農曆生辰' }, { key: 'showTime', label: '出生時辰' }, { key: 'showAddress', label: '通訊地址' }, { key: 'showIdNumber', label: '身分證字號' }, { key: 'showGender', label: '顯示性別' }].map(field => {
                                                         const config = editForm.fieldConfig || {};
                                                         return (
                                                             <div key={field.key} className="flex flex-col gap-2">
@@ -1669,6 +1670,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     />
                                                 </th>
                                                 <th className="p-4 whitespace-nowrap">信眾項目</th>
+                                                <th className="p-4 whitespace-nowrap">性別</th>
                                                 <th className="p-4 whitespace-nowrap">金額</th>
                                                 <th className="p-4 whitespace-nowrap">匯款末五碼</th>
                                                 <th className="p-4 whitespace-nowrap">處理狀態</th>
@@ -1687,6 +1689,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         />
                                                     </td>
                                                     <td className="p-4"><div className="font-bold text-white">{reg.name}</div><div className="text-xs text-gray-400">{reg.phone}</div><div className="text-xs text-mystic-gold">{reg.serviceTitle}</div></td>
+                                                    <td className="p-4">
+                                                        {reg.gender === 'F' ? <span className="text-pink-400 font-bold">女</span> : <span className="text-blue-400 font-bold">男</span>}
+                                                    </td>
                                                     <td className="p-4 text-mystic-gold font-bold">NT$ {reg.amount}</td>
                                                     <td className="p-4 text-gray-300 font-mono">{reg.bankLastFive || '-'}</td>
                                                     <td className="p-4"><button onClick={() => handleToggleStatus(reg)} className={`flex items-center gap-2 px-3 py-1 rounded-full border ${reg.isProcessed ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>{reg.isProcessed ? '已圓滿' : '未辦理'}</button></td>
@@ -1728,6 +1733,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         <thead className="bg-white/5 text-gray-400 uppercase tracking-widest text-[10px]">
                                             <tr>
                                                 <th className="p-4 whitespace-nowrap">會員資訊</th>
+                                                <th className="p-4 whitespace-nowrap">性別</th>
                                                 <th className="p-4 whitespace-nowrap">聯絡方式</th>
                                                 <th className="p-4 whitespace-nowrap">加入時間</th>
                                                 <th className="p-4 whitespace-nowrap">已擁有藏書</th>
@@ -1736,13 +1742,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
                                             {isLoadingProfiles ? (
-                                                <tr><td colSpan={5} className="p-8 text-center text-gray-500"><Loader2 className="animate-spin inline mr-2" /> 載入會員資料中...</td></tr>
+                                                <tr><td colSpan={6} className="p-8 text-center text-gray-500"><Loader2 className="animate-spin inline mr-2" /> 載入會員資料中...</td></tr>
                                             ) : adminProfiles.map((profile: any) => {
                                                 return (
                                                     <tr key={profile.id} className="hover:bg-white/5 transition-colors">
                                                         <td className="p-4">
                                                             <div className="font-bold text-white">{profile.fullName || '未設定姓名'}</div>
                                                             <div className="text-xs text-gray-500 font-mono">{profile.email}</div>
+                                                        </td>
+                                                        <td className="p-4">
+                                                             {profile.gender === 'F' ? <span className="text-pink-400 font-bold">女</span> : <span className="text-blue-400 font-bold">男</span>}
                                                         </td>
                                                         <td className="p-4 text-gray-400">
                                                             <div>{profile.phone || '-'}</div>
@@ -1942,7 +1951,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         )}
 
                         {/* Shared Search & Actions for Non-Registration Tabs */}
-                        {activeTab !== 'REGISTRATIONS' && (
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'MEMBERS' && (
                             <div className="flex flex-col gap-4 mb-4 bg-white/5 p-4 rounded border border-white/10">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
@@ -2013,7 +2022,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         )}
 
                         {/* Shared Table for Non-Registration Tabs */}
-                        {activeTab !== 'REGISTRATIONS' && (
+                        {activeTab !== 'REGISTRATIONS' && activeTab !== 'MEMBERS' && (
                             <div className="bg-mystic-charcoal rounded overflow-hidden border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
                                 <div className="flex-1 overflow-x-auto">
                                     <table className="w-full text-left text-sm min-w-[650px]">

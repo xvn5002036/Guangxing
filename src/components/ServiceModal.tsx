@@ -29,6 +29,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
   const [formData, setFormData] = useState({
     id: '',
     name: '',
+    gender: 'M',
     phone: '',
     birthYear: '民國70',
     birthMonth: '1',
@@ -60,7 +61,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     }
 
     // Default (Events/Rituals)
-    return { showBirth: true, showTime: false, showAddress: true, showIdNumber: true };
+    return { showBirth: true, showTime: false, showAddress: true, showIdNumber: true, showGender: true };
   }, [service]);
 
   // Dynamic lists based on selections
@@ -95,6 +96,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       setFormData(prev => ({
         ...prev,
         name: userProfile.fullName || prev.name,
+        gender: userProfile.gender || prev.gender, // Auto-fill gender
         phone: userProfile.phone || prev.phone,
         birthYear: normalizedYear,
         birthMonth: normalizedMonth,
@@ -144,6 +146,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     try {
       const payload = {
         name: formData.name,
+        gender: formData.gender,
         phone: formData.phone,
         birthYear: formData.birthYear,
         birthMonth: formData.birthMonth,
@@ -237,6 +240,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     setFormData({
       id: reg.id,
       name: reg.name,
+      gender: reg.gender || 'M',
       phone: reg.phone,
       birthYear: reg.birthYear,
       birthMonth: reg.birthMonth,
@@ -247,6 +251,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       road: reg.road,
       isManualRoad: true,
       addressDetail: reg.addressDetail,
+      idNumber: reg.idNumber || '',
       amount: reg.amount
     });
     setMode('REGISTER');
@@ -270,6 +275,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
     setFormData({
       id: '',
       name: '',
+      gender: 'M',
       phone: '',
       birthYear: '民國70',
       birthMonth: '1',
@@ -280,6 +286,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
       road: '',
       isManualRoad: false,
       addressDetail: '',
+      idNumber: '',
       amount: service?.price || 600
     });
     onClose();
@@ -347,6 +354,42 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
                         value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="09XX-XXXXXX" />
                     </div>
                   </div>
+                  
+                  {/* Gender Selection */}
+                  {currentConfig.showGender && (
+                    <div className="grid grid-cols-2 gap-4">
+                       <div>
+                          <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <User size={14} className="text-mystic-gold" /> 性別
+                          </label>
+                          <div className="flex gap-4 items-center h-[46px]">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name="form_gender" 
+                                value="M" 
+                                checked={formData.gender === 'M'} 
+                                onChange={e => setFormData({...formData, gender: e.target.value})}
+                                className="accent-mystic-gold w-4 h-4"
+                              />
+                              <span className="text-white">男 (乾造)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name="form_gender" 
+                                value="F" 
+                                checked={formData.gender === 'F' || formData.gender === 'female'} 
+                                onChange={e => setFormData({...formData, gender: e.target.value})}
+                                className="accent-mystic-gold w-4 h-4"
+                              />
+                              <span className="text-white">女 (坤造)</span>
+                            </label>
+                          </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* ID Number */}
                   {currentConfig.showIdNumber && (
                     <div>

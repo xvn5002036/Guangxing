@@ -175,12 +175,15 @@ CREATE TABLE public.profiles (
   city text,
   district text,
   address text,
+  gender text DEFAULT 'M'::text,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
   role text DEFAULT 'user'::text CHECK (role = ANY (ARRAY['admin'::text, 'user'::text])),
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
+
+COMMENT ON COLUMN public.profiles.gender IS 'Gender of the user (M=Male/乾造, F=Female/坤造)';
 
 CREATE TABLE public.purchases (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -208,6 +211,7 @@ CREATE TABLE public.registrations (
   district text,
   road text,
   address_detail text,
+  gender text,
   amount numeric NOT NULL,
   status text DEFAULT 'PENDING'::text CHECK (status = ANY (ARRAY['PAID'::text, 'PENDING'::text, 'CANCELLED'::text])),
   is_processed boolean DEFAULT false,
@@ -221,6 +225,8 @@ CREATE TABLE public.registrations (
   CONSTRAINT registrations_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
   CONSTRAINT registrations_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
+
+COMMENT ON COLUMN public.registrations.gender IS 'Gender of the registrant (M/F)';
 
 CREATE TABLE public.services (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
