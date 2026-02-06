@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { User, Package, Calendar, MapPin, LogOut, ChevronRight, Printer, BookOpen, Sparkles, ExternalLink } from 'lucide-react';
 import AuthModal from './AuthModal';
+import ServiceModal from './ServiceModal';
 import { MemberLibrary } from './MemberLibrary';
+import { ServiceItem } from '../types';
 
 interface MemberCenterProps {
     onBack: () => void;
@@ -12,6 +14,8 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
     const { user, userProfile, signOut, registrations, siteSettings, addRegistration } = useData();
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS' | 'SCRIPTURES' | 'FORTUNE'>('PROFILE');
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+    const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
     // --- Zodiac & Tai Sui Logic ---
     const getZodiac = (year: number) => {
@@ -20,15 +24,30 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
     };
 
     const getTaiSuiStatus = (birthYear: number, targetYear: number) => {
-        const zodiacIndex = birthYear % 12;
-        const targetIndex = targetYear % 12;
-        const diff = (targetIndex - zodiacIndex + 12) % 12;
-
-        if (diff === 0) return { status: '值太歲', description: '本命年，運勢起伏較大，宜靜不宜動。', severity: 'high' };
-        if (diff === 6) return { status: '沖太歲', description: '沖者動也，易有變動、奔波勞碌。', severity: 'high' };
-        if (diff === 3) return { status: '刑太歲', description: '刑者傷也，易有是非口舌、官非。', severity: 'medium' };
-        if (diff === 9) return { status: '害太歲', description: '害者陷害，易犯小人、被陷害。', severity: 'medium' };
-        if (diff === 2 || diff === 11) return { status: '破太歲', description: '破者破耗，易有錢財破損。', severity: 'low' }; // 破 sometimes varies by sect, keeping simple
+        const zodiacIndex = birthYear % 12; // 0=Monkey, ... 4=Rat, 5=Ox, 7=Rabbit, 10=Horse, 1=Rooster
+        const targetIndex = targetYear % 12; // 2026 % 12 = 10 (Horse)
+        
+        // Specific Logic for 2026 (Horse Year)
+        if (targetIndex === 10) {
+            // Horse (10) - Value + Punishment
+            if (zodiacIndex === 10) return { status: '值太歲 / 刑太歲', description: '本命年且自刑，運勢起伏大，宜靜不宜動，注意情緒與健康。', severity: 'high' };
+            // Rat (4) - Clash
+            if (zodiacIndex === 4) return { status: '沖太歲', description: '沖者動也，正沖流年，易有變動、奔波勞碌，慎防大耗。', severity: 'high' };
+            // Ox (5) - Harm
+            if (zodiacIndex === 5) return { status: '害太歲', description: '害者陷害，易犯小人、被陷害或有溝通誤解。', severity: 'medium' };
+            // Rabbit (7) - Destruction (Po)
+            if (zodiacIndex === 7) return { status: '破太歲', description: '馬兔相破，易有突如其來的破壞、人際失和或小病痛。', severity: 'low' };
+            // Rooster (1) - Destruction (Po) - According to HelloYishi source
+            if (zodiacIndex === 1) return { status: '破太歲', description: '運勢小破，需注意與人合作細節，避免財物損失。', severity: 'low' };
+        } else {
+             // Fallback for other years (Generic logic)
+            const diff = (targetIndex - zodiacIndex + 12) % 12;
+            if (diff === 0) return { status: '值太歲', description: '本命年，運勢起伏較大，宜靜不宜動。', severity: 'high' };
+            if (diff === 6) return { status: '沖太歲', description: '沖者動也，易有變動、奔波勞碌。', severity: 'high' };
+            if (diff === 3) return { status: '刑太歲', description: '刑者傷也，易有是非口舌、官非。', severity: 'medium' };
+            if (diff === 9) return { status: '害太歲', description: '害者陷害，易犯小人、被陷害。', severity: 'medium' };
+            if (diff === 2 || diff === 11) return { status: '破太歲', description: '破者破耗，易有錢財破損。', severity: 'low' };
+        }
         return null;
     };
     
@@ -365,42 +384,24 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                 setIsEditProfileOpen(true);
                                                                 return;
                                                             }
-
-                                                            const confirm = window.confirm(`確定要為【${userProfile.fullName}】報名安太歲嗎？\n費用：$600`);
-                                                            if (confirm) {
-                                                                // Extract/Default birth info
-                                                                const birthYear = userProfile.birthYear || '';
-                                                                const birthMonth = userProfile.birthMonth || '';
-                                                                const birthDay = userProfile.birthDay || '';
-                                                                const birthHour = userProfile.birthHour || '';
-                                                                
-                                                                // Add Registration
-                                                                addRegistration({
-                                                                    serviceTitle: '線上安太歲',
-                                                                    name: userProfile.fullName,
-                                                                    phone: userProfile.phone,
-                                                                    amount: 600,
-                                                                    status: 'PENDING',
-                                                                    isProcessed: false,
-                                                                    paymentMethod: 'CASH', // default or TBD
-                                                                    // Add birth info for the ritual
-                                                                    birthYear: birthYear,
-                                                                    birthMonth: birthMonth,
-                                                                    birthDay: birthDay,
-                                                                    birthHour: birthHour,
-                                                                    city: userProfile.city || '',
-                                                                    district: userProfile.district || '',
-                                                                    addressDetail: userProfile.address || '',
-                                                                    userId: user.id
-                                                                } as any); // Type cast if strict type check fails on optional fields or ID
-
-                                                                alert('報名申請已送出！請至「祈福紀錄」查看或進行付款。');
-                                                                setActiveTab('ORDERS');
-                                                            }
+                                                            
+                                                            // Setup Service Item for Tai Sui
+                                                            const taiSuiService: ServiceItem = {
+                                                                id: 'taisui_2026_member',
+                                                                title: '線上安太歲',
+                                                                price: 600,
+                                                                type: 'RITUAL', 
+                                                                description: '祈求流年平安，消災解厄',
+                                                                iconName: 'Sparkles',
+                                                                // Config matching LIGHT/RITUAL needs
+                                                                fieldConfig: { showBirth: true, showTime: true, showAddress: true, showIdNumber: false }
+                                                            };
+                                                            setSelectedService(taiSuiService);
+                                                            setIsServiceModalOpen(true);
                                                         }}
                                                         className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm font-bold shadow-lg shadow-red-900/20 transition-all active:scale-95 whitespace-nowrap"
                                                     >
-                                                        一鍵報名 ($600)
+                                                        立即報名 ($600)
                                                     </button>
                                                 </div>
                                             )}
@@ -452,6 +453,14 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
 
             {/* Re-use AuthModal for editing profile */}
             <AuthModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
+            
+            {/* Service Registration Modal */}
+             <ServiceModal 
+                isOpen={isServiceModalOpen} 
+                onClose={() => setIsServiceModalOpen(false)} 
+                service={selectedService}
+                initialEventTitle="線上安太歲"
+            />
         </div>
     );
 };

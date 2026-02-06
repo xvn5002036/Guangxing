@@ -212,24 +212,37 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         const fetchData = async () => {
-            const { data, error } = await supabase
-                .from(tableName)
-                .select('*')
-                .order(orderByCol, { ascending });
+            try {
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('*')
+                    .order(orderByCol, { ascending });
 
-            if (!error && data) {
-                // Auto-map snake_case to camelCase keys
-                const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
-                const mapKeys = (o: any) => {
-                    const newO: any = {};
-                    for (const key in o) {
-                        newO[toCamel(key)] = o[key];
-                    }
-                    return newO;
-                };
+                if (error) {
+                    console.error(`Error fetching ${tableName}:`, error);
+                    return;
+                }
 
-                const mappedData = data.map(mapKeys);
-                setter(mappedData as any);
+                if (data) {
+                    // Auto-map snake_case to camelCase keys
+                    const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
+                    const mapKeys = (o: any) => {
+                        const newO: any = {};
+                        for (const key in o) {
+                            newO[toCamel(key)] = o[key];
+                        }
+                        return newO;
+                    };
+
+                    const mappedData = data.map(mapKeys);
+                    setter(mappedData as any);
+                }
+            } catch (err: any) {
+                // Ignore AbortError which just means the component unmounted or network was cancelled
+                if (err.name === 'AbortError' || err.message?.includes('Fail to fetch') || err.status === 406) {
+                    return;
+                }
+                console.error(`Unexpected error in ${tableName} sync:`, err);
             }
         };
 
@@ -254,45 +267,52 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Settings is a single row table usually, or we query key-value. 
         // Schema says 'site_settings' table usually with one row.
         const fetchSettings = async () => {
-            const { data, error } = await supabase.from('site_settings').select('*').maybeSingle();
-            if (!error && data) {
-                // Need to map snake_case to camelCase manually here because Settings has many fields
-                const mappedSettings: SiteSettings = {
-                    templeName: data.temple_name || DEFAULT_SETTINGS.templeName,
-                    address: data.address || DEFAULT_SETTINGS.address,
-                    phone: data.phone || DEFAULT_SETTINGS.phone,
-                    lineUrl: data.line_url || DEFAULT_SETTINGS.lineUrl,
-                    heroTitle: data.hero_title || DEFAULT_SETTINGS.heroTitle,
-                    heroSubtitle: data.hero_subtitle || DEFAULT_SETTINGS.heroSubtitle,
-                    heroImage: data.hero_image || DEFAULT_SETTINGS.heroImage,
-                    deityImage: data.deity_image || DEFAULT_SETTINGS.deityImage,
-                    deityTitle: data.deity_title || DEFAULT_SETTINGS.deityTitle,
-                    deityIntro: data.deity_intro || DEFAULT_SETTINGS.deityIntro,
-                    deityBirthday: data.deity_birthday || DEFAULT_SETTINGS.deityBirthday,
-                    deityBirthdayLabel: data.deity_birthday_label || DEFAULT_SETTINGS.deityBirthdayLabel,
-                    deityDuty: data.deity_duty || DEFAULT_SETTINGS.deityDuty,
-                    deityDutyLabel: data.deity_duty_label || DEFAULT_SETTINGS.deityDutyLabel,
-                    historyImageRoof: data.history_image_roof || DEFAULT_SETTINGS.historyImageRoof,
-                    historyRoofTitle: data.history_roof_title || DEFAULT_SETTINGS.historyRoofTitle,
-                    historyRoofDesc: data.history_roof_desc || DEFAULT_SETTINGS.historyRoofDesc,
-                    historyImageStone: data.history_image_stone || DEFAULT_SETTINGS.historyImageStone,
-                    historyStoneTitle: data.history_stone_title || DEFAULT_SETTINGS.historyStoneTitle,
-                    historyStoneDesc: data.history_stone_desc || DEFAULT_SETTINGS.historyStoneDesc,
-                    historyTitle1: data.history_title1 || DEFAULT_SETTINGS.historyTitle1,
-                    historyDesc1: data.history_desc1 || DEFAULT_SETTINGS.historyDesc1,
-                    historyTitle2: data.history_title2 || DEFAULT_SETTINGS.historyTitle2,
-                    historyDesc2: data.history_desc2 || DEFAULT_SETTINGS.historyDesc2,
-                    historyTitle3: data.history_title3 || DEFAULT_SETTINGS.historyTitle3,
-                    historyDesc3: data.history_desc3 || DEFAULT_SETTINGS.historyDesc3,
+            try {
+                const { data, error } = await supabase.from('site_settings').select('*').maybeSingle();
+                if (error) {
+                     console.error("Error fetching settings:", error);
+                     return;
+                }
+                
+                if (data) {
+                    // Need to map snake_case to camelCase manually here because Settings has many fields
+                    const mappedSettings: SiteSettings = {
+                        templeName: data.temple_name || DEFAULT_SETTINGS.templeName,
+                        address: data.address || DEFAULT_SETTINGS.address,
+                        phone: data.phone || DEFAULT_SETTINGS.phone,
+                        lineUrl: data.line_url || DEFAULT_SETTINGS.lineUrl,
+                        heroTitle: data.hero_title || DEFAULT_SETTINGS.heroTitle,
+                        heroSubtitle: data.hero_subtitle || DEFAULT_SETTINGS.heroSubtitle,
+                        heroImage: data.hero_image || DEFAULT_SETTINGS.heroImage,
+                        deityImage: data.deity_image || DEFAULT_SETTINGS.deityImage,
+                        deityTitle: data.deity_title || DEFAULT_SETTINGS.deityTitle,
+                        deityIntro: data.deity_intro || DEFAULT_SETTINGS.deityIntro,
+                        deityBirthday: data.deity_birthday || DEFAULT_SETTINGS.deityBirthday,
+                        deityBirthdayLabel: data.deity_birthday_label || DEFAULT_SETTINGS.deityBirthdayLabel,
+                        deityDuty: data.deity_duty || DEFAULT_SETTINGS.deityDuty,
+                        deityDutyLabel: data.deity_duty_label || DEFAULT_SETTINGS.deityDutyLabel,
+                        historyImageRoof: data.history_image_roof || DEFAULT_SETTINGS.historyImageRoof,
+                        historyRoofTitle: data.history_roof_title || DEFAULT_SETTINGS.historyRoofTitle,
+                        historyRoofDesc: data.history_roof_desc || DEFAULT_SETTINGS.historyRoofDesc,
+                        historyImageStone: data.history_image_stone || DEFAULT_SETTINGS.historyImageStone,
+                        historyStoneTitle: data.history_stone_title || DEFAULT_SETTINGS.historyStoneTitle,
+                        historyStoneDesc: data.history_stone_desc || DEFAULT_SETTINGS.historyStoneDesc,
+                        historyTitle1: data.history_title1 || DEFAULT_SETTINGS.historyTitle1,
+                        historyDesc1: data.history_desc1 || DEFAULT_SETTINGS.historyDesc1,
+                        historyTitle2: data.history_title2 || DEFAULT_SETTINGS.historyTitle2,
+                        historyDesc2: data.history_desc2 || DEFAULT_SETTINGS.historyDesc2,
+                        historyTitle3: data.history_title3 || DEFAULT_SETTINGS.historyTitle3,
+                        historyDesc3: data.history_desc3 || DEFAULT_SETTINGS.historyDesc3,
 
-                    // New Form Configs (Assuming JSONB or similar structure in DB, or we just rely on defaults for now if DB not updated)
-                    configDonation: data.config_donation || DEFAULT_SETTINGS.configDonation,
-                    configLight: data.config_light || DEFAULT_SETTINGS.configLight,
-                    configEvent: data.config_event || DEFAULT_SETTINGS.configEvent,
-                };
-                setSiteSettings(mappedSettings);
-            } else {
-                // If empty, maybe insert defaults? for now just use defaults in state
+                        // New Form Configs (Assuming JSONB or similar structure in DB, or we just rely on defaults for now if DB not updated)
+                        configDonation: data.config_donation || DEFAULT_SETTINGS.configDonation,
+                        configLight: data.config_light || DEFAULT_SETTINGS.configLight,
+                        configEvent: data.config_event || DEFAULT_SETTINGS.configEvent,
+                    };
+                    setSiteSettings(mappedSettings);
+                }
+            } catch (e) {
+                console.error("Critical error fetching settings:", e);
             }
         };
 
@@ -316,8 +336,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('gallery_albums', setGalleryAlbums, 'created_at', false), []);
     useEffect(() => syncTable('digital_products', setScriptures, 'created_at', false), []);
     useEffect(() => syncTable('notifications', setNotifications, 'created_at', false), []);
-    useEffect(() => syncTable('profiles', setProfiles, 'created_at', false), []);
-    useEffect(() => syncTable('purchases', setPurchases, 'created_at', false), []);
+    // useEffect(() => syncTable('profiles', setProfiles, 'created_at', false), []);
+    // useEffect(() => syncTable('purchases', setPurchases, 'created_at', false), []);
 
     // Notification Actions
     const markNotificationAsRead = async (id: string) => {
@@ -1088,10 +1108,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Listen for changes
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log(`Supabase Auth Event: ${event}`);
             setUser(session?.user ?? null);
+            
+            // Optimization: Only fetch profile on sign-in or initial session to avoid 429 loops
             if (session?.user) {
-                fetchUserProfile(session.user.id);
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    fetchUserProfile(session.user.id);
+                }
             } else {
                 setUserProfile(null);
             }
@@ -1106,11 +1131,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
         if (error) {
             console.error('Error fetching profile:', error);
-            // Handling case where auth user exists but profile row doesn't (if trigger failed or manual fix needed)
+        } else if (!data) {
+            // User exists in Auth but has no profile row yet (e.g. strict RLS or trigger delay)
+            console.log('User has no profile data yet.');
+            setUserProfile(null);
+
         } else if (data) {
             // Map snake_case to camelCase
             const profile: any = {
