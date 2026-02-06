@@ -14,16 +14,17 @@
     "@google/genai": "^1.35.0",
     "@supabase/supabase-js": "^2.93.1",
     "@tailwindcss/typography": "^0.5.19",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
+    "lunar-javascript": "^1.7.7",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-markdown": "^10.1.0",
-    "rehype-raw": "^7.0.0",
-    "express": "^4.19.2",
-    "body-parser": "^1.20.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5"
+    "rehype-raw": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

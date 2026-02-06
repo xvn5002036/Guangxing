@@ -219,6 +219,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     .order(orderByCol, { ascending });
 
                 if (error) {
+                    // Ignore AbortError and known network interruptions
+                    if (error.message?.includes('AbortError') || error.details?.includes('AbortError') || error.code === '20') {
+                        return;
+                    }
                     console.error(`Error fetching ${tableName}:`, error);
                     return;
                 }
@@ -270,6 +274,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
                 const { data, error } = await supabase.from('site_settings').select('*').maybeSingle();
                 if (error) {
+                     // Ignore AbortError
+                     if (error.message?.includes('AbortError') || error.details?.includes('AbortError') || error.code === '20') {
+                        return;
+                     }
                      console.error("Error fetching settings:", error);
                      return;
                 }
@@ -311,7 +319,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     };
                     setSiteSettings(mappedSettings);
                 }
-            } catch (e) {
+            } catch (e: any) {
+                if (e.name === 'AbortError' || e.message?.includes('AbortError')) return;
                 console.error("Critical error fetching settings:", e);
             }
         };
@@ -1109,8 +1118,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log(`Supabase Auth Event: ${event}`);
-            setUser(session?.user ?? null);
+
+            // Optimization: Avoid re-rendering if user ID hasn't changed (prevents loops on TOKEN_REFRESHED)
+            setUser(prevUser => {
+                if (session?.user?.id === prevUser?.id) return prevUser; 
+                console.log(`Auth State Changed: ${event} -> updating user state`);
+                return session?.user ?? null;
+            });
             
             // Optimization: Only fetch profile on sign-in or initial session to avoid 429 loops
             if (session?.user) {
@@ -1134,6 +1148,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .maybeSingle();
 
         if (error) {
+            if (error.message?.includes('AbortError') || error.details?.includes('AbortError') || error.code === '20') {
+                return;
+            }
             console.error('Error fetching profile:', error);
         } else if (!data) {
             // User exists in Auth but has no profile row yet (e.g. strict RLS or trigger delay)

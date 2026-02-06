@@ -93,6 +93,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Local Profiles State (Fetched on demand to avoid global sync overhead)
+    const [adminProfiles, setAdminProfiles] = useState<any[]>([]);
+    const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+
+    // Local Purchases State (For Admin Modal)
+    const [adminPurchases, setAdminPurchases] = useState<any[]>([]);
+    const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
+
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     
@@ -487,6 +495,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     useEffect(() => {
         if (activeTab === 'ORDERS') {
             fetchScriptureOrders();
+        } else if (activeTab === 'MEMBERS') {
+            const fetchProfiles = async () => {
+                setIsLoadingProfiles(true);
+                // 1. Fetch Profiles
+                const { data: profilesData, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (profilesError) {
+                    console.error('Error fetching profiles:', profilesError);
+                    setAdminProfiles([]); // Ensure empty state on error
+                } else {
+                    // 2. Fetch Purchase Counts (separately to avoid Join issues)
+                    const { data: purchasesData, error: purchasesError } = await supabase
+                        .from('purchases')
+                        .select('user_id'); // Lightweight fetch
+                    
+                    const purchaseCounts: Record<string, number> = {};
+                    if (!purchasesError && purchasesData) {
+                         purchasesData.forEach((p: any) => {
+                            const uid = p.user_id || p.userId;
+                            if (uid) purchaseCounts[uid] = (purchaseCounts[uid] || 0) + 1;
+                         });
+                    }
+
+                    // Map snake_case to camelCase and add count
+                    const mappedData = (profilesData || []).map((p: any) => ({
+                        ...p,
+                        fullName: p.full_name,
+                        birthYear: p.birth_year,
+                        birthMonth: p.birth_month,
+                        birthDay: p.birth_day,
+                        birthHour: p.birth_hour,
+                        createdAt: p.created_at,
+                        purchaseCount: purchaseCounts[p.id] || 0
+                    }));
+                    setAdminProfiles(mappedData);
+                }
+                setIsLoadingProfiles(false);
+            };
+            fetchProfiles();
         }
     }, [activeTab]);
 
@@ -524,14 +574,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 .from('profiles')
                 .select('role')
                 .eq('id', data.user.id)
-                .single();
+                .maybeSingle();
 
-            if (profileError || profileData?.role !== 'admin') {
+            if (profileError || !profileData || profileData.role !== 'admin') {
                 console.warn("Login denied: Profile check failed", { profileError, role: profileData?.role });
 
                 let detail = '';
                 if (profileError) detail = `資料庫錯誤: ${profileError.message} (${profileError.code})`;
-                else if (!profileData) detail = '找不到會員資料 (ID 不匹配?)';
+                else if (!profileData) detail = '找不到會員資料或非管理員帳號';
                 else detail = `角色權限: ${profileData.role || '無'} (需要: admin)`;
 
                 await supabase.auth.signOut();
@@ -1685,8 +1735,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
-                                            {profiles.map((profile: any) => {
-                                                const userPurchases = purchases.filter((p: any) => p.userId === profile.id || p.user_id === profile.id);
+                                            {isLoadingProfiles ? (
+                                                <tr><td colSpan={5} className="p-8 text-center text-gray-500"><Loader2 className="animate-spin inline mr-2" /> 載入會員資料中...</td></tr>
+                                            ) : adminProfiles.map((profile: any) => {
                                                 return (
                                                     <tr key={profile.id} className="hover:bg-white/5 transition-colors">
                                                         <td className="p-4">
@@ -1702,15 +1753,40 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         </td>
                                                         <td className="p-4">
                                                             <span className="bg-mystic-gold/10 text-mystic-gold px-2 py-1 rounded text-xs border border-mystic-gold/20 font-bold">
-                                                                {userPurchases.length} 本
+                                                                {profile.purchaseCount || 0} 本
                                                             </span>
                                                         </td>
                                                         <td className="p-4 text-right">
                                                             <button 
-                                                                onClick={() => {
+                                                                onClick={async () => {
                                                                     setEditingId(profile.id);
                                                                     setEditForm({ ...profile });
                                                                     setIsAdding(true); // Reuse isAdding to show modal
+                                                                    
+                                                                    // Fetch purchases for this user locally
+                                                                    setIsLoadingPurchases(true);
+                                                                    const { data, error } = await supabase
+                                                                        .from('purchases')
+                                                                        .select('*, digital_products(title, price)')
+                                                                        .eq('user_id', profile.id);
+                                                                    
+                                                                    if (error) {
+                                                                        console.error("Error fetching user purchases:", error);
+                                                                        setAdminPurchases([]);
+                                                                    } else {
+                                                                        // Map snake_case to camelCase
+                                                                         const mappedData = (data || []).map((p: any) => ({
+                                                                            id: p.id,
+                                                                            userId: p.user_id,
+                                                                            productId: p.product_id,
+                                                                            orderId: p.order_id,
+                                                                            createdAt: p.created_at,
+                                                                            productTitle: p.digital_products?.title,
+                                                                            productPrice: p.digital_products?.price
+                                                                        }));
+                                                                        setAdminPurchases(mappedData);
+                                                                    }
+                                                                    setIsLoadingPurchases(false);
                                                                 }}
                                                                 className="bg-blue-900/40 text-blue-400 px-3 py-1.5 rounded hover:bg-blue-800/40 transition-colors text-xs flex items-center gap-1 ml-auto"
                                                             >
@@ -1720,7 +1796,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     </tr>
                                                 );
                                             })}
-                                            {profiles.length === 0 && (
+                                            {(!isLoadingProfiles && adminProfiles.length === 0) && (
                                                 <tr><td colSpan={5} className="p-8 text-center text-gray-500">目前無會員資料</td></tr>
                                             )}
                                         </tbody>
@@ -1754,19 +1830,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         <div className="mb-6">
                                             <h4 className="text-sm font-bold text-mystic-gold mb-3 uppercase tracking-widest border-b border-white/10 pb-2">已擁有的藏書權限</h4>
                                             <div className="space-y-2">
-                                                {purchases.filter((p: any) => p.userId === editForm.id || p.user_id === editForm.id).map((p: any) => {
-                                                    const product = scriptures.find(s => s.id === (p.productId || p.product_id));
+                                                {isLoadingPurchases ? (
+                                                    <div className="text-center py-4 text-gray-500"><Loader2 className="animate-spin inline mr-2" /> 載入權限資料中...</div>
+                                                ) : adminPurchases.length === 0 ? (
+                                                     <p className="text-sm text-gray-500 italic py-2">目前沒有任何權限</p>
+                                                ) : (
+                                                    adminPurchases.map((p: any) => {
+                                                    const product = scriptures.find(s => s.id === p.productId);
+                                                    const displayTitle = p.productTitle || product?.title || '未知藏書';
                                                     return (
                                                         <div key={p.id} className="flex justify-between items-center bg-black/30 p-3 rounded border border-white/5 hover:border-white/10 transition-colors">
                                                             <div className="flex items-center gap-3">
                                                                 <BookOpen size={16} className="text-gray-500" />
-                                                                <span className="text-white font-bold">{product?.title || '未知藏書'}</span>
+                                                                <span className="text-white font-bold">{displayTitle}</span>
                                                             </div>
                                                             <button 
                                                                 onClick={async () => {
-                                                                    if (window.confirm(`確定要移除「${product?.title}」的閱讀權限嗎？`)) {
+                                                                    if (window.confirm(`確定要移除「${displayTitle}」的閱讀權限嗎？`)) {
                                                                         try {
                                                                             await revokeScriptureAccess(editForm.id, p.productId || p.product_id);
+                                                                            setAdminPurchases(prev => prev.filter(item => item.id !== p.id)); // Update local state
+                                                                            
+                                                                            // Update main Member list count locally
+                                                                            setAdminProfiles(prev => prev.map(profile => 
+                                                                                profile.id === editForm.id 
+                                                                                    ? { ...profile, purchaseCount: Math.max(0, (profile.purchaseCount || 0) - 1) }
+                                                                                    : profile
+                                                                            ));
+
                                                                             alert('權限已移除');
                                                                         } catch (e: any) {
                                                                             alert('移除失敗: ' + e.message);
@@ -1779,11 +1870,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                             </button>
                                                         </div>
                                                     );
-                                                })}
-                                                {purchases.filter((p: any) => p.userId === editForm.id || p.user_id === editForm.id).length === 0 && (
-                                                    <p className="text-sm text-gray-500 italic py-2">目前沒有任何權限</p>
-                                                )}
-                                            </div>
+                                                })
+                                            )}
+                                        </div>
+
                                         </div>
 
                                         <div>
@@ -1795,7 +1885,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 >
                                                     <option value="">請選擇要授權的藏書...</option>
                                                     {scriptures
-                                                        .filter(s => !purchases.some((p: any) => (p.userId === editForm.id || p.user_id === editForm.id) && (p.productId === s.id || p.product_id === s.id)))
+                                                        .filter(s => !adminPurchases.some((p: any) => (p.productId === s.id || p.product_id === s.id)))
                                                         .map(s => (
                                                             <option key={s.id} value={s.id}>{s.title} (${s.price})</option>
                                                         ))
@@ -1809,6 +1899,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         
                                                         try {
                                                             await grantScriptureAccess(editForm.id, productId);
+                                                            
+                                                            // Find product details for immediate display
+                                                            const product = scriptures.find(s => s.id === productId);
+
+                                                            // Update local state immediately
+                                                            const newPurchase = {
+                                                                id: `temp_${Date.now()}`,
+                                                                userId: editForm.id,
+                                                                productId: productId,
+                                                                createdAt: new Date().toISOString(),
+                                                                productTitle: product?.title, // Add title for display
+                                                                productPrice: product?.price
+                                                            };
+                                                            setAdminPurchases(prev => [...prev, newPurchase]);
+                                                            
+                                                            // Update main Member list count locally
+                                                            setAdminProfiles(prev => prev.map(profile => 
+                                                                profile.id === editForm.id 
+                                                                    ? { ...profile, purchaseCount: (profile.purchaseCount || 0) + 1 }
+                                                                    : profile
+                                                            ));
+
                                                             alert('授權成功！');
                                                             select.value = '';
                                                         } catch (e: any) {
@@ -2112,8 +2224,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         {((activeTab === 'EVENTS' || activeTab === 'NEWS' || activeTab === 'SERVICES' || activeTab === 'ORG' || activeTab === 'FAQS') && paginatedItems.length === 0) && <div className="p-12 text-center text-gray-600">目前暫無資料</div>}
                     </>
                 )}
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

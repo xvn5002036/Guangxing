@@ -5,6 +5,8 @@ import AuthModal from './AuthModal';
 import ServiceModal from './ServiceModal';
 import { MemberLibrary } from './MemberLibrary';
 import { ServiceItem } from '../types';
+import { Solar, Lunar, LunarYear, EightChar } from 'lunar-javascript';
+import { getShenShaForPillar } from '../utils/shenSha';
 
 interface MemberCenterProps {
     onBack: () => void;
@@ -12,7 +14,7 @@ interface MemberCenterProps {
 
 const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
     const { user, userProfile, signOut, registrations, siteSettings, addRegistration } = useData();
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS' | 'SCRIPTURES' | 'FORTUNE'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS' | 'SCRIPTURES' | 'FORTUNE' | 'BAZI'>('PROFILE');
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
     const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
@@ -194,7 +196,14 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                 className={`w-full text-left p-4 flex items-center gap-3 transition-colors ${activeTab === 'FORTUNE' ? 'bg-mystic-gold/10 text-mystic-gold border-l-2 border-mystic-gold' : 'text-gray-400 hover:bg-white/5'}`}
                             >
                                 <Sparkles size={18} />
-                                線上安太歲/算命
+                                線上安太歲
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('BAZI')}
+                                className={`w-full text-left p-4 flex items-center gap-3 transition-colors ${activeTab === 'BAZI' ? 'bg-mystic-gold/10 text-mystic-gold border-l-2 border-mystic-gold' : 'text-gray-400 hover:bg-white/5'}`}
+                            >
+                                <BookOpen size={18} />
+                                我的八字命盤
                             </button>
                         </div>
                     </div>
@@ -447,6 +456,318 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                 )}
                             </div>
                         )}
+
+
+                        {activeTab === 'BAZI' && (
+                            <div className="bg-zinc-900 border border-white/5 rounded-lg p-6 md:p-8 animate-fade-in-up">
+                                <h3 className="text-xl font-bold text-white mb-6 pb-4 border-b border-white/10 flex items-center gap-2">
+                                    <BookOpen className="text-mystic-gold" size={20} />
+                                    八字命盤排盤
+                                </h3>
+
+                                {!userProfile?.birthYear ? (
+                                    <div className="text-center py-10">
+                                        <div className="text-gray-400 mb-4">請先完善個人生日資料，以獲取八字排盤。</div>
+                                        <button 
+                                            onClick={() => setIsEditProfileOpen(true)}
+                                            className="bg-mystic-gold text-black px-6 py-2 rounded font-bold hover:bg-yellow-500 transition-colors"
+                                        >
+                                            填寫生日資料
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        {/* BaZi Chart Calculation */}
+                                        {(() => {
+                                            // 1. Construct Date object from profile (assuming Lunar or Gregorian? Profile says Lunar usually in this app context, but let's check)
+                                            // Actually the modal saves "birthYear" as "民國XX" or "19XX", need careful parsing.
+                                            // The profile form saves: Year (e.g. 1987), Month (1-12), Day (1-30), Hour (String like '子時').
+                                            // IMPORTANT: Lunar-javascript usually takes Solar date to convert to Lunar/BaZi accurately, OR we can construct Lunar date directly.
+                                            // Since our form asks for "農曆生辰" (Lunar Birthday), we should construct a Lunar object.
+                                            
+                                            try {
+                                                let y = parseInt(userProfile.birthYear);
+                                                // Handle ROC Year (e.g. 76 -> 1987)
+                                                if (y < 1000) {
+                                                    y += 1911;
+                                                }
+                                                const m = parseInt(userProfile.birthMonth);
+                                                const d = parseInt(userProfile.birthDay);
+                                                
+                                                // Hour mapping
+                                                const hourMap: Record<string, number> = {
+                                                    '子時 (23-01)': 0, '丑時 (01-03)': 2, '寅時 (03-05)': 4, '卯時 (05-07)': 6,
+                                                    '辰時 (07-09)': 8, '巳時 (09-11)': 10, '午時 (11-13)': 12, '未時 (13-15)': 14,
+                                                    '申時 (15-17)': 16, '酉時 (17-19)': 18, '戌時 (19-21)': 20, '亥時 (21-23)': 22,
+                                                    '子時': 0, '丑時': 2, '寅時': 4, '卯時': 6, '辰時': 8, '巳時': 10, 
+                                                    '午時': 12, '未時': 14, '申時': 16, '酉時': 18, '戌時': 20, '亥時': 22
+                                                };
+                                                // Approximate hour if string match fails
+                                                let h = 12;
+                                                const hourStr = userProfile.birthHour || '';
+                                                // Simple matching
+                                                for (const key in hourMap) {
+                                                    if (hourStr.startsWith(key.substring(0, 2))) {
+                                                        h = hourMap[key];
+                                                        break;
+                                                    }
+                                                }
+
+                                                // Create Lunar Date from Input (Treating input strictly as Lunar)
+                                                // Note: Lunar.fromYmd creates a timestamp at noon so we need to adjust time for accurate BaZi
+                                                const lunar = Lunar.fromYmd(y, m, d); 
+                                                // To get the accurate BaZi (especially Time Pillar), we need the full date context including hour.
+                                                // We convert the specific Lunar YMD + Hour to a Solar timestamp to get the full EightChar.
+                                                const solar = lunar.getSolar(); 
+                                                const solarWithTime = Solar.fromYmdHms(solar.getYear(), solar.getMonth(), solar.getDay(), h, 0, 0);
+                                                const lunarWithTime = Lunar.fromSolar(solarWithTime);
+                                                const baZi = lunarWithTime.getEightChar();
+
+                                                // === Helper Functions ===
+                                                const GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                                                const ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+                                                const WUXING = {
+                                                    '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土', '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水',
+                                                    '寅': '木', '卯': '木', '巳': '火', '午': '火', '辰': '土', '戌': '土', '丑': '土', '未': '土', '申': '金', '酉': '金', '亥': '水', '子': '水'
+                                                };
+                                                const SHISHEN_MAP: Record<string, Record<string, string>> = {
+                                                    '甲': {'甲':'比肩','乙':'劫財','丙':'食神','丁':'傷官','戊':'偏財','己':'正財','庚':'七殺','辛':'正官','壬':'偏印','癸':'正印'},
+                                                    '乙': {'甲':'劫財','乙':'比肩','丙':'傷官','丁':'食神','戊':'正財','己':'偏財','庚':'正官','辛':'七殺','壬':'正印','癸':'偏印'},
+                                                    '丙': {'甲':'偏印','乙':'正印','丙':'比肩','丁':'劫財','戊':'食神','己':'傷官','庚':'偏財','辛':'正財','壬':'七殺','癸':'正官'},
+                                                    '丁': {'甲':'正印','乙':'偏印','丙':'劫財','丁':'比肩','戊':'傷官','己':'食神','庚':'正財','辛':'偏財','壬':'正官','癸':'七殺'},
+                                                    '戊': {'甲':'七殺','乙':'正官','丙':'偏印','丁':'正印','戊':'比肩','己':'劫財','庚':'食神','辛':'傷官','壬':'偏財','癸':'正財'},
+                                                    '己': {'甲':'正官','乙':'七殺','丙':'正印','丁':'偏印','戊':'劫財','己':'比肩','庚':'傷官','辛':'食神','壬':'正財','癸':'偏財'},
+                                                    '庚': {'甲':'偏財','乙':'正財','丙':'七殺','丁':'正官','戊':'偏印','己':'正印','庚':'比肩','辛':'劫財','壬':'食神','癸':'傷官'},
+                                                    '辛': {'甲':'正財','乙':'偏財','丙':'正官','丁':'七殺','戊':'正印','己':'偏印','庚':'劫財','辛':'比肩','壬':'傷官','癸':'食神'},
+                                                    '壬': {'甲':'食神','乙':'傷官','丙':'偏財','丁':'正財','戊':'七殺','己':'正官','庚':'偏印','辛':'正印','壬':'比肩','癸':'劫財'},
+                                                    '癸': {'甲':'傷官','乙':'食神','丙':'正財','丁':'偏財','戊':'正官','己':'七殺','庚':'正印','辛':'偏印','壬':'劫財','癸':'比肩'}
+                                                };
+                                                
+                                                const getShiShen = (dm: string, target: string) => SHISHEN_MAP[dm]?.[target] || '';
+                                                const getWuXing = (char: string) => WUXING[char as keyof typeof WUXING] || '';
+                                                
+                                                // Count Wu Xing
+                                                const counts = {'金':0, '木':0, '水':0, '火':0, '土':0};
+                                                const pillars = [
+                                                    {g: baZi.getYearGan(), z: baZi.getYearZhi()},
+                                                    {g: baZi.getMonthGan(), z: baZi.getMonthZhi()},
+                                                    {g: baZi.getDayGan(), z: baZi.getDayZhi()},
+                                                    {g: baZi.getTimeGan(), z: baZi.getTimeZhi()}
+                                                ];
+                                                pillars.forEach(p => {
+                                                    counts[getWuXing(p.g) as keyof typeof counts]++;
+                                                    counts[getWuXing(p.z) as keyof typeof counts]++;
+                                                });
+
+                                                const dayMaster = baZi.getDayGan();
+
+                                                const columns = [
+                                                    { 
+                                                        title: '年柱', 
+                                                        gan: baZi.getYearGan(), 
+                                                        zhi: baZi.getYearZhi(),
+                                                        zhuXing: getShiShen(dayMaster, baZi.getYearGan()),
+                                                        hidden: baZi.getYearHideGan() as string[],
+                                                        diShi: baZi.getYearDiShi(),
+                                                        naYin: baZi.getYearNaYin()
+                                                    },
+                                                    { 
+                                                        title: '月柱', 
+                                                        gan: baZi.getMonthGan(), 
+                                                        zhi: baZi.getMonthZhi(),
+                                                        zhuXing: getShiShen(dayMaster, baZi.getMonthGan()),
+                                                        hidden: baZi.getMonthHideGan() as string[],
+                                                        diShi: baZi.getMonthDiShi(),
+                                                        naYin: baZi.getMonthNaYin()
+                                                    },
+                                                    { 
+                                                        title: '日柱 (命主)', 
+                                                        gan: baZi.getDayGan(), 
+                                                        zhi: baZi.getDayZhi(),
+                                                        zhuXing: '元男',
+                                                        hidden: baZi.getDayHideGan() as string[],
+                                                        diShi: baZi.getDayDiShi(),
+                                                        naYin: baZi.getDayNaYin()
+                                                    },
+                                                    { 
+                                                        title: '時柱', 
+                                                        gan: baZi.getTimeGan(), 
+                                                        zhi: baZi.getTimeZhi(),
+                                                        zhuXing: getShiShen(dayMaster, baZi.getTimeGan()),
+                                                        hidden: baZi.getTimeHideGan() as string[],
+                                                        diShi: baZi.getTimeDiShi(),
+                                                        naYin: baZi.getTimeNaYin()
+                                                    }
+                                                ];
+
+                                                // Shen Sha (Simple approach: list Day Ji Shen)
+                                                const shenSha = lunar.getDayJiShen();
+
+                                                // Full chart stems for San Qi check
+                                                const fullChartStems = [baZi.getYearGan(), baZi.getMonthGan(), baZi.getDayGan(), baZi.getTimeGan()];
+                                                const yearGan = baZi.getYearGan();
+
+                                                return (
+                                                    <div className="space-y-8 animate-fade-in-up">
+                                                        
+                                                        {/* Advanced Table */}
+                                                        <div className="overflow-x-auto rounded-lg border border-white/10">
+                                                            <table className="w-full text-center text-sm md:text-base border-collapse">
+                                                                <thead>
+                                                                    <tr className="bg-zinc-800 text-mystic-gold">
+                                                                        <th className="p-3 border border-white/10 w-24">乾造</th>
+                                                                        {columns.map(c => <th key={c.title} className="p-3 border border-white/10 text-lg font-bold">{c.title}</th>)}
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="bg-black/40 text-gray-200">
+                                                                    {/* Zhu Xing */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">主星</td>
+                                                                        {columns.map((c, i) => (
+                                                                            <td key={i} className="p-3 border border-white/10 font-bold text-red-400">
+                                                                                {c.zhuXing === '元男' ? '日主' : c.zhuXing}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                    {/* Tian Gan */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">天干</td>
+                                                                        {columns.map((c, i) => (
+                                                                            <td key={i} className={`p-3 border border-white/10 text-3xl font-serif font-bold`} style={{ color: getWuXing(c.gan) === '火' ? '#ff4d4f' : getWuXing(c.gan) === '木' ? '#52c41a' : getWuXing(c.gan) === '金' ? '#faad14' : getWuXing(c.gan) === '水' ? '#1890ff' : '#d4b106' }}>
+                                                                                {c.gan}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                    {/* Di Zhi */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">地支</td>
+                                                                        {columns.map((c, i) => (
+                                                                            <td key={i} className="p-3 border border-white/10 text-3xl font-serif font-bold" style={{ color: getWuXing(c.zhi) === '火' ? '#ff4d4f' : getWuXing(c.zhi) === '木' ? '#52c41a' : getWuXing(c.zhi) === '金' ? '#faad14' : getWuXing(c.zhi) === '水' ? '#1890ff' : '#d4b106' }}>
+                                                                                {c.zhi}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                    {/* Hidden Stems */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">藏干</td>
+                                                                        {columns.map((c, i) => (
+                                                                            <td key={i} className="p-3 border border-white/10 align-top h-24">
+                                                                                <div className="flex flex-col gap-1 text-xs items-center justify-center h-full">
+                                                                                    {c.hidden.map((h, idx) => (
+                                                                                        <div key={idx} className="flex items-center gap-1">
+                                                                                             <span className={getWuXing(h) === '火' ? 'text-red-400' : getWuXing(h) === '木' ? 'text-green-400' : getWuXing(h) === '金' ? 'text-yellow-400' : getWuXing(h) === '水' ? 'text-blue-400' : 'text-yellow-600'}>
+                                                                                                 ({h})
+                                                                                             </span>
+                                                                                             <span className="text-gray-500 scale-90">{getShiShen(dayMaster, h)}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                    {/* Di Shi */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">地勢</td>
+                                                                        {columns.map((c, i) => (
+                                                                            <td key={i} className="p-3 border border-white/10 font-medium">{c.diShi}</td>
+                                                                        ))}
+                                                                    </tr>
+                                                                    {/* Na Yin */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">納音</td>
+                                                                        {columns.map((c, i) => (
+                                                                            <td key={i} className="p-1 md:p-3 border border-white/10 text-xs text-gray-400">{c.naYin}</td>
+                                                                        ))}
+                                                                    </tr>
+                                                                    {/* Shen Sha */}
+                                                                    {/* Shen Sha */}
+                                                                    <tr>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 h-32 align-middle">
+                                                                            <div className="flex flex-col gap-2">
+                                                                                <span>神煞</span>
+                                                                                <div className="text-[10px] font-normal text-gray-500 text-left px-1 mt-2 border-t border-white/5 pt-2">
+                                                                                    <div className="flex justify-between"><span>胎元:</span> <span>{baZi.getTaiYuan()}</span></div>
+                                                                                    <div className="flex justify-between"><span>命宮:</span> <span>{baZi.getMingGong()}</span></div>
+                                                                                    <div className="flex justify-between"><span>空亡:</span> <span>{baZi.getDayXunKong()}</span></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        {columns.map((c, i) => {
+                                                                            // Calculate Shen Sha for this pillar
+                                            const stars = getShenShaForPillar(c.zhi, c.gan, dayMaster, yearGan, baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), fullChartStems);
+                                                                            return (
+                                                                                <td key={i} className="p-2 border border-white/10 text-xs align-top">
+                                                                                    <div className="flex flex-col gap-1 items-center">
+                                                                                        {stars.map((s, idx) => (
+                                                                                            <span key={idx} className="bg-white/5 px-2 py-0.5 rounded text-gray-300 w-full text-center hover:bg-white/10 transition-colors">
+                                                                                                {s}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                        {stars.length === 0 && <span className="text-gray-600">-</span>}
+                                                                                    </div>
+                                                                                </td>
+                                                                            );
+                                                                        })}
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+
+                                                        {/* Wu Xing Bar Chart */}
+                                                        <div className="bg-black/20 p-6 rounded-lg border border-white/5">
+                                                            <h4 className="text-gray-400 mb-6 border-b border-white/10 pb-2 flex justify-between items-center">
+                                                                <span>五行力量分析</span>
+                                                                <span className="text-xs text-gray-500 font-normal">本命元神：{dayMaster} ({getWuXing(dayMaster)})</span>
+                                                            </h4>
+                                                            <div className="flex items-end justify-between h-56 gap-2 md:gap-4 px-2 md:px-8">
+                                                                {[
+                                                                    { k: '木', color: 'bg-green-600', label: '木 (印梟)' },
+                                                                    { k: '火', color: 'bg-red-600', label: '火 (比劫)' },
+                                                                    { k: '土', color: 'bg-yellow-700', label: '土 (食傷)' },
+                                                                    { k: '金', color: 'bg-yellow-500', label: '金 (財星)' },
+                                                                    { k: '水', color: 'bg-blue-600', label: '水 (官殺)' }
+                                                                ].map((el) => {
+                                                                    const count = counts[el.k as keyof typeof counts];
+                                                                    const max = 8; // approx max
+                                                                    // Min height for visibility
+                                                                    const height = Math.max(5, (count / max) * 100);
+                                                                    return (
+                                                                        <div key={el.k} className="flex flex-col items-center flex-1 h-full justify-end group w-full">
+                                                                            <div className="text-white font-bold mb-2 opacity-80 group-hover:opacity-100 transition-opacity text-lg">{count}</div>
+                                                                            <div className="w-full bg-gray-800/50 rounded-t h-full flex flex-col justify-end relative">
+                                                                                <div 
+                                                                                    className={`w-full ${el.color} rounded-t transition-all duration-700 ease-out hover:brightness-110 absolute bottom-0`}
+                                                                                    style={{ height: `${height}%` }}
+                                                                                ></div>
+                                                                            </div>
+                                                                            <div className="mt-3 text-sm text-gray-300 font-bold">{el.k}</div>
+                                                                            <div className="text-[10px] text-gray-500 scale-90">{el.label.split(' ')[1]}</div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <div className="mt-6 text-center text-xs md:text-sm text-gray-500 border-t border-white/5 pt-4">
+                                                                <div className="inline-block bg-yellow-900/20 px-4 py-2 rounded text-yellow-500/80">
+                                                                    由於五行僅計算四柱八字數量，未加權計算藏干與月令，僅供基礎參考。
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Disclaimer */}
+                                                        <div className="text-xs text-gray-600 text-center">
+                                                            註：八字排盤僅供參考，詳細流年運勢建議親臨本宮諮詢專業老師。
+                                                        </div>
+                                                    </div>
+                                            );
+                                        } catch (e) {
+                                            console.error("BaZi calculation failed:", e);
+                                            return <div className="text-red-400">八字計算發生錯誤，請檢查您的生日資料格式是否正確。</div>;
+                                        }
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+                    )}
                     </div>
                 </div>
             </div>
