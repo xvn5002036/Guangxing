@@ -616,7 +616,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     const handleEdit = (item: any) => {
         setEditingId(item.id);
-        setEditForm({ ...item });
+        
+        let initialForm = { ...item };
+
+        // Fix: Populate default fieldConfig for existing items if missing, 
+        // ensuring the Admin UI reflects the actual defaults used by Frontend.
+        if (!initialForm.fieldConfig) {
+             const baseEventConfig = siteSettings?.configEvent || { showBirth: true, showTime: false, showAddress: true, showIdNumber: true, showGender: true };
+             const baseLightConfig = siteSettings?.configLight || { showBirth: true, showTime: true, showAddress: true, showIdNumber: false };
+             const baseDonationConfig = siteSettings?.configDonation || { showBirth: false, showTime: false, showAddress: false, showIdNumber: false };
+
+             if (activeTab === 'EVENTS' || item.type === 'FESTIVAL' || item.type === 'RITUAL') {
+                 initialForm.fieldConfig = baseEventConfig;
+             } else if (activeTab === 'SERVICES') {
+                 if (item.type === 'LIGHT' || item.title?.includes('燈')) {
+                     initialForm.fieldConfig = baseLightConfig;
+                 } else if (item.type === 'DONATION' || item.title?.includes('隨喜') || item.title?.includes('捐獻')) {
+                     initialForm.fieldConfig = baseDonationConfig;
+                 }
+                 // Default service fallback if needed
+                 if (!initialForm.fieldConfig) initialForm.fieldConfig = baseLightConfig;
+             }
+        }
+
+        setEditForm(initialForm);
         setIsAdding(false);
         // Scroll the container, not the window
         if (mainContentRef.current) {
@@ -892,13 +915,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                             <button onClick={() => { 
                                 setEditingId(null); 
                                 setIsAdding(true); 
-                                const initialForm = 
+                                const initialForm: any = 
                                     activeTab === 'NEWS' ? { category: '公告' } : 
                                     activeTab === 'ORG' ? { category: 'STAFF' } : 
                                     activeTab === 'FAQS' ? {} : 
                                     activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : 
-                                    activeTab === 'SERVICES' ? { type: 'LIGHT', price: 0 } :
-                                    activeTab === 'EVENTS' ? { type: 'FESTIVAL' } :
+                                    activeTab === 'SERVICES' ? { type: 'LIGHT', price: 0, fieldConfig: siteSettings.configLight } :
+                                    activeTab === 'EVENTS' ? { type: 'FESTIVAL', fieldConfig: siteSettings.configEvent } :
                                     { type: 'FESTIVAL' };
                                 setEditForm(initialForm); 
                             }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, CreditCard, CheckCircle, AlertTriangle, Search, User, Phone, MapPin, Calendar, Trash2, Edit, RefreshCw, ChevronDown, Landmark, ChevronLeft } from 'lucide-react';
-import { ServiceItem, Registration, TAIWAN_ADDRESS_DATA, COMMON_ROADS, LUNAR_HOURS } from '../types';
+import { ServiceItem, Registration, TAIWAN_ADDRESS_DATA, COMMON_ROADS, LUNAR_HOURS, FieldConfig } from '../types';
 import { useData } from '../context/DataContext';
 import { supabase } from '../services/supabase';
 
@@ -45,24 +45,26 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
   });
 
   // Determine current field config
-  // Determine current field config
   const currentConfig = useMemo(() => {
-    // 1. Prefer per-item config
-    if (service?.fieldConfig) {
-      return service.fieldConfig;
+    // 1. Determine fallback base from siteSettings
+    let baseConfig: FieldConfig = { showBirth: true, showTime: false, showAddress: true, showIdNumber: true, showGender: true }; // Absolute default
+
+    if (initialEventTitle || service?.type === 'RITUAL' || (service as any)?.date) {
+      baseConfig = siteSettings?.configEvent || baseConfig;
+    } else if (service?.type === 'DONATION' || service?.title?.includes('隨喜') || service?.title?.includes('捐獻')) {
+      baseConfig = siteSettings?.configDonation || baseConfig;
+    } else if (service?.type === 'LIGHT' || service?.title?.includes('燈')) {
+      baseConfig = siteSettings?.configLight || baseConfig;
     }
 
-    // 2. Fallback logic for legacy items without config (maintain behavior)
-    if (service?.type === 'DONATION' || service?.title?.includes('隨喜') || service?.title?.includes('捐獻')) {
-      return { showBirth: false, showTime: false, showAddress: false, showIdNumber: false };
-    }
-    if (service?.type === 'LIGHT' || service?.title?.includes('燈')) {
-      return { showBirth: true, showTime: true, showAddress: true, showIdNumber: false };
+    // 2. Merge with per-item config if available
+    // Ensure we handle cases where fieldConfig might be an empty object or missing fields
+    if (service?.fieldConfig && Object.keys(service.fieldConfig).length > 0) {
+      return { ...baseConfig, ...service.fieldConfig };
     }
 
-    // Default (Events/Rituals)
-    return { showBirth: true, showTime: false, showAddress: true, showIdNumber: true, showGender: true };
-  }, [service]);
+    return baseConfig;
+  }, [service, siteSettings, initialEventTitle]);
 
   // Dynamic lists based on selections
   const cityList = useMemo(() => Object.keys(TAIWAN_ADDRESS_DATA), []);
