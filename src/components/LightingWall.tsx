@@ -118,17 +118,22 @@ const LightingWall: React.FC = () => {
                                 {/* Placeholder / Fallback Pattern if image empty */}
                                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]"></div>
 
-                                {siteSettings.deityImage ? (
-                                    <img
-                                        src={siteSettings.deityImage}
-                                        alt={siteSettings.deityTitle || "Main Deity"}
-                                        className={`w-full h-full object-cover object-top transition-all duration-1000 ${isDeityGlowing ? 'brightness-110 contrast-110 saturate-110' : 'brightness-50 grayscale'}`}
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-700 font-serif">
-                                        <span>(請設定神尊照片)</span>
-                                    </div>
-                                )}
+                                {(() => {
+                                    // 邏輯：如果資料庫中有設定圖片且不是預設的 Unsplash 連結，則使用它
+                                    // 否則，使用我們剛剛上傳的本地圖片 /assets/images/deity.jpg
+                                    const isDefaultUnsplash = siteSettings.deityImage?.includes('images.unsplash.com');
+                                    const imgSrc = (siteSettings.deityImage && !isDefaultUnsplash) 
+                                        ? siteSettings.deityImage 
+                                        : "/assets/images/deity.jpg";
+                                    
+                                    return (
+                                        <img
+                                            src={imgSrc}
+                                            alt={siteSettings.deityTitle || "Main Deity"}
+                                            className={`w-full h-full object-cover object-[50%_30%] transition-all duration-1000 ${isDeityGlowing ? 'brightness-110 contrast-110 saturate-110 scale-135 shadow-[0_0_30px_rgba(255,215,0,0.3)]' : 'brightness-90 scale-120'}`}
+                                        />
+                                    );
+                                })()}
 
                                 {/* Inner Shine Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
@@ -162,33 +167,52 @@ const LightingWall: React.FC = () => {
                                     {/* The Lamp Object */}
                                     <div className={`relative w-full aspect-[3/4] rounded-t-full border-2 transition-all duration-700 flex flex-col items-center justify-end overflow-hidden group
                                 ${light
-                                            ? 'bg-gradient-to-b from-yellow-900/80 via-red-900/50 to-black border-yellow-500 shadow-[0_0_20px_rgba(255,165,0,0.4)]'
-                                            : 'bg-black/40 border-gray-800 opacity-50'
+                                            ? 'bg-gradient-to-b from-yellow-950/80 via-red-950/50 to-black border-yellow-500/80 shadow-[0_0_15px_rgba(255,165,0,0.3)]'
+                                            : 'bg-black/40 border-gray-800/50'
                                         }`}
                                     >
+                                        {/* Background Deity Image for all lamps */}
+                                        <div className="absolute inset-0 z-0">
+                                            {(() => {
+                                                const isDefaultUnsplash = siteSettings.deityImage?.includes('images.unsplash.com');
+                                                const imgSrc = (siteSettings.deityImage && !isDefaultUnsplash) 
+                                                    ? siteSettings.deityImage 
+                                                    : "/assets/images/deity.jpg";
+                                                
+                                                return (
+                                                    <img
+                                                        src={imgSrc}
+                                                        alt="Deity Base"
+                                                        className={`w-full h-full object-cover object-[50%_35%] transition-all duration-1000 ${light ? 'brightness-110 saturate-110' : 'brightness-[0.4] opacity-80'}`}
+                                                    />
+                                                );
+                                            })()}
+                                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                                        </div>
+
                                         {/* Light Source (Top) */}
                                         {light && (
-                                            <div className="absolute top-4 w-2 h-2 bg-white rounded-full shadow-[0_0_15px_5px_rgba(255,255,0,1)] animate-pulse"></div>
+                                            <div className="absolute top-4 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_12px_4px_rgba(255,255,0,0.8)] animate-pulse z-20"></div>
                                         )}
 
                                         {/* Inner Glow */}
                                         {light && (
-                                            <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent"></div>
+                                            <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent z-10"></div>
                                         )}
 
                                         {/* Name Tag (Vertical) */}
-                                        <div className="relative z-10 py-6 w-full text-center">
+                                        <div className="relative z-20 py-4 w-full text-center">
                                             {light ? (
-                                                <div className="flex flex-col items-center gap-1">
-                                                    <span className="text-[10px] text-yellow-300/80 tracking-widest">{light.serviceTitle.substring(0, 2)}</span>
-                                                    <div className="w-6 h-[1px] bg-yellow-500/50 my-1"></div>
-                                                    <div className="text-xl md:text-2xl font-bold text-white writing-vertical-rl font-serif tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                    <span className="text-[9px] text-yellow-500/80 tracking-widest">{light.serviceTitle.substring(0, 2)}</span>
+                                                    <div className="w-4 h-[1px] bg-yellow-500/30 my-0.5"></div>
+                                                    <div className="text-lg md:text-xl font-bold text-white writing-vertical-rl font-serif tracking-widest drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">
                                                         {light.name}
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center h-full opacity-30">
-                                                    <div className="text-lg text-gray-500 font-serif writing-vertical-rl tracking-widest">
+                                                <div className="flex flex-col items-center justify-center h-full opacity-40">
+                                                    <div className="text-base text-gray-500 font-serif writing-vertical-rl tracking-widest">
                                                         平安
                                                     </div>
                                                 </div>
