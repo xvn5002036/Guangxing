@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './Ritual.css';
 
 const Ritual: React.FC = () => {
   const [incenseLit, setIncenseLit] = useState(false);
@@ -12,9 +13,24 @@ const Ritual: React.FC = () => {
   };
 
   return (
-    <section id="ritual" className="py-24 bg-mystic-charcoal relative border-b border-mystic-gold/10 overflow-hidden">
-       {/* Background Smoke Effect */}
-       <div className="absolute inset-0 opacity-10 bg-smoke animate-pulse"></div>
+    <section id="ritual" className="ritual-container py-24 bg-mystic-charcoal relative border-b border-mystic-gold/10">
+       {/* Background Particles (Sparkles) */}
+       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+           {[...Array(20)].map((_, i) => (
+               <div 
+                  key={i} 
+                  className="bg-particle"
+                  style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      width: `${Math.random() * 4 + 1}px`,
+                      height: `${Math.random() * 4 + 1}px`,
+                      animationDuration: `${Math.random() * 10 + 5}s`,
+                      animationDelay: `${Math.random() * 5}s`
+                  }}
+               ></div>
+           ))}
+       </div>
 
       <div className="container mx-auto px-6 text-center relative z-10">
         <div className="mb-12">
@@ -26,37 +42,42 @@ const Ritual: React.FC = () => {
         </div>
 
         <div className="relative h-80 flex items-end justify-center mb-12">
-             {/* Incense Pot Image (Placeholder construction) */}
-             <div className="relative w-64 h-40 bg-gradient-to-b from-stone-800 to-stone-900 rounded-b-3xl border-t-8 border-stone-700 shadow-2xl flex justify-center items-start pt-4">
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-serif text-mystic-gold/20 select-none">池</div>
+             {/* Enhanced Incense Pot */}
+             <div className="incense-pot relative w-64 h-40 rounded-b-3xl flex justify-center items-start pt-4">
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-serif text-mystic-gold/20 select-none pot-character">池</div>
                  
                  {/* Incense Sticks */}
-                 <div className="absolute -top-32 flex gap-8">
+                 <div className="absolute -top-[130px] flex gap-12 z-20">
                      {[0, 1, 2].map((i) => (
                          <div key={i} className="relative flex flex-col items-center">
-                             {/* Smoke */}
-                             <div className={`w-8 h-32 absolute -top-28 transition-opacity duration-1000 ${incenseLit ? 'opacity-60' : 'opacity-0'}`}>
-                                 <div className="w-full h-full bg-gray-400 blur-xl animate-[float_3s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.5}s` }}></div>
+                             {/* Realistic Smoke System */}
+                             <div className={`smoke-container ${incenseLit ? 'lit' : ''}`}>
+                                 <div className="smoke-particle"></div>
+                                 <div className="smoke-particle"></div>
+                                 <div className="smoke-particle"></div>
                              </div>
-                             {/* Ember */}
-                             <div className={`w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_red] mb-1 transition-opacity duration-500 ${incenseLit ? 'opacity-100' : 'opacity-0'}`}></div>
-                             {/* Stick */}
-                             <div className="w-1.5 h-32 bg-stone-500 rounded-t-sm bg-gradient-to-b from-red-800 to-yellow-900"></div>
+
+                             {/* Glowing Ember */}
+                             <div className={`ember ${incenseLit ? 'lit' : ''}`}></div>
+
+                             {/* Stick Body */}
+                             <div className="incense-stick"></div>
                          </div>
                      ))}
                  </div>
-                 {/* Ash */}
-                 <div className="w-56 h-8 bg-stone-400/20 blur-sm rounded-full absolute top-2"></div>
+                 
+                 {/* Ash Fill (Visual only) */}
+                 <div className="w-56 h-6 bg-[#8a8a8a] blur-md rounded-full absolute top-2 opacity-30"></div>
              </div>
         </div>
 
         <button 
             onClick={handleLightIncense}
             disabled={incenseLit}
-            className={`px-10 py-4 text-lg tracking-widest uppercase transition-all duration-500 ${
+            className={`px-12 py-4 text-lg tracking-widest uppercase transition-all duration-500 rounded-sm border ${
                 incenseLit 
-                ? 'bg-transparent text-gray-500 border border-gray-700 cursor-default' 
-                : 'bg-mystic-crimson text-white hover:bg-red-900 shadow-[0_0_20px_rgba(150,0,0,0.5)]'
+                ? 'bg-transparent text-gray-500 border-gray-800 cursor-default' 
+                : 'bg-mystic-crimson text-white border-transparent hover:bg-red-900 shadow-[0_0_20px_rgba(150,0,0,0.5)] hover:shadow-[0_0_30px_rgba(200,0,0,0.7)] transform hover:-translate-y-1'
             }`}
         >
             {incenseLit ? '香火鼎盛' : '點 香 拜 拜'}
