@@ -445,7 +445,53 @@ app.get('/api/download/:productId', async (req, res) => {
 /**
  * Diagnostic Endpoint
  */
+// ... (previous code)
+
+/**
+ * 7. LINE Notify 代理 API
+ * POST /api/line-notify
+ * Body: { message: "Notification Content" }
+ */
+app.post('/api/line-notify', async (req, res) => {
+    const { message } = req.body;
+    const token = process.env.LINE_NOTIFY_TOKEN;
+
+    if (!token) {
+        console.error('LINE Notify Token is missing.');
+        return res.status(500).json({ error: 'Messaging configuration missing (Token).' });
+    }
+
+    if (!message) {
+        return res.status(400).json({ error: 'Message is required.' });
+    }
+
+    try {
+        const response = await fetch('https://notify-api.line.me/api/notify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Bearer ${token}`
+            },
+            body: new URLSearchParams({ message: message }) // LINE Notify specifically wants form-urlencoded
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+           res.json({ success: true, result });
+        } else {
+           console.error('LINE Notify Error:', result);
+           res.status(response.status).json({ error: 'Failed to send to LINE', details: result });
+        }
+
+    } catch (error) {
+        console.error('LINE Notify Proxy Error:', error);
+        res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    }
+});
+
 app.get('/api/diag', async (req, res) => {
+// ... (rest of the code)
     try {
         const results = {};
         results.env = {

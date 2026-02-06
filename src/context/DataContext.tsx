@@ -738,6 +738,26 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 console.error("Error adding registration:", error);
                 throw error; // Throw error so UI knows it failed
+            } else {
+                // Success: Create a System Notification for Admins
+                const notif = {
+                    type: 'ORDER',
+                    title: '新報名通知',
+                    message: `${newReg.name} 已報名：${newReg.serviceTitle} ($${newReg.amount})`,
+                    is_read: false,
+                    link: 'REGISTRATIONS' // Internal link for AdminPanel tab
+                };
+                await supabase.from('notifications').insert([notif]);
+
+                // LINE Notify Integration (Fire and Forget)
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const apiBase = isLocal ? 'http://localhost:3001' : ''; // Relative path for Vercel, absolute for local dev
+                
+                fetch(`${apiBase}/api/line-notify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `\n[新報名通知]\n信眾：${newReg.name}\n項目：${newReg.serviceTitle}\n金額：$${newReg.amount}` })
+                }).catch(err => console.warn('Failed to send LINE notification:', err));
             }
         } else {
             const localReg = { ...newReg, id: `local_${Date.now()}`, createdAt: new Date().toISOString(), isProcessed: false };
