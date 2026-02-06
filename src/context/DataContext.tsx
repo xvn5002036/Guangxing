@@ -706,10 +706,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             is_processed: false
         };
         if (isSupabaseConfigured()) {
+            // Helper to check if string is a valid UUID
+            const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
             // Map camelCase to snake_case
             const dbReg = {
-                // If serviceId is 'EVENT' (from generic event registration), set to null to avoid UUID error
-                service_id: (newReg.serviceId === 'EVENT' || !newReg.serviceId) ? null : newReg.serviceId,
+                // EXTREME SAFETY FIX: Only use serviceId if it's a valid UUID. 
+                // Any other value (like 'EVENT', 's1', or empty) is forced to null to avoid Foreign Key violation.
+                service_id: (newReg.serviceId && isUuid(newReg.serviceId)) ? newReg.serviceId : null,
                 service_title: newReg.serviceTitle,
                 name: newReg.name,
                 phone: newReg.phone,

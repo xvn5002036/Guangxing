@@ -166,14 +166,15 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, service, i
 
       if (formData.id) {
         // Update existing
-        // updateRegistration currently is fire-and-forget in context (unless we update it too, but addRegistration was the main culprit)
-        // Let's assume updateRegistration works or is less critical right now. 
-        // Ideally we should make all context methods async/throwable, but sticking to the fix for now.
         updateRegistration(formData.id, payload);
       } else {
         // Add new
+        // CRITICAL FIX: If it's an event registration, force serviceId to 'EVENT'
+        // This ensures DataContext.tsx maps it to null, avoiding Foreign Key violation on 'services' table
+        const registrationServiceId = initialEventTitle ? 'EVENT' : (service?.id || 'EVENT');
+        
         await addRegistration({
-          serviceId: service?.id || 'EVENT',
+          serviceId: registrationServiceId,
           serviceTitle: initialEventTitle || service?.title || '未知服務',
           ...payload,
           status: 'PAID'
