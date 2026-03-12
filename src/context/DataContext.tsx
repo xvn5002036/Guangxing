@@ -708,28 +708,59 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const addAnnouncement = async (item: Omit<Announcement, 'id' | 'created_at'>) => {
+        let finalItem: any = { ...item };
+        // Ensure both camelCase and snake_case are present for internal consistency
+        if (finalItem.is_active !== undefined) finalItem.isActive = finalItem.is_active;
+        if (finalItem.isActive !== undefined) finalItem.is_active = finalItem.isActive;
+
         if (isSupabaseConfigured()) {
-            const { error } = await supabase.from('announcements').insert([item]);
+            const dbItem: any = { ...item };
+            delete dbItem.id;
+            delete dbItem.createdAt;
+            delete dbItem.created_at;
+            delete dbItem.isActive; // Remove camelCase before DB save
+
+            const { data, error } = await supabase.from('announcements').insert([dbItem]).select().single();
             if (error) throw error;
+            if (data) finalItem = { ...finalItem, id: data.id, created_at: data.created_at };
         } else {
-            const newItem = { ...item, id: `local_${Date.now()}` };
-            setAnnouncements(prev => [newItem, ...prev]);
+            finalItem.id = `local_${Date.now()}`;
+        }
+        setAnnouncements(prev => [finalItem, ...prev]);
+    };
+
+    const updateAnnouncement = async (id: string, item: Partial<Announcement> & { isActive?: boolean }) => {
+        // Map camelCase to snake_case if needed
+        const updates: any = { ...item };
+        if (updates.isActive !== undefined) updates.is_active = updates.isActive;
+        if (updates.is_active !== undefined) updates.isActive = updates.is_active;
+
+        // Optimistic UI update
+        setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+
+        if (isSupabaseConfigured()) {
+            const dbItem: any = { ...updates };
+            delete dbItem.id;
+            delete dbItem.createdAt;
+            delete dbItem.created_at;
+            delete dbItem.isActive; // Remove camelCase before DB save
+
+            const { error } = await supabase.from('announcements').update(dbItem).eq('id', id);
+            if (error) {
+                console.error('Update announcement failed', error);
+                throw error;
+            }
         }
     };
-    const updateAnnouncement = async (id: string, item: Partial<Announcement>) => {
-        if (isSupabaseConfigured()) {
-            const { error } = await supabase.from('announcements').update(item).eq('id', id);
-            if (error) throw error;
-        } else {
-            setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...item } : a));
-        }
-    };
+
     const deleteAnnouncement = async (id: string) => {
+        // Optimistic UI update
+        setAnnouncements(prev => prev.filter(item => item.id !== id));
+
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('announcements').delete().eq('id', id);
             if (error) throw error;
         }
-        setAnnouncements(prev => prev.filter(item => item.id !== id));
     };
 
     const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {

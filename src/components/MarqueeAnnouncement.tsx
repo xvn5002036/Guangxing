@@ -1,60 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../services/supabase';
-
-interface Announcement {
-    id: string;
-    content: string;
-    is_active: boolean;
-    priority: number;
-}
+import { useData } from '../context/DataContext';
 
 const MarqueeAnnouncement: React.FC = () => {
-    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-    const [isVisible, setIsVisible] = useState(false);
+    const { announcements: allAnnouncements } = useData();
 
-    useEffect(() => {
-        const fetchAnnouncements = async () => {
-            const { data, error } = await supabase
-                .from('announcements')
-                .select('*')
-                .eq('is_active', true)
-                .order('priority', { ascending: false })
-                .order('created_at', { ascending: false });
+    // 過濾出啟用中的公告，並依照優先度排序
+    const activeAnnouncements = allAnnouncements
+        .filter(a => (a as any).is_active !== false && (a as any).isActive !== false)
+        .sort((a, b) => {
+            // 優先度排序 (數字大在前)
+            if (b.priority !== a.priority) return (b.priority || 0) - (a.priority || 0);
+            // 時間排序 (新在前) - 同時支援 created_at 與 createdAt
+            const timeB = new Date((b as any).created_at || (b as any).createdAt || 0).getTime();
+            const timeA = new Date((a as any).created_at || (a as any).createdAt || 0).getTime();
+            return timeB - timeA;
+        });
 
-            if (error) {
-                console.error('獲取跑馬燈公告失敗:', error);
-                return;
-            }
+    const isVisible = activeAnnouncements.length > 0;
 
-            setAnnouncements(data || []);
-            setIsVisible(data && data.length > 0);
-        };
-
-        fetchAnnouncements();
-
-        // 訂閱 Supabase Realtime 更新
-        const channel = supabase
-            .channel('public:announcements')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'announcements' },
-                (payload) => {
-                    console.log('收到即時公告更新:', payload);
-                    // 當有變動時重新抓取公告資料
-                    fetchAnnouncements();
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    if (!isVisible || announcements.length === 0) return null;
-
-    // 串接所有的啟用中公告，以特定符號區分
-    const combinedText = announcements.map(a => a.content).join(' ✦ ');
+    if (!isVisible) return null;
 
     return (
         <div className="fixed bottom-0 left-0 w-full bg-mystic-charcoal border-t border-mystic-gold/30 text-mystic-paper py-2 overflow-hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
@@ -66,8 +29,21 @@ const MarqueeAnnouncement: React.FC = () => {
                     <span className="font-bold text-sm tracking-widest whitespace-nowrap">最新消息</span>
                 </div>
                 <div className="overflow-hidden flex-grow group min-w-0">
-                    <div className="whitespace-nowrap inline-block animate-marquee group-hover:[animation-play-state:paused] cursor-default text-sm md:text-base pl-[100%]">
-                        <span className="pr-10">{combinedText}</span>
+                    <div className="whitespace-nowrap inline-block animate-marquee group-hover:[animation-play-state:paused] text-sm md:text-base pl-[100%]">
+                        <span className="pr-10 flex items-center gap-4">
+                            {activeAnnouncements.map((a, index) => (
+                                <span key={a.id} className="flex items-center gap-4">
+                                    {a.link ? (
+                                        <a href={a.link} target="_blank" rel="noopener noreferrer" className="hover:text-mystic-gold hover:underline transition-colors decoration-mystic-gold/50 cursor-pointer">
+                                            {a.content}
+                                        </a>
+                                    ) : (
+                                        <span className="cursor-default">{a.content}</span>
+                                    )}
+                                    {index < activeAnnouncements.length - 1 && <span className="text-mystic-gold/50 text-xs cursor-default">✦</span>}
+                                </span>
+                            ))}
+                        </span>
                     </div>
                 </div>
             </div>

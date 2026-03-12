@@ -1435,6 +1435,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     ) : activeTab === 'ANNOUNCEMENTS' ? (
                                         <>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">跑馬燈公告文字</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.content || ''} onChange={e => setEditForm({ ...editForm, content: e.target.value })} /></div>
+                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">連結網址 (選填)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" placeholder="例如: https://mingle.com/" value={editForm.link || ''} onChange={e => setEditForm({ ...editForm, link: e.target.value })} /></div>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">排列優先度 (數字越大越前)</label><input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.priority || 0} onChange={e => setEditForm({ ...editForm, priority: parseInt(e.target.value) || 0 })} /></div>
                                             <div className="space-y-1 flex items-center pt-6"><label className="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" className="w-5 h-5 bg-black border-white/10 text-mystic-gold focus:ring-mystic-gold" checked={editForm.is_active !== false} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} />啟用此公告</label></div>
                                         </>
@@ -2140,19 +2141,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                                 <span className="text-xs">狀態:</span>
                                                                 <button
                                                                     onClick={async () => {
+                                                                        const currentStatus = item.is_active !== false && item.isActive !== false;
                                                                         try {
-                                                                            await updateAnnouncement(item.id, { is_active: !item.is_active });
+                                                                            await updateAnnouncement(item.id, { is_active: !currentStatus });
                                                                         } catch (err: any) {
                                                                             alert('切換狀態失敗: ' + err.message);
                                                                         }
                                                                     }}
-                                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.is_active ? 'bg-green-600' : 'bg-gray-700'}`}
+                                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${(item.is_active !== false && item.isActive !== false) ? 'bg-green-600' : 'bg-gray-700'}`}
                                                                     role="switch"
-                                                                    aria-checked={item.is_active}
+                                                                    aria-checked={item.is_active !== false && item.isActive !== false}
                                                                 >
-                                                                    <span aria-hidden="true" className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${item.is_active ? 'translate-x-2' : '-translate-x-2'}`} />
+                                                                    <span aria-hidden="true" className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${(item.is_active !== false && item.isActive !== false) ? 'translate-x-2' : '-translate-x-2'}`} />
                                                                 </button>
-                                                                <span className={`text-xs ml-1 ${item.is_active ? 'text-green-400' : 'text-gray-500'}`}>{item.is_active ? '啟用中' : '已停用'}</span>
+                                                                <span className={`text-xs ml-1 ${(item.is_active !== false && item.isActive !== false) ? 'text-green-400' : 'text-gray-500'}`}>{(item.is_active !== false && item.isActive !== false) ? '啟用中' : '已停用'}</span>
                                                             </div>
                                                         </div>
                                                     </td>

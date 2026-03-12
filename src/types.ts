@@ -270,5 +270,6 @@ export interface Announcement {
   content: string;
   is_active: boolean;
   priority: number;
+  link?: string;
   created_at?: string;
 }
