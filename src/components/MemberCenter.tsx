@@ -22,6 +22,26 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
     const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
+    const [activeTooltip, setActiveTooltip] = useState<{ title: string; desc: string } | null>(null);
+
+    const handleToggleTooltip = (title: string, desc: string, e: React.MouseEvent | React.TouchEvent) => {
+        e.stopPropagation();
+        if (activeTooltip?.title === title) {
+            setActiveTooltip(null);
+        } else {
+            setActiveTooltip({ title, desc });
+        }
+    };
+
+    useEffect(() => {
+        const handleClickOutside = () => setActiveTooltip(null);
+        window.addEventListener('click', handleClickOutside);
+        window.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            window.removeEventListener('click', handleClickOutside);
+            window.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, []);
 
     // --- Zodiac & Tai Sui Logic ---
     const getZodiac = (year: number) => {
@@ -671,12 +691,27 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                 <tbody className="bg-black/40 text-gray-200">
                                                                     {/* Zhu Xing */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['主星']}>主星</td>
-                                                                        {columns.map((c, i) => (
-                                                                            <td key={i} className="p-3 border border-white/10 font-bold text-red-400 cursor-help" title={SHI_SHEN_DESCRIPTIONS[c.zhuXing === '元男' ? '日主' : c.zhuXing] || ''}>
-                                                                                {c.zhuXing === '元男' ? '日主' : c.zhuXing}
-                                                                            </td>
-                                                                        ))}
+                                                                        <td 
+                                                                            className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" 
+                                                                            title={GENERAL_BAZI_DESCRIPTIONS['主星']}
+                                                                            onClick={(e) => handleToggleTooltip('主星', GENERAL_BAZI_DESCRIPTIONS['主星'], e)}
+                                                                        >
+                                                                            主星
+                                                                        </td>
+                                                                        {columns.map((c, i) => {
+                                                                            const val = c.zhuXing === '元男' ? '日主' : c.zhuXing;
+                                                                            const desc = SHI_SHEN_DESCRIPTIONS[val] || '';
+                                                                            return (
+                                                                                <td 
+                                                                                    key={i} 
+                                                                                    className="p-3 border border-white/10 font-bold text-red-400 cursor-help" 
+                                                                                    title={desc}
+                                                                                    onClick={(e) => handleToggleTooltip(val, desc, e)}
+                                                                                >
+                                                                                    {val}
+                                                                                </td>
+                                                                            );
+                                                                        })}
                                                                     </tr>
                                                                     {/* Tian Gan */}
                                                                     <tr>
@@ -698,38 +733,74 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                     </tr>
                                                                     {/* Hidden Stems */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['藏干']}>藏干</td>
+                                                                        <td 
+                                                                            className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" 
+                                                                            title={GENERAL_BAZI_DESCRIPTIONS['藏干']}
+                                                                            onClick={(e) => handleToggleTooltip('藏干', GENERAL_BAZI_DESCRIPTIONS['藏干'], e)}
+                                                                        >
+                                                                            藏干
+                                                                        </td>
                                                                         {columns.map((c, i) => (
                                                                             <td key={i} className="p-3 border border-white/10 align-top h-24">
                                                                                 <div className="flex flex-col gap-1 text-xs items-center justify-center h-full">
-                                                                                    {c.hidden.map((h, idx) => (
-                                                                                        <div key={idx} className="flex items-center gap-1">
-                                                                                             <span className={getWuXing(h) === '火' ? 'text-red-400' : getWuXing(h) === '木' ? 'text-green-400' : getWuXing(h) === '金' ? 'text-yellow-400' : getWuXing(h) === '水' ? 'text-blue-400' : 'text-yellow-600'}>
-                                                                                                 ({h})
-                                                                                             </span>
-                                                                                             <span className="text-gray-500 scale-90 cursor-help border-b border-dotted border-white/10" title={SHI_SHEN_DESCRIPTIONS[getShiShen(dayMaster, h)] || ''}>
-                                                                                                 {getShiShen(dayMaster, h)}
-                                                                                             </span>
-                                                                                        </div>
-                                                                                    ))}
+                                                                                    {c.hidden.map((h, idx) => {
+                                                                                        const ss = getShiShen(dayMaster, h);
+                                                                                        const desc = SHI_SHEN_DESCRIPTIONS[ss] || '';
+                                                                                        return (
+                                                                                            <div key={idx} className="flex items-center gap-1">
+                                                                                                 <span className={getWuXing(h) === '火' ? 'text-red-400' : getWuXing(h) === '木' ? 'text-green-400' : getWuXing(h) === '金' ? 'text-yellow-400' : getWuXing(h) === '水' ? 'text-blue-400' : 'text-yellow-600'}>
+                                                                                                     ({h})
+                                                                                                 </span>
+                                                                                                 <span 
+                                                                                                    className="text-gray-500 scale-90 cursor-help border-b border-dotted border-white/10" 
+                                                                                                    title={desc}
+                                                                                                    onClick={(e) => handleToggleTooltip(ss, desc, e)}
+                                                                                                 >
+                                                                                                     {ss}
+                                                                                                 </span>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })}
                                                                                 </div>
                                                                             </td>
                                                                         ))}
                                                                     </tr>
                                                                     {/* Di Shi */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['地勢']}>地勢</td>
+                                                                        <td 
+                                                                            className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" 
+                                                                            title={GENERAL_BAZI_DESCRIPTIONS['地勢']}
+                                                                            onClick={(e) => handleToggleTooltip('地勢', GENERAL_BAZI_DESCRIPTIONS['地勢'], e)}
+                                                                        >
+                                                                            地勢
+                                                                        </td>
                                                                         {columns.map((c, i) => (
-                                                                            <td key={i} className="p-3 border border-white/10 font-medium cursor-help hover:text-mystic-gold transition-colors" title={DI_SHI_DESCRIPTIONS[c.diShi] || ''}>
+                                                                            <td 
+                                                                                key={i} 
+                                                                                className="p-3 border border-white/10 font-medium cursor-help hover:text-mystic-gold transition-colors" 
+                                                                                title={DI_SHI_DESCRIPTIONS[c.diShi] || ''}
+                                                                                onClick={(e) => handleToggleTooltip(c.diShi, DI_SHI_DESCRIPTIONS[c.diShi] || '', e)}
+                                                                            >
                                                                                 {c.diShi}
                                                                             </td>
                                                                         ))}
                                                                     </tr>
                                                                     {/* Na Yin */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['納音']}>納音</td>
+                                                                        <td 
+                                                                            className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" 
+                                                                            title={GENERAL_BAZI_DESCRIPTIONS['納音']}
+                                                                            onClick={(e) => handleToggleTooltip('納音', GENERAL_BAZI_DESCRIPTIONS['納音'], e)}
+                                                                        >
+                                                                            納音
+                                                                        </td>
                                                                         {columns.map((c, i) => (
-                                                                            <td key={i} className="p-1 md:p-3 border border-white/10 text-xs text-gray-400 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['納音']}>
+                                                                            <td 
+                                                                                key={i} 
+                                                                                className="p-1 md:p-3 border border-white/10 text-xs text-gray-400 cursor-help" 
+                                                                                title={GENERAL_BAZI_DESCRIPTIONS['納音']}
+                                                                                onClick={(e) => handleToggleTooltip('納音', GENERAL_BAZI_DESCRIPTIONS['納音'], e)}
+                                                                            >
                                                                                 {c.naYin}
                                                                             </td>
                                                                         ))}
@@ -753,15 +824,19 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                             return (
                                                                                 <td key={i} className="p-2 border border-white/10 text-xs align-top">
                                                                                     <div className="flex flex-col gap-1 items-center">
-                                                                                        {stars.map((s, idx) => (
-                                                                                            <span 
-                                                                                                key={idx} 
-                                                                                                title={SHEN_SHA_DESCRIPTIONS[s] || ''}
-                                                                                                className="bg-white/5 px-2 py-0.5 rounded text-gray-300 w-full text-center hover:bg-white/10 transition-all cursor-help border-b border-dotted border-white/20"
-                                                                                            >
-                                                                                                {s}
-                                                                                            </span>
-                                                                                        ))}
+                                                                                        {stars.map((s, idx) => {
+                                                                                            const desc = SHEN_SHA_DESCRIPTIONS[s] || '';
+                                                                                            return (
+                                                                                                <span 
+                                                                                                    key={idx} 
+                                                                                                    title={desc}
+                                                                                                    className="bg-white/5 px-2 py-0.5 rounded text-gray-300 w-full text-center hover:bg-white/10 transition-all cursor-help border-b border-dotted border-white/20"
+                                                                                                    onClick={(e) => handleToggleTooltip(s, desc, e)}
+                                                                                                >
+                                                                                                    {s}
+                                                                                                </span>
+                                                                                            );
+                                                                                        })}
                                                                                         {stars.length === 0 && <span className="text-gray-600">-</span>}
                                                                                     </div>
                                                                                 </td>
@@ -806,6 +881,30 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                 })}
                                                             </div>
                                                         </div>
+
+                                                        {/* Mobile Tooltip Overlay */}
+                                                        {activeTooltip && (
+                                                            <div 
+                                                                className="fixed bottom-20 left-4 right-4 bg-zinc-900 border border-mystic-gold/50 rounded-lg p-4 shadow-2xl z-50 animate-fade-in-up md:max-w-md md:mx-auto"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <div className="flex justify-between items-start mb-2">
+                                                                    <h5 className="text-mystic-gold font-bold flex items-center gap-2">
+                                                                        <BookOpen className="w-4 h-4" />
+                                                                        {activeTooltip.title}
+                                                                    </h5>
+                                                                    <button 
+                                                                        onClick={() => setActiveTooltip(null)}
+                                                                        className="text-gray-500 hover:text-white"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </div>
+                                                                <p className="text-gray-300 text-sm leading-relaxed">
+                                                                    {activeTooltip.desc}
+                                                                </p>
+                                                            </div>
+                                                        )}
 
                                                         {/* Bone Weight (Cheng Gu) Section */}
                                                         {(() => {
