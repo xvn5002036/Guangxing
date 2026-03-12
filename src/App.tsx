@@ -7,7 +7,6 @@ import TempleCalendar from './components/TempleCalendar';
 import DeityInfo from './components/DeityInfo';
 import TempleHistory from './components/TempleHistory';
 import Organization from './components/Organization';
-import Talisman from './components/Talisman';
 import Services from './components/Services';
 import LightingWall from './components/LightingWall';
 import Gallery from './components/Gallery';
@@ -80,7 +79,6 @@ const App: React.FC = () => {
               <LightingWall />
               <News />
               <TempleCalendar />
-              <Talisman />
               <Services />
               <Gallery />
               <FAQ />

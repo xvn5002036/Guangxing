@@ -61,15 +61,6 @@ export interface NewsItem {
   category: string;
 }
 
-export type TalismanType = 'SAFETY' | 'WEALTH' | 'HEALTH' | 'LOVE';
-
-export interface TalismanConfig {
-  type: TalismanType;
-  name: string;
-  label: string;
-  script: string;
-}
-
 export interface TempleEvent {
   id: string;
   date: string;
