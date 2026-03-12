@@ -1,18 +1,22 @@
 import React from 'react';
-import { Calendar, CheckCircle2, XCircle, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
+import { Solar, Lunar } from 'lunar-javascript';
 
 interface AlmanacProps {
   onOpenAdmin?: () => void;
 }
 
 const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
-  // In a real app, this would be calculated or fetched. Hardcoded for demo.
   const today = new Date();
+  const solar = Solar.fromDate(today);
+  const lunar = solar.getLunar();
+  
   const dateStr = today.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-  const lunarDate = "農曆 九月 十五日"; // Mocked
+  const lunarDate = `農曆 ${lunar.getMonthInChinese()}月 ${lunar.getDayInChinese()}`;
+  const suiCi = `歲次 ${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日`;
 
-  const goodActivities = ['祭祀', '祈福', '求嗣', '開光', '出行'];
-  const badActivities = ['動土', '安葬', '開倉'];
+  const goodActivities = lunar.getDayYi();
+  const badActivities = lunar.getDayJi();
 
   return (
     <section id="almanac" className="relative -mt-20 z-20 container mx-auto px-6 mb-24">
@@ -27,7 +31,7 @@ const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
           <div>
             <h3 className="text-xl font-bold text-white mb-1">{dateStr}</h3>
             <p className="text-mystic-gold font-medium">{lunarDate}</p>
-            <p className="text-gray-500 text-sm mt-1">歲次 癸卯年 壬戌月 戊申日</p>
+            <p className="text-gray-500 text-sm mt-1">{suiCi}</p>
           </div>
         </div>
 
