@@ -7,8 +7,6 @@ import TempleCalendar from './components/TempleCalendar';
 import DeityInfo from './components/DeityInfo';
 import TempleHistory from './components/TempleHistory';
 import Organization from './components/Organization';
-// import Ritual from './components/Ritual';
-// import Oracle from './components/Oracle';
 import Talisman from './components/Talisman';
 import Services from './components/Services';
 import LightingWall from './components/LightingWall';
@@ -20,10 +18,7 @@ import Footer from './components/Footer';
 import BackgroundEffects from './components/BackgroundEffects';
 import AdminPanel from './components/AdminPanel';
 import MemberCenter from './components/MemberCenter';
-import { DataProvider, useData } from './context/DataContext';
-import { isSupabaseConfigured } from './services/supabase';
-import SupabaseSetupWizard from './components/SupabaseSetupWizard';
-
+import { useData } from './context/DataContext';
 import { ScriptureShop } from './components/ScriptureShop';
 import MarqueeAnnouncement from './components/MarqueeAnnouncement';
 
@@ -35,7 +30,6 @@ const App: React.FC = () => {
 
   return (
     <>
-      <SupabaseSetupWizard />
       <div className="min-h-screen flex flex-col bg-mystic-dark relative">
         <BackgroundEffects />
 

@@ -4,12 +4,6 @@ export interface NavItem {
   href: string;
 }
 
-export interface OracleResponse {
-  poem: string;
-  interpretation: string;
-  advice: string;
-}
-
 export interface ServiceItem {
   id: string;
   title: string;
