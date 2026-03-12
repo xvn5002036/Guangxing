@@ -7,7 +7,7 @@ import TempleCalendar from './components/TempleCalendar';
 import DeityInfo from './components/DeityInfo';
 import TempleHistory from './components/TempleHistory';
 import Organization from './components/Organization';
-import Ritual from './components/Ritual';
+// import Ritual from './components/Ritual';
 // import Oracle from './components/Oracle';
 import Talisman from './components/Talisman';
 import Services from './components/Services';
@@ -25,6 +25,7 @@ import { isSupabaseConfigured } from './services/supabase';
 import SupabaseSetupWizard from './components/SupabaseSetupWizard';
 
 import { ScriptureShop } from './components/ScriptureShop';
+import MarqueeAnnouncement from './components/MarqueeAnnouncement';
 
 const App: React.FC = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -42,37 +43,40 @@ const App: React.FC = () => {
           <AdminPanel onClose={() => setIsAdminOpen(false)} />
         ) : view === 'MEMBER' ? (
           <>
-            <Header 
-              onNavigateToMember={() => setView('MEMBER')} 
+            <Header
+              onNavigateToMember={() => setView('MEMBER')}
               onNavigateToShop={() => setView('SHOP')}
-              onOpenAdmin={() => setIsAdminOpen(true)} 
+              onOpenAdmin={() => setIsAdminOpen(true)}
             />
+            <MarqueeAnnouncement />
             <MemberCenter onBack={() => setView('HOME')} />
           </>
         ) : view === 'SHOP' ? (
           <>
-            <Header 
-              onNavigateToMember={() => setView('MEMBER')} 
+            <Header
+              onNavigateToMember={() => setView('MEMBER')}
               onNavigateToShop={() => setView('SHOP')}
-              onOpenAdmin={() => setIsAdminOpen(true)} 
+              onOpenAdmin={() => setIsAdminOpen(true)}
             />
+            <MarqueeAnnouncement />
             <main className="flex-grow pt-20">
               <ScriptureShop userId={user?.id} />
               <div className="container mx-auto px-6 py-10 text-center">
-                 <button onClick={() => setView('HOME')} className="text-gray-500 hover:text-mystic-gold transition-all text-sm">
-                   ← 返回首頁
-                 </button>
+                <button onClick={() => setView('HOME')} className="text-gray-500 hover:text-mystic-gold transition-all text-sm">
+                  ← 返回首頁
+                </button>
               </div>
             </main>
             <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
           </>
         ) : (
           <div className="relative z-10">
-            <Header 
-              onNavigateToMember={() => setView('MEMBER')} 
+            <Header
+              onNavigateToMember={() => setView('MEMBER')}
               onNavigateToShop={() => setView('SHOP')}
-              onOpenAdmin={() => setIsAdminOpen(true)} 
+              onOpenAdmin={() => setIsAdminOpen(true)}
             />
+            <MarqueeAnnouncement />
             <main className="flex-grow">
               <Hero />
               <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
@@ -82,7 +86,6 @@ const App: React.FC = () => {
               <LightingWall />
               <News />
               <TempleCalendar />
-              <Ritual />
               <Talisman />
               <Services />
               <Gallery />

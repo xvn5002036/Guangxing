@@ -10,8 +10,8 @@ const navItems: NavItem[] = [
   { label: '組織架構', href: '#organization' },
   { label: '線上燈牆', href: '#lighting-wall' },
   { label: '行事曆', href: '#calendar' },
-  { label: '線上上香', href: '#ritual' },
   // { label: '靈籤擲筊', href: '#oracle' }, // Removed by request
+  // { label: '線上上香', href: '#ritual' }, // Removed by request
   { label: '濟世服務', href: '#services' },
   { label: '活動花絮', href: '#gallery' },
   { label: '數位商城', href: '#shop' },
@@ -186,13 +186,13 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
 
         {/* Full Screen Menu - Visible on ALL screens when open */}
         {isMenuOpen && (
-          <div className="fixed inset-0 w-screen h-screen bg-mystic-dark/98 z-[60] flex flex-col justify-center items-center backdrop-blur-xl animate-fade-in">
-            <div className="flex flex-col w-[min(90%,450px)] px-6 gap-[1vh]">
+          <div className="fixed inset-0 w-screen h-screen bg-mystic-dark/98 z-[60] flex flex-col items-center backdrop-blur-xl animate-fade-in overflow-y-auto pb-16 pt-24">
+            <div className="flex flex-col w-[min(90%,450px)] px-6 gap-[1vh] my-auto">
               {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-[clamp(1rem,4.5vw,1.5rem)] md:text-[clamp(1.2rem,3vh,2rem)] text-gray-200 hover:text-mystic-gold py-3 md:py-4 tracking-[0.3em] transition-colors border-b border-white/5 w-full text-center cursor-pointer font-medium"
+                  className="text-[clamp(1rem,4.5vw,1.5rem)] md:text-[clamp(1.1rem,2.5vh,1.8rem)] text-gray-200 hover:text-mystic-gold py-2 md:py-3 tracking-[0.3em] transition-colors border-b border-white/5 w-full text-center cursor-pointer font-medium"
                   onClick={(e) => handleNavClick(e, item.href)}
                 >
                   {item.label}
@@ -209,7 +209,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                     setIsAuthOpen(true);
                   }
                 }}
-                className="mt-4 text-center text-mystic-gold border border-mystic-gold py-3 rounded tracking-widest hover:bg-mystic-gold hover:text-black transition-colors"
+                className="mt-6 text-center text-mystic-gold border border-mystic-gold py-3 rounded tracking-widest hover:bg-mystic-gold hover:text-black transition-colors"
               >
                 {user ? '會員中心' : '會員登入 / 註冊'}
               </button>
@@ -220,7 +220,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                   setIsMenuOpen(false);
                   if (onOpenAdmin) onOpenAdmin();
                 }}
-                className="text-center text-gray-500 text-sm tracking-widest hover:text-white transition-colors"
+                className="mt-4 text-center text-gray-500 text-sm tracking-widest hover:text-white transition-colors pb-4"
               >
                 <div className="flex items-center justify-center gap-2">
                   <Lock size={14} />

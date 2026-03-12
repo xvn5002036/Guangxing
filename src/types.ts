@@ -264,3 +264,11 @@ export interface Notification {
   createdAt: string;
   link?: string;
 }
+
+export interface Announcement {
+  id: string;
+  content: string;
+  is_active: boolean;
+  priority: number;
+  created_at?: string;
+}

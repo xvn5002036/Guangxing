@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem, DigitalProduct, ScriptureOrder, Notification } from '../types';
+import { NewsItem, TempleEvent, ServiceItem, GalleryItem, GalleryAlbum, Registration, SiteSettings, OrgMember, FAQItem, DigitalProduct, ScriptureOrder, Notification, Announcement } from '../types';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 // Helper to get formatted date for current month
@@ -107,7 +107,7 @@ interface DataContextType {
     orgMembers: OrgMember[];
     faqs: FAQItem[];
     siteSettings: SiteSettings;
-    
+
     // Members & Access
     profiles: any[]; // Using any to avoid import cycles or complex type mapping
     purchases: any[];
@@ -156,7 +156,7 @@ interface DataContextType {
     getRegistrationsByPhone: (phone: string) => Registration[];
 
     updateSiteSettings: (settings: Partial<SiteSettings>) => void;
-    
+
     // Scriptures
     scriptures: DigitalProduct[];
     scriptureOrders: ScriptureOrder[];
@@ -172,6 +172,12 @@ interface DataContextType {
     notifications: Notification[];
     markNotificationAsRead: (id: string) => Promise<void>;
     deleteNotification: (id: string) => Promise<void>;
+
+    // Announcements
+    announcements: Announcement[];
+    addAnnouncement: (item: Omit<Announcement, 'id' | 'created_at'>) => Promise<void>;
+    updateAnnouncement: (id: string, item: Partial<Announcement>) => Promise<void>;
+    deleteAnnouncement: (id: string) => Promise<void>;
 
     resetData: () => void;
 }
@@ -191,7 +197,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [scriptures, setScriptures] = useState<DigitalProduct[]>([]);
     const [scriptureOrders, setScriptureOrders] = useState<ScriptureOrder[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
     // Member Management State
     const [profiles, setProfiles] = useState<any[]>([]);
     const [purchases, setPurchases] = useState<any[]>([]);
@@ -274,14 +281,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
                 const { data, error } = await supabase.from('site_settings').select('*').maybeSingle();
                 if (error) {
-                     // Ignore AbortError
-                     if (error.message?.includes('AbortError') || error.details?.includes('AbortError') || error.code === '20') {
+                    // Ignore AbortError
+                    if (error.message?.includes('AbortError') || error.details?.includes('AbortError') || error.code === '20') {
                         return;
-                     }
-                     console.error("Error fetching settings:", error);
-                     return;
+                    }
+                    console.error("Error fetching settings:", error);
+                    return;
                 }
-                
+
                 if (data) {
                     // Need to map snake_case to camelCase manually here because Settings has many fields
                     const mappedSettings: SiteSettings = {
@@ -345,6 +352,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => syncTable('gallery_albums', setGalleryAlbums, 'created_at', false), []);
     useEffect(() => syncTable('digital_products', setScriptures, 'created_at', false), []);
     useEffect(() => syncTable('notifications', setNotifications, 'created_at', false), []);
+    useEffect(() => syncTable('announcements', setAnnouncements, 'created_at', false), []);
     // useEffect(() => syncTable('profiles', setProfiles, 'created_at', false), []);
     // useEffect(() => syncTable('purchases', setPurchases, 'created_at', false), []);
 
@@ -699,6 +707,31 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setFaqs(prev => prev.filter(item => item.id !== id));
     };
 
+    const addAnnouncement = async (item: Omit<Announcement, 'id' | 'created_at'>) => {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('announcements').insert([item]);
+            if (error) throw error;
+        } else {
+            const newItem = { ...item, id: `local_${Date.now()}` };
+            setAnnouncements(prev => [newItem, ...prev]);
+        }
+    };
+    const updateAnnouncement = async (id: string, item: Partial<Announcement>) => {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('announcements').update(item).eq('id', id);
+            if (error) throw error;
+        } else {
+            setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...item } : a));
+        }
+    };
+    const deleteAnnouncement = async (id: string) => {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('announcements').delete().eq('id', id);
+            if (error) throw error;
+        }
+        setAnnouncements(prev => prev.filter(item => item.id !== id));
+    };
+
     const addRegistration = async (reg: Omit<Registration, 'id' | 'createdAt'>) => {
         const newReg = {
             ...reg,
@@ -752,7 +785,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // LINE Notify Integration (Fire and Forget)
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 const apiBase = isLocal ? 'http://localhost:3001' : ''; // Relative path for Vercel, absolute for local dev
-                
+
                 fetch(`${apiBase}/api/line-notify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -893,22 +926,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             method: 'DELETE'
         });
         if (!response.ok) {
-        if (!response.ok) {
-            let errorData;
-            try {
-                errorData = await response.json();
-            } catch (e) {
-                console.error("Failed to parse error JSON:", e);
-                // Try to get text, or default to status text
-                const text = await response.text().catch(() => '');
-                throw new Error(`Server Error (${response.status}): ${text || response.statusText}`);
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    console.error("Failed to parse error JSON:", e);
+                    // Try to get text, or default to status text
+                    const text = await response.text().catch(() => '');
+                    throw new Error(`Server Error (${response.status}): ${text || response.statusText}`);
+                }
+                const err: any = new Error(errorData.details || errorData.error || '刪除失敗');
+                if (errorData.code) err.code = errorData.code;
+                throw err;
             }
-            const err: any = new Error(errorData.details || errorData.error || '刪除失敗');
-            if (errorData.code) err.code = errorData.code;
-            throw err;
         }
-        }
-        
+
         // Update local state immediately for fast UI
         setScriptures(prev => prev.filter(s => s.id !== id));
     };
@@ -972,13 +1005,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .from('orders')
                 .delete()
                 .eq('id', id);
-            
+
             if (error) {
                 console.error("Error deleting order:", error);
                 throw error;
             }
         }
-        
+
         // Update local state immediately for fast UI
         setScriptureOrders(prev => prev.filter(o => o.id !== id));
     };
@@ -989,7 +1022,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (updates.userId) { dbUpdates.user_id = updates.userId; delete dbUpdates.userId; }
             if (updates.productId) { dbUpdates.product_id = updates.productId; delete dbUpdates.productId; }
             if (updates.merchantTradeNo) { dbUpdates.merchant_trade_no = updates.merchantTradeNo; delete dbUpdates.merchantTradeNo; }
-            
+
             // If manually setting to PAID, add payment info
             if (updates.status === 'PAID') {
                 dbUpdates.payment_date = new Date().toISOString();
@@ -1006,7 +1039,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 console.error("Order update failed:", error);
                 throw error;
             }
-            
+
             // If count is 0, it means RLS prevented update or ID not found
             if (count === 0) {
                 console.warn("Order update returned 0 rows affected. RLS may be blocking.");
@@ -1024,14 +1057,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             product_id: order.productId,
                             order_id: id
                         }, { onConflict: 'user_id,product_id' });
-                    
+
                     if (fulfillError) {
                         console.error("Fulfillment failed:", fulfillError);
                         alert(`【發貨失敗】\n原因：${fulfillError.message}\n詳情：${fulfillError.details || '無'}\n請確認 SQL 腳本 fix_rls.sql 已執行。`);
                     }
                 }
             }
-            
+
             // Refetch to ensure consistency
             await fetchScriptureOrders();
         } else {
@@ -1064,61 +1097,61 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const grantScriptureAccess = async (userId: string, productId: string) => {
         console.log(`Granting access: User ${userId}, Product ${productId}`);
         if (isSupabaseConfigured()) {
-             // Upsert to avoid duplicates. Use select to get the inserted/returned row for state update.
-             const { data, error } = await supabase.from('purchases').upsert({
-                 user_id: userId,
-                 product_id: productId,
-                 order_id: null // Manual grant
-             }, { onConflict: 'user_id,product_id' }).select().single();
-             
-             if (error) {
-                 console.error("Grant access error:", error);
-                 throw error;
-             }
-             
-             // Immediate state update
-             if (data) {
-                 // Map snake_case to camelCase for local consistency if needed, 
-                 // but existing syncTable maps to camelCase automatically.
-                 // We should match the format used by syncTable (which maps keys).
-                 // Let's manually reconstruct it or check syncTable mapping.
-                 // syncTable uses a helper: const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
-                 
-                 const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
-                 const mapKeys = (o: any) => {
-                     const newO: any = {};
-                     for (const key in o) {
-                         newO[toCamel(key)] = o[key];
-                     }
-                     return newO;
-                 };
-                 
-                 const mappedPurchase = mapKeys(data);
-                 setPurchases(prev => {
-                     // Avoid duplicates in state
-                     if (prev.some(p => p.id === mappedPurchase.id)) return prev;
-                     return [...prev, mappedPurchase];
-                 });
-             }
+            // Upsert to avoid duplicates. Use select to get the inserted/returned row for state update.
+            const { data, error } = await supabase.from('purchases').upsert({
+                user_id: userId,
+                product_id: productId,
+                order_id: null // Manual grant
+            }, { onConflict: 'user_id,product_id' }).select().single();
+
+            if (error) {
+                console.error("Grant access error:", error);
+                throw error;
+            }
+
+            // Immediate state update
+            if (data) {
+                // Map snake_case to camelCase for local consistency if needed, 
+                // but existing syncTable maps to camelCase automatically.
+                // We should match the format used by syncTable (which maps keys).
+                // Let's manually reconstruct it or check syncTable mapping.
+                // syncTable uses a helper: const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
+
+                const toCamel = (s: string) => s.replace(/(_\w)/g, k => k[1].toUpperCase());
+                const mapKeys = (o: any) => {
+                    const newO: any = {};
+                    for (const key in o) {
+                        newO[toCamel(key)] = o[key];
+                    }
+                    return newO;
+                };
+
+                const mappedPurchase = mapKeys(data);
+                setPurchases(prev => {
+                    // Avoid duplicates in state
+                    if (prev.some(p => p.id === mappedPurchase.id)) return prev;
+                    return [...prev, mappedPurchase];
+                });
+            }
         } else {
-             // Local demo logic
-             const newPurchase = { id: `local_p_${Date.now()}`, userId: userId, productId: productId, createdAt: new Date().toISOString() };
-             setPurchases(prev => [...prev, newPurchase]);
+            // Local demo logic
+            const newPurchase = { id: `local_p_${Date.now()}`, userId: userId, productId: productId, createdAt: new Date().toISOString() };
+            setPurchases(prev => [...prev, newPurchase]);
         }
     };
 
     const revokeScriptureAccess = async (userId: string, productId: string) => {
         console.log(`Revoking access: User ${userId}, Product ${productId}`);
         if (isSupabaseConfigured()) {
-             const { error } = await supabase.from('purchases').delete().match({ user_id: userId, product_id: productId });
-             if (error) {
-                 console.error("Revoke access error:", error);
-                 throw error;
-             }
-             // Immediate state update: Remove from local state
-             setPurchases(prev => prev.filter(p => !( (p.userId === userId || p.user_id === userId) && (p.productId === productId || p.product_id === productId) )));
+            const { error } = await supabase.from('purchases').delete().match({ user_id: userId, product_id: productId });
+            if (error) {
+                console.error("Revoke access error:", error);
+                throw error;
+            }
+            // Immediate state update: Remove from local state
+            setPurchases(prev => prev.filter(p => !((p.userId === userId || p.user_id === userId) && (p.productId === productId || p.product_id === productId))));
         } else {
-             setPurchases(prev => prev.filter(p => !( (p.userId === userId || p.user_id === userId) && (p.productId === productId || p.product_id === productId) )));
+            setPurchases(prev => prev.filter(p => !((p.userId === userId || p.user_id === userId) && (p.productId === productId || p.product_id === productId))));
         }
     };
 
@@ -1145,11 +1178,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Optimization: Avoid re-rendering if user ID hasn't changed (prevents loops on TOKEN_REFRESHED)
             setUser(prevUser => {
-                if (session?.user?.id === prevUser?.id) return prevUser; 
+                if (session?.user?.id === prevUser?.id) return prevUser;
                 console.log(`Auth State Changed: ${event} -> updating user state`);
                 return session?.user ?? null;
             });
-            
+
             // Optimization: Only fetch profile on sign-in or initial session to avoid 429 loops
             if (session?.user) {
                 if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
@@ -1219,7 +1252,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return (
         <DataContext.Provider value={{
-            news, events, services, gallery, registrations, orgMembers, faqs, siteSettings,
+            news, events, services, gallery, registrations, orgMembers, faqs, siteSettings, announcements,
             // Auth
             user, userProfile, signOut, fetchUserProfile,
             addNews, updateNews, deleteNews,
@@ -1230,13 +1263,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             galleryAlbums,
             addOrgMember, updateOrgMember, deleteOrgMember,
             addFaq, updateFaq, deleteFaq,
+            addAnnouncement, updateAnnouncement, deleteAnnouncement,
             addRegistration, updateRegistration, deleteRegistration, getRegistrationsByPhone,
 
             updateSiteSettings,
-            
+
             // Members & Access
             profiles, purchases, grantScriptureAccess, revokeScriptureAccess,
-            
+
             scriptures, scriptureOrders, addScripture, updateScripture, deleteScripture, deleteScriptureWithOrders, fetchScriptureOrders, updateScriptureOrder, deleteScriptureOrder,
             notifications, markNotificationAsRead, deleteNotification,
             resetData

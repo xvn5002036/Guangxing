@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>池府王爺 - 新莊武壇廣行宮</title>
-  
+
   <!-- SEO Meta Tags -->
   <meta name="description" content="新莊武壇廣行宮 - 主祀池府王爺。提供線上三柱香、聖誕點燈、問事、補財庫、祭改、祈福法會等服務。結合傳統信仰與現代科技，讓信眾隨時隨地感受神恩。" />
   <meta name="keywords" content="新莊武壇, 廣行宮, 池府王爺, 線上參拜, 線上點燈, 八字算命, 補財庫, 問事, 祭改, 台北廟宇, 新莊廟宇, 道教信仰" />
@@ -67,6 +67,7 @@
             'toss': 'toss 0.8s ease-in-out infinite',
             'fade-in': 'fadeIn 0.5s ease-out forwards',
             'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+            'marquee': 'marquee 25s linear infinite',
           },
           keyframes: {
             float: {
@@ -91,6 +92,10 @@
             fadeInUp: {
               '0%': { opacity: '0', transform: 'translateY(20px)' },
               '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            marquee: {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-100%)' }
             }
           }
         }

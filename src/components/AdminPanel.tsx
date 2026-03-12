@@ -27,9 +27,9 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
 
     if (inline) {
         return (
-            <code 
-                className={`${className} cursor-pointer hover:bg-mystic-gold/20 active:bg-mystic-gold/40 transition-colors rounded px-1 relative group`} 
-                onClick={handleCopy} 
+            <code
+                className={`${className} cursor-pointer hover:bg-mystic-gold/20 active:bg-mystic-gold/40 transition-colors rounded px-1 relative group`}
+                onClick={handleCopy}
                 title="點擊複製 (Click to Copy)"
                 {...props}
             >
@@ -42,8 +42,8 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
     return (
         <div className="relative group my-4">
             <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                    onClick={handleCopy} 
+                <button
+                    onClick={handleCopy}
                     className="p-1.5 rounded bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white backdrop-blur-sm border border-white/10"
                     title="複製程式碼"
                 >
@@ -62,6 +62,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         news, addNews, updateNews, deleteNews,
         events, addEvent, updateEvent, deleteEvent,
         services, addService, updateService, deleteService,
+        announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement,
         gallery, galleryAlbums, addGalleryItem, addGalleryItems, updateGalleryItem, deleteGalleryItem,
         addGalleryAlbum, updateGalleryAlbum, deleteGalleryAlbum,
         registrations, updateRegistration, deleteRegistration,
@@ -75,7 +76,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         resetData, signOut
     } = useData();
 
-    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS' | 'SCRIPTURES' | 'ORDERS' | 'MEMBERS'>('DASHBOARD');
+    const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'GENERAL' | 'NEWS' | 'EVENTS' | 'SERVICES' | 'GALLERY' | 'REGISTRATIONS' | 'ORG' | 'FAQS' | 'SCRIPTURES' | 'ORDERS' | 'MEMBERS' | 'ANNOUNCEMENTS'>('DASHBOARD');
     const [generalSubTab, setGeneralSubTab] = useState<'VISUAL' | 'CONFIG'>('VISUAL');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -103,7 +104,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    
+
     // Ref for main content scrolling
     const mainContentRef = useRef<HTMLDivElement>(null);
 
@@ -127,9 +128,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         const after = text.substring(end);
 
         const newText = before + prefix + selection + suffix + after;
-        
+
         setEditForm({ ...editForm, content: newText });
-        
+
         setTimeout(() => {
             textarea.focus();
             textarea.setSelectionRange(start + prefix.length, end + prefix.length);
@@ -138,7 +139,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     // Generic Delete Handler
 
-    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'SCRIPTURE' | 'ORDER', id: string) => {
+    const handleDelete = async (type: 'NEWS' | 'EVENT' | 'SERVICE' | 'ORG' | 'FAQ' | 'REGISTRATION' | 'SCRIPTURE' | 'ORDER' | 'ANNOUNCEMENT', id: string) => {
         if (!window.confirm('確定要刪除此項目嗎？此動作無法復原。')) return;
 
         try {
@@ -148,6 +149,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
             else if (type === 'ORG') await deleteOrgMember(id);
             else if (type === 'FAQ') await deleteFaq(id);
+            else if (type === 'ANNOUNCEMENT') await deleteAnnouncement(id);
             else if (type === 'REGISTRATION') await deleteRegistration(id);
             else if (type === 'SCRIPTURE') await deleteScripture(id);
             else if (type === 'ORDER') await deleteScriptureOrder(id);
@@ -289,12 +291,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             case 'SERVICES': data = services; break;
             case 'ORG': data = orgMembers; break;
             case 'FAQS': data = faqs; break;
+            case 'ANNOUNCEMENTS': data = announcements; break;
             case 'SCRIPTURES': data = scriptures; break;
-             case 'GALLERY': data = galleryAlbums; break;
-            case 'ORDERS': 
-                 // Filter Orders based on status
-                 data = scriptureOrders.filter(o => o.status === orderFilter);
-                 break;
+            case 'GALLERY': data = galleryAlbums; break;
+            case 'ORDERS':
+                // Filter Orders based on status
+                data = scriptureOrders.filter(o => o.status === orderFilter);
+                break;
             default: data = [];
         }
         return data;
@@ -328,6 +331,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         if (activeTab === 'SERVICES') return check((item as any).title) || check((item as any).price);
         if (activeTab === 'ORG') return check((item as any).name) || check((item as any).title);
         if (activeTab === 'FAQS') return check((item as any).question) || check((item as any).answer);
+        if (activeTab === 'ANNOUNCEMENTS') return check((item as any).content);
         if (activeTab === 'SCRIPTURES') return check((item as any).title) || check((item as any).description);
         if (activeTab === 'ORDERS') {
             const i = item as any;
@@ -368,7 +372,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         }
     });
     const topProducts = Array.from(productSalesMap.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
-    
+
     // Notifications Filtering
     const unreadNotifications = notifications.filter(n => !n.isRead).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -377,8 +381,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         ...registrations.map(r => ({ ...r, type: 'RITUAL' as const })),
         ...scriptureOrders.map(o => ({ ...o, type: 'PRODUCT' as const, name: userProfile?.id === o.userId ? (userProfile?.name || '會員') : '購買信眾', serviceTitle: o.product?.title || '數位商品' }))
     ]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10);
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
 
 
     // Pagination Logic
@@ -427,6 +431,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     else if (activeTab === 'SERVICES') await deleteService(id);
                     else if (activeTab === 'ORG') await deleteOrgMember(id);
                     else if (activeTab === 'FAQS') await deleteFaq(id);
+                    else if (activeTab === 'ANNOUNCEMENTS') await deleteAnnouncement(id);
                     else if (activeTab === 'ORDERS') await deleteScriptureOrder(id);
                     else if (activeTab === 'SCRIPTURES') {
                         try {
@@ -461,7 +466,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
             if (failCount > 0) {
                 alert(`批次處理完成。成功刪除: ${successCount} 筆，失敗: ${failCount} 筆。\n\n提示：失敗原因通常是資料庫關聯限制（例如經文已有訂單，或活動已有報名）。請先刪除關聯資料後再重試。`);
             }
- else {
+            else {
                 alert('已完成批次刪除');
             }
         }
@@ -504,7 +509,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     .from('profiles')
                     .select('*')
                     .order('created_at', { ascending: false });
-                
+
                 if (profilesError) {
                     console.error('Error fetching profiles:', profilesError);
                     setAdminProfiles([]); // Ensure empty state on error
@@ -513,13 +518,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     const { data: purchasesData, error: purchasesError } = await supabase
                         .from('purchases')
                         .select('user_id'); // Lightweight fetch
-                    
+
                     const purchaseCounts: Record<string, number> = {};
                     if (!purchasesError && purchasesData) {
-                         purchasesData.forEach((p: any) => {
+                        purchasesData.forEach((p: any) => {
                             const uid = p.user_id || p.userId;
                             if (uid) purchaseCounts[uid] = (purchaseCounts[uid] || 0) + 1;
-                         });
+                        });
                     }
 
                     // Map snake_case to camelCase and add count
@@ -616,27 +621,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
     const handleEdit = (item: any) => {
         setEditingId(item.id);
-        
+
         let initialForm = { ...item };
 
         // Fix: Populate default fieldConfig for existing items if missing, 
         // ensuring the Admin UI reflects the actual defaults used by Frontend.
         if (!initialForm.fieldConfig) {
-             const baseEventConfig = siteSettings?.configEvent || { showBirth: true, showTime: false, showAddress: true, showIdNumber: true, showGender: true };
-             const baseLightConfig = siteSettings?.configLight || { showBirth: true, showTime: true, showAddress: true, showIdNumber: false };
-             const baseDonationConfig = siteSettings?.configDonation || { showBirth: false, showTime: false, showAddress: false, showIdNumber: false };
+            const baseEventConfig = siteSettings?.configEvent || { showBirth: true, showTime: false, showAddress: true, showIdNumber: true, showGender: true };
+            const baseLightConfig = siteSettings?.configLight || { showBirth: true, showTime: true, showAddress: true, showIdNumber: false };
+            const baseDonationConfig = siteSettings?.configDonation || { showBirth: false, showTime: false, showAddress: false, showIdNumber: false };
 
-             if (activeTab === 'EVENTS' || item.type === 'FESTIVAL' || item.type === 'RITUAL') {
-                 initialForm.fieldConfig = baseEventConfig;
-             } else if (activeTab === 'SERVICES') {
-                 if (item.type === 'LIGHT' || item.title?.includes('燈')) {
-                     initialForm.fieldConfig = baseLightConfig;
-                 } else if (item.type === 'DONATION' || item.title?.includes('隨喜') || item.title?.includes('捐獻')) {
-                     initialForm.fieldConfig = baseDonationConfig;
-                 }
-                 // Default service fallback if needed
-                 if (!initialForm.fieldConfig) initialForm.fieldConfig = baseLightConfig;
-             }
+            if (activeTab === 'EVENTS' || item.type === 'FESTIVAL' || item.type === 'RITUAL') {
+                initialForm.fieldConfig = baseEventConfig;
+            } else if (activeTab === 'SERVICES') {
+                if (item.type === 'LIGHT' || item.title?.includes('燈')) {
+                    initialForm.fieldConfig = baseLightConfig;
+                } else if (item.type === 'DONATION' || item.title?.includes('隨喜') || item.title?.includes('捐獻')) {
+                    initialForm.fieldConfig = baseDonationConfig;
+                }
+                // Default service fallback if needed
+                if (!initialForm.fieldConfig) initialForm.fieldConfig = baseLightConfig;
+            }
         }
 
         setEditForm(initialForm);
@@ -650,8 +655,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
 
     const handleSave = async () => {
-        // Validation: Required title OR selected files
-        if (!editForm.title && !editForm.name) {
+        // Validation
+        if (activeTab === 'ANNOUNCEMENTS') {
+            if (!editForm.content) {
+                alert('請填寫跑馬燈公告文字');
+                return;
+            }
+        } else if (activeTab === 'FAQS') {
+            if (!editForm.question || !editForm.answer) {
+                alert('請填寫問與答');
+                return;
+            }
+        } else if (!editForm.title && !editForm.name) {
             alert('請填寫標題或名稱');
             return;
         }
@@ -680,6 +695,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     if (isAdding) await addOrgMember(editForm); else await updateOrgMember(editingId!, editForm);
                 } else if (activeTab === 'FAQS') {
                     if (isAdding) await addFaq(editForm); else await updateFaq(editingId!, editForm);
+                } else if (activeTab === 'ANNOUNCEMENTS') {
+                    if (isAdding) await addAnnouncement(editForm); else await updateAnnouncement(editingId!, editForm);
                 } else if (activeTab === 'SCRIPTURES') {
                     if (isAdding) await addScripture(editForm); else await updateScripture(editingId!, editForm);
                 }
@@ -873,6 +890,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         { id: 'SERVICES', icon: Briefcase, label: '服務項目' },
                         { id: 'GALLERY', icon: Image, label: '活動花絮' },
                         { id: 'FAQS', icon: HelpCircle, label: '常見問題' },
+                        { id: 'ANNOUNCEMENTS', icon: FileText, label: '跑馬燈公告' },
                         { id: 'REGISTRATIONS', icon: Users, label: '報名管理' },
                         { id: 'SCRIPTURES', icon: BookOpen, label: '道藏藏書管理' },
                         { id: 'ORDERS', icon: ShoppingBag, label: '道藏收藏訂單' },
@@ -907,29 +925,32 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 activeTab === 'SERVICES' ? '服務項目設定' :
                                                     activeTab === 'FAQS' ? '常見問題管理' :
                                                         activeTab === 'SCRIPTURES' ? '數位商品管理 (經文/電子書)' :
-                                                            activeTab === 'ORDERS' ? '數位商品訂單紀錄' : 
-                                                                activeTab === 'MEMBERS' ? '會員資料與權限管理' : '活動花絮管理'}
+                                                            activeTab === 'ANNOUNCEMENTS' ? '即時跑馬燈公告管理' :
+                                                                activeTab === 'ORDERS' ? '數位商品訂單紀錄' :
+                                                                    activeTab === 'MEMBERS' ? '會員資料與權限管理' : '活動花絮管理'}
                     </h2>
                     <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-3">
                         {activeTab !== 'REGISTRATIONS' && activeTab !== 'ORDERS' && activeTab !== 'GENERAL' && activeTab !== 'DASHBOARD' && activeTab !== 'GALLERY' && activeTab !== 'MEMBERS' && (
-                            <button onClick={() => { 
-                                setEditingId(null); 
-                                setIsAdding(true); 
-                                const initialForm: any = 
-                                    activeTab === 'NEWS' ? { category: '公告' } : 
-                                    activeTab === 'ORG' ? { category: 'STAFF' } : 
-                                    activeTab === 'FAQS' ? {} : 
-                                    activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } : 
-                                    activeTab === 'SERVICES' ? { type: 'LIGHT', price: 0, fieldConfig: siteSettings.configLight } :
-                                    activeTab === 'EVENTS' ? { type: 'FESTIVAL', fieldConfig: siteSettings.configEvent } :
-                                    { type: 'FESTIVAL' };
-                                setEditForm(initialForm); 
+                            <button onClick={() => {
+                                setEditingId(null);
+                                setIsAdding(true);
+                                const initialForm: any =
+                                    activeTab === 'NEWS' ? { category: '公告' } :
+                                        activeTab === 'ORG' ? { category: 'STAFF' } :
+                                            activeTab === 'FAQS' ? {} :
+                                                activeTab === 'ANNOUNCEMENTS' ? { is_active: true, priority: 0 } :
+                                                    activeTab === 'SCRIPTURES' ? { file_type: 'PDF', category: '數位道藏' } :
+                                                        activeTab === 'SERVICES' ? { type: 'LIGHT', price: 0, fieldConfig: siteSettings.configLight } :
+                                                            activeTab === 'EVENTS' ? { type: 'FESTIVAL', fieldConfig: siteSettings.configEvent } :
+                                                                { type: 'FESTIVAL' };
+                                setEditForm(initialForm);
                             }} className="w-full md:w-auto justify-center bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-600 font-bold transition-all shadow-lg active:scale-95">
                                 <Plus size={18} /> {
                                     activeTab === 'SERVICES' ? '新增服務項目' :
-                                    activeTab === 'EVENTS' ? '新增活動' :
-                                    activeTab === 'NEWS' ? '新增消息' :
-                                    activeTab === 'SCRIPTURES' ? '新增藏書' : '新增項目'
+                                        activeTab === 'EVENTS' ? '新增活動' :
+                                            activeTab === 'NEWS' ? '新增消息' :
+                                                activeTab === 'ANNOUNCEMENTS' ? '新增公告' :
+                                                    activeTab === 'SCRIPTURES' ? '新增藏書' : '新增項目'
                                 }
                             </button>
                         )}
@@ -1015,10 +1036,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div key={notification.id} className="bg-white/5 p-3 rounded border border-white/5 flex justify-between items-start group hover:bg-white/10 transition-colors">
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                                                            notification.type === 'ORDER' ? 'bg-green-900 text-green-300' :
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${notification.type === 'ORDER' ? 'bg-green-900 text-green-300' :
                                                             notification.type === 'ALERT' ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'
-                                                        }`}>
+                                                            }`}>
                                                             {notification.type}
                                                         </span>
                                                         <span className="text-xs text-gray-500">{new Date(notification.createdAt).toLocaleDateString()}</span>
@@ -1026,7 +1046,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <h4 className="font-bold text-sm">{notification.title}</h4>
                                                     <p className="text-xs text-gray-400 mt-1">{notification.message}</p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => markNotificationAsRead(notification.id)}
                                                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded text-gray-400 hover:text-white transition-all"
                                                     title="標示為已讀"
@@ -1092,8 +1112,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="font-bold text-white">{ (item as any).name || '購買者' }</div>
-                                                    <div className="text-xs text-gray-500 mt-0.5">{ (item as any).serviceTitle || '數位商品' }</div>
+                                                    <div className="font-bold text-white">{(item as any).name || '購買者'}</div>
+                                                    <div className="text-xs text-gray-500 mt-0.5">{(item as any).serviceTitle || '數位商品'}</div>
                                                 </td>
                                                 <td className="p-4 font-mono text-mystic-gold">NT$ {item.amount.toLocaleString()}</td>
                                                 <td className="p-4 text-right">
@@ -1412,6 +1432,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">問題 (Question)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.question || ''} onChange={e => setEditForm({ ...editForm, question: e.target.value })} /></div>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">解答 (Answer)</label><textarea rows={5} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.answer || ''} onChange={e => setEditForm({ ...editForm, answer: e.target.value })} /></div>
                                         </>
+                                    ) : activeTab === 'ANNOUNCEMENTS' ? (
+                                        <>
+                                            <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">跑馬燈公告文字</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.content || ''} onChange={e => setEditForm({ ...editForm, content: e.target.value })} /></div>
+                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">排列優先度 (數字越大越前)</label><input type="number" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.priority || 0} onChange={e => setEditForm({ ...editForm, priority: parseInt(e.target.value) || 0 })} /></div>
+                                            <div className="space-y-1 flex items-center pt-6"><label className="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" className="w-5 h-5 bg-black border-white/10 text-mystic-gold focus:ring-mystic-gold" checked={editForm.is_active !== false} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} />啟用此公告</label></div>
+                                        </>
                                     ) : activeTab === 'SCRIPTURES' ? (
                                         <div className="md:col-span-2 space-y-8 bg-mystic-charcoal text-white p-8 rounded-lg border border-white/10 shadow-2xl">
                                             <div className="space-y-4">
@@ -1466,7 +1492,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-xs text-gray-500 uppercase tracking-widest">內文 (支援 Markdown 語法)</label>
-                                                    
+
                                                     {/* Markdown / Preview Toggle */}
                                                     <div className="flex gap-2 mb-2 border-b border-white/10">
                                                         <button
@@ -1511,25 +1537,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                                 </div>
                                                                 <div className="flex gap-1">
                                                                     <button type="button" onClick={() => handleInsert('[標題](連結网址)', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">連結</button>
-                                                                    <button type="button" onClick={() => handleInsert('![](', ')') } className="hover:text-white px-2 py-1 rounded bg-black/40">圖片</button>
+                                                                    <button type="button" onClick={() => handleInsert('![](', ')')} className="hover:text-white px-2 py-1 rounded bg-black/40">圖片</button>
                                                                     <button type="button" onClick={() => handleInsert('---\n', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">分隔線</button>
                                                                     <button type="button" onClick={() => handleInsert('| 標題1 | 標題2 |\n|---|---|\n| 內容1 | 內容2 |', '')} className="hover:text-white px-2 py-1 rounded bg-black/40">表格</button>
                                                                 </div>
                                                             </div>
-                                                            <textarea 
+                                                            <textarea
                                                                 ref={textareaRef}
-                                                                id="scripture-content-editor" 
-                                                                rows={18} 
-                                                                className="w-full bg-black border border-white/10 p-4 text-white focus:border-mystic-gold outline-none transition-all font-mono text-sm leading-relaxed" 
-                                                                value={editForm.content || ''} 
-                                                                onChange={e => setEditForm({ ...editForm, content: e.target.value })} 
-                                                                placeholder="# 在此輸入標題&#10;您可以使用上方工具列快速插入語法...&#10;&#10;**粗體重點**&#10;> 這是引用區塊" 
+                                                                id="scripture-content-editor"
+                                                                rows={18}
+                                                                className="w-full bg-black border border-white/10 p-4 text-white focus:border-mystic-gold outline-none transition-all font-mono text-sm leading-relaxed"
+                                                                value={editForm.content || ''}
+                                                                onChange={e => setEditForm({ ...editForm, content: e.target.value })}
+                                                                placeholder="# 在此輸入標題&#10;您可以使用上方工具列快速插入語法...&#10;&#10;**粗體重點**&#10;> 這是引用區塊"
                                                             />
                                                         </div>
                                                     ) : (
                                                         <div className="w-full bg-white text-black p-8 rounded min-h-[400px] overflow-y-auto">
                                                             <article className="prose prose-lg max-w-none">
-                                                                <ReactMarkdown 
+                                                                <ReactMarkdown
                                                                     rehypePlugins={[rehypeRaw]}
                                                                     components={{
                                                                         code: CodeBlock
@@ -1548,9 +1574,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-4">上傳圖片到經文</h4>
                                                 <div className="flex flex-col gap-4 bg-black/40 p-6 rounded border border-white/5">
                                                     <div className="flex items-center gap-4">
-                                                        <input 
-                                                            type="file" 
-                                                            accept="image/*" 
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
                                                             className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-mystic-gold/10 file:text-mystic-gold hover:file:bg-mystic-gold/20 cursor-pointer"
                                                             onChange={async (e) => {
                                                                 const file = e.target.files?.[0];
@@ -1592,7 +1618,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                             }} className="text-red-400 hover:bg-red-400/10 p-2 rounded transition-colors"><Trash2 size={16} /></button>
                                                         </div>
                                                     ))}
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             const fileInput = document.createElement('input');
                                                             fileInput.type = 'file';
@@ -1791,7 +1817,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                             <div className="text-xs text-gray-500 font-mono">{profile.email}</div>
                                                         </td>
                                                         <td className="p-4">
-                                                             {profile.gender === 'F' ? <span className="text-pink-400 font-bold">女</span> : <span className="text-blue-400 font-bold">男</span>}
+                                                            {profile.gender === 'F' ? <span className="text-pink-400 font-bold">女</span> : <span className="text-blue-400 font-bold">男</span>}
                                                         </td>
                                                         <td className="p-4 text-gray-400">
                                                             <div>{profile.phone || '-'}</div>
@@ -1806,25 +1832,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                             </span>
                                                         </td>
                                                         <td className="p-4 text-right">
-                                                            <button 
+                                                            <button
                                                                 onClick={async () => {
                                                                     setEditingId(profile.id);
                                                                     setEditForm({ ...profile });
                                                                     setIsAdding(true); // Reuse isAdding to show modal
-                                                                    
+
                                                                     // Fetch purchases for this user locally
                                                                     setIsLoadingPurchases(true);
                                                                     const { data, error } = await supabase
                                                                         .from('purchases')
                                                                         .select('*, digital_products(title, price)')
                                                                         .eq('user_id', profile.id);
-                                                                    
+
                                                                     if (error) {
                                                                         console.error("Error fetching user purchases:", error);
                                                                         setAdminPurchases([]);
                                                                     } else {
                                                                         // Map snake_case to camelCase
-                                                                         const mappedData = (data || []).map((p: any) => ({
+                                                                        const mappedData = (data || []).map((p: any) => ({
                                                                             id: p.id,
                                                                             userId: p.user_id,
                                                                             productId: p.product_id,
@@ -1882,53 +1908,53 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                 {isLoadingPurchases ? (
                                                     <div className="text-center py-4 text-gray-500"><Loader2 className="animate-spin inline mr-2" /> 載入權限資料中...</div>
                                                 ) : adminPurchases.length === 0 ? (
-                                                     <p className="text-sm text-gray-500 italic py-2">目前沒有任何權限</p>
+                                                    <p className="text-sm text-gray-500 italic py-2">目前沒有任何權限</p>
                                                 ) : (
                                                     adminPurchases.map((p: any) => {
-                                                    const product = scriptures.find(s => s.id === p.productId);
-                                                    const displayTitle = p.productTitle || product?.title || '未知藏書';
-                                                    return (
-                                                        <div key={p.id} className="flex justify-between items-center bg-black/30 p-3 rounded border border-white/5 hover:border-white/10 transition-colors">
-                                                            <div className="flex items-center gap-3">
-                                                                <BookOpen size={16} className="text-gray-500" />
-                                                                <span className="text-white font-bold">{displayTitle}</span>
-                                                            </div>
-                                                            <button 
-                                                                onClick={async () => {
-                                                                    if (window.confirm(`確定要移除「${displayTitle}」的閱讀權限嗎？`)) {
-                                                                        try {
-                                                                            await revokeScriptureAccess(editForm.id, p.productId || p.product_id);
-                                                                            setAdminPurchases(prev => prev.filter(item => item.id !== p.id)); // Update local state
-                                                                            
-                                                                            // Update main Member list count locally
-                                                                            setAdminProfiles(prev => prev.map(profile => 
-                                                                                profile.id === editForm.id 
-                                                                                    ? { ...profile, purchaseCount: Math.max(0, (profile.purchaseCount || 0) - 1) }
-                                                                                    : profile
-                                                                            ));
+                                                        const product = scriptures.find(s => s.id === p.productId);
+                                                        const displayTitle = p.productTitle || product?.title || '未知藏書';
+                                                        return (
+                                                            <div key={p.id} className="flex justify-between items-center bg-black/30 p-3 rounded border border-white/5 hover:border-white/10 transition-colors">
+                                                                <div className="flex items-center gap-3">
+                                                                    <BookOpen size={16} className="text-gray-500" />
+                                                                    <span className="text-white font-bold">{displayTitle}</span>
+                                                                </div>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (window.confirm(`確定要移除「${displayTitle}」的閱讀權限嗎？`)) {
+                                                                            try {
+                                                                                await revokeScriptureAccess(editForm.id, p.productId || p.product_id);
+                                                                                setAdminPurchases(prev => prev.filter(item => item.id !== p.id)); // Update local state
 
-                                                                            alert('權限已移除');
-                                                                        } catch (e: any) {
-                                                                            alert('移除失敗: ' + e.message);
+                                                                                // Update main Member list count locally
+                                                                                setAdminProfiles(prev => prev.map(profile =>
+                                                                                    profile.id === editForm.id
+                                                                                        ? { ...profile, purchaseCount: Math.max(0, (profile.purchaseCount || 0) - 1) }
+                                                                                        : profile
+                                                                                ));
+
+                                                                                alert('權限已移除');
+                                                                            } catch (e: any) {
+                                                                                alert('移除失敗: ' + e.message);
+                                                                            }
                                                                         }
-                                                                    }
-                                                                }}
-                                                                className="text-red-400 hover:bg-red-900/20 p-2 rounded transition-colors text-xs flex items-center gap-1"
-                                                            >
-                                                                <Trash2 size={14} /> 移除
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
+                                                                    }}
+                                                                    className="text-red-400 hover:bg-red-900/20 p-2 rounded transition-colors text-xs flex items-center gap-1"
+                                                                >
+                                                                    <Trash2 size={14} /> 移除
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
 
                                         </div>
 
                                         <div>
                                             <h4 className="text-sm font-bold text-green-400 mb-3 uppercase tracking-widest border-b border-white/10 pb-2">手動新增權限</h4>
                                             <div className="flex gap-2">
-                                                <select 
+                                                <select
                                                     className="flex-1 bg-black border border-white/20 text-white rounded p-2 outline-none focus:border-green-500"
                                                     id="scriptureSelect"
                                                 >
@@ -1940,15 +1966,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                         ))
                                                     }
                                                 </select>
-                                                <button 
+                                                <button
                                                     onClick={async () => {
                                                         const select = document.getElementById('scriptureSelect') as HTMLSelectElement;
                                                         const productId = select.value;
                                                         if (!productId) return alert('請選擇藏書');
-                                                        
+
                                                         try {
                                                             await grantScriptureAccess(editForm.id, productId);
-                                                            
+
                                                             // Find product details for immediate display
                                                             const product = scriptures.find(s => s.id === productId);
 
@@ -1962,10 +1988,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                                 productPrice: product?.price
                                                             };
                                                             setAdminPurchases(prev => [...prev, newPurchase]);
-                                                            
+
                                                             // Update main Member list count locally
-                                                            setAdminProfiles(prev => prev.map(profile => 
-                                                                profile.id === editForm.id 
+                                                            setAdminProfiles(prev => prev.map(profile =>
+                                                                profile.id === editForm.id
                                                                     ? { ...profile, purchaseCount: (profile.purchaseCount || 0) + 1 }
                                                                     : profile
                                                             ));
@@ -2103,6 +2129,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
                                                     <td className="p-4 text-white font-bold">{item.title}</td><td className="p-4 text-gray-400">{item.date}</td><td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('NEWS', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td></tr>
                                             ))}
+                                            {activeTab === 'ANNOUNCEMENTS' && paginatedItems.map((item: any) => (
+                                                <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
+                                                    <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
+                                                    <td className="p-4 text-white font-bold">{item.content}</td>
+                                                    <td className="p-4 text-gray-400">
+                                                        <div className="flex items-center gap-3">
+                                                            <span>排序: {item.priority || 0}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs">狀態:</span>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await updateAnnouncement(item.id, { is_active: !item.is_active });
+                                                                        } catch (err: any) {
+                                                                            alert('切換狀態失敗: ' + err.message);
+                                                                        }
+                                                                    }}
+                                                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${item.is_active ? 'bg-green-600' : 'bg-gray-700'}`}
+                                                                    role="switch"
+                                                                    aria-checked={item.is_active}
+                                                                >
+                                                                    <span aria-hidden="true" className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${item.is_active ? 'translate-x-2' : '-translate-x-2'}`} />
+                                                                </button>
+                                                                <span className={`text-xs ml-1 ${item.is_active ? 'text-green-400' : 'text-gray-500'}`}>{item.is_active ? '啟用中' : '已停用'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-right flex justify-end gap-2"><button onClick={() => handleEdit(item)} className="p-2 bg-blue-900/20 text-blue-400 rounded"><Edit size={16} /></button><button onClick={() => handleDelete('ANNOUNCEMENT', item.id)} className="p-2 bg-red-900/20 text-red-400 rounded"><Trash2 size={16} /></button></td>
+                                                </tr>
+                                            ))}
                                             {activeTab === 'SERVICES' && paginatedItems.map((item: any) => (
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
@@ -2132,7 +2188,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             {activeTab === 'SCRIPTURES' && paginatedItems.map((item: any) => (
                                                 <tr key={item.id} className={`hover:bg-white/5 ${selectedItems.has(item.id) ? 'bg-white/5' : ''}`}>
                                                     <td className="p-4"><input type="checkbox" className="cursor-pointer" checked={selectedItems.has(item.id)} onChange={() => handleSelectOne(item.id)} /></td>
-                                                     <td className="p-4 flex gap-4">
+                                                    <td className="p-4 flex gap-4">
                                                         <div className="w-10 h-10 bg-mystic-charcoal rounded flex items-center justify-center border border-white/10">
                                                             {item.previewUrl ? (
                                                                 <img src={item.previewUrl} alt={item.title} className="w-full h-full object-cover rounded" />
@@ -2174,7 +2230,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4">
                                                         <div className="font-bold text-white">{order.product?.title || '未知商品'}</div>
                                                         <div className="text-[10px] text-gray-500 font-mono">
-                                                            {order.merchantTradeNo && order.merchantTradeNo.startsWith('BANK_') 
+                                                            {order.merchantTradeNo && order.merchantTradeNo.startsWith('BANK_')
                                                                 ? <span className="text-mystic-gold font-bold">匯款末五碼: {order.merchantTradeNo.split('_')[1]}</span>
                                                                 : order.merchantTradeNo}
                                                         </div>
@@ -2182,60 +2238,60 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                                     <td className="p-4 text-gray-400">
                                                         <div className="flex flex-col">
                                                             <span className="text-white">NT$ {order.amount}</span>
-                                                              <span className={`text-[10px] ${order.status === 'PAID' ? 'text-green-400' : 'text-red-400'}`}>
+                                                            <span className={`text-[10px] ${order.status === 'PAID' ? 'text-green-400' : 'text-red-400'}`}>
                                                                 {order.status === 'PAID' ? '已付款' : '未付款'}
-                                                              </span>
-                                                              <button
-                                                                  onClick={async () => {
-                                                                      const newStatus = order.status === 'PAID' ? 'PENDING' : 'PAID';
-                                                                      let confirmMsg = newStatus === 'PAID' 
-                                                                        ? `確定要確認此訂單已付款嗎？\n(將自動為會員 ${order.userId.substring(0,4)}... 開通閱讀權限)` 
+                                                            </span>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const newStatus = order.status === 'PAID' ? 'PENDING' : 'PAID';
+                                                                    let confirmMsg = newStatus === 'PAID'
+                                                                        ? `確定要確認此訂單已付款嗎？\n(將自動為會員 ${order.userId.substring(0, 4)}... 開通閱讀權限)`
                                                                         : `確定要取消付款狀態嗎？\n(將會移除會員的閱讀權限)`;
 
-                                                                      if (window.confirm(confirmMsg)) {
-                                                                          try {
-                                                                              // 1. Update Order Status
-                                                                              await updateScriptureOrder(order.id, { status: newStatus });
-                                                                              
-                                                                              // 2. Sync Access Rights (Purchases Table)
-                                                                              if (newStatus === 'PAID') {
-                                                                                  // Grant Access
-                                                                                  const { error: pError } = await supabase.from('purchases').insert({
-                                                                                      user_id: order.userId,
-                                                                                      product_id: order.productId,
-                                                                                      order_id: order.id
-                                                                                  });
-                                                                                  // Ignore 'duplicate key' error (23505) just in case
-                                                                                  if (pError && pError.code !== '23505') throw pError;
-                                                                                  
-                                                                                  alert('付款確認成功！權限已立即開通。');
-                                                                              } else {
-                                                                                  // Revoke Access
-                                                                                  const { error: dError } = await supabase
-                                                                                      .from('purchases')
-                                                                                      .delete()
-                                                                                      .match({ order_id: order.id });
-                                                                                  
-                                                                                  if (dError) console.error('Revoke access warning:', dError);
-                                                                                  alert('已取消付款狀態，權限已移除。');
-                                                                              }
-                                                                          } catch (err: any) {
-                                                                              console.error(err);
-                                                                              alert(`操作失敗: ${err.message}`);
-                                                                          }
-                                                                      }
-                                                                  }}
-                                                                  className={`mt-1 text-[10px] px-2 py-0.5 rounded border ${order.status === 'PAID' ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-green-500/50 text-green-400 hover:bg-green-500/10'} transition-all`}
-                                                              >
-                                                                  {order.status === 'PAID' ? '設為未付款 (移除權限)' : '手動確認付款 (開通權限)'}
-                                                              </button>
-                                                              <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
-                                                          </div>
+                                                                    if (window.confirm(confirmMsg)) {
+                                                                        try {
+                                                                            // 1. Update Order Status
+                                                                            await updateScriptureOrder(order.id, { status: newStatus });
+
+                                                                            // 2. Sync Access Rights (Purchases Table)
+                                                                            if (newStatus === 'PAID') {
+                                                                                // Grant Access
+                                                                                const { error: pError } = await supabase.from('purchases').insert({
+                                                                                    user_id: order.userId,
+                                                                                    product_id: order.productId,
+                                                                                    order_id: order.id
+                                                                                });
+                                                                                // Ignore 'duplicate key' error (23505) just in case
+                                                                                if (pError && pError.code !== '23505') throw pError;
+
+                                                                                alert('付款確認成功！權限已立即開通。');
+                                                                            } else {
+                                                                                // Revoke Access
+                                                                                const { error: dError } = await supabase
+                                                                                    .from('purchases')
+                                                                                    .delete()
+                                                                                    .match({ order_id: order.id });
+
+                                                                                if (dError) console.error('Revoke access warning:', dError);
+                                                                                alert('已取消付款狀態，權限已移除。');
+                                                                            }
+                                                                        } catch (err: any) {
+                                                                            console.error(err);
+                                                                            alert(`操作失敗: ${err.message}`);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className={`mt-1 text-[10px] px-2 py-0.5 rounded border ${order.status === 'PAID' ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-green-500/50 text-green-400 hover:bg-green-500/10'} transition-all`}
+                                                            >
+                                                                {order.status === 'PAID' ? '設為未付款 (移除權限)' : '手動確認付款 (開通權限)'}
+                                                            </button>
+                                                            <span className="text-[10px]">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                        </div>
                                                     </td>
                                                     <td className="p-4 text-right flex justify-end items-center gap-4">
                                                         <div className="text-[10px] text-gray-600">UserID: {order.userId.substring(0, 8)}...</div>
-                                                        <button 
-                                                            onClick={() => handleDelete('ORDER', order.id)} 
+                                                        <button
+                                                            onClick={() => handleDelete('ORDER', order.id)}
                                                             className="p-2 bg-red-900/20 text-red-400 rounded hover:bg-red-900/40 transition-colors"
                                                             title="刪除此訂單"
                                                         >
