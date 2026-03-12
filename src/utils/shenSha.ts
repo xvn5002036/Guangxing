@@ -477,9 +477,9 @@ export const getShenShaForPillar = (
     const season = getSeason(monthZhi);
     const tzMap: Record<string, string[]> = {
         'Spring': ['寅', '子'],
-        'Summer': ['卯', '未'],
-        'Fall': ['申', '寅'],
-        'Winter': ['酉', '卯']
+        'Summer': ['卯', '未', '辰'],
+        'Fall': ['寅', '子'],
+        'Winter': ['卯', '未', '辰']
     };
     if (tzMap[season]?.includes(pillarZhi)) starList.push('童子煞');
 
@@ -527,12 +527,12 @@ export const getShenShaForPillar = (
     // San Qi Gui Ren (三奇貴人)
     if (fullChartStems.length === 4) {
         const stems = fullChartStems.join('');
-        // Tian Shang San Qi: Jia Wu Geng
-        if (stems.includes('甲戊庚') || stems.includes('庚戊甲')) starList.push('天上三奇');
-        // Di xia San Qi: Yi Bing Ding
-        if (stems.includes('乙丙丁') || stems.includes('丁丙乙')) starList.push('地下三奇');
-        // Ren Zhong San Qi: Ren Gui Xin
-        if (stems.includes('壬癸辛') || stems.includes('辛癸壬')) starList.push('人中三奇');
+        // Tian Shang San Qi: Jia Wu Geng (Strict Order)
+        if (stems.includes('甲戊庚')) starList.push('天上三奇');
+        // Di xia San Qi: Yi Bing Ding (Strict Order)
+        if (stems.includes('乙丙丁')) starList.push('地下三奇');
+        // Ren Zhong San Qi: Ren Gui Xin (Strict Order)
+        if (stems.includes('壬癸辛')) starList.push('人中三奇');
     }
     
     return [...new Set(starList)];

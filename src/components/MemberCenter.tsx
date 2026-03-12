@@ -9,6 +9,8 @@ import { Solar, Lunar, LunarYear, EightChar } from 'lunar-javascript';
 import { getShenShaForPillar } from '../utils/shenSha';
 import { getChengGuWeight } from '../utils/chengGu';
 import { calculateMingGe } from '../utils/baziPatterns';
+import { SHEN_SHA_DESCRIPTIONS } from '../utils/shenShaDescriptions';
+import { DI_SHI_DESCRIPTIONS, SHI_SHEN_DESCRIPTIONS, GENERAL_BAZI_DESCRIPTIONS } from '../utils/baziDescriptions';
 
 interface MemberCenterProps {
     onBack: () => void;
@@ -669,9 +671,9 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                 <tbody className="bg-black/40 text-gray-200">
                                                                     {/* Zhu Xing */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">主星</td>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['主星']}>主星</td>
                                                                         {columns.map((c, i) => (
-                                                                            <td key={i} className="p-3 border border-white/10 font-bold text-red-400">
+                                                                            <td key={i} className="p-3 border border-white/10 font-bold text-red-400 cursor-help" title={SHI_SHEN_DESCRIPTIONS[c.zhuXing === '元男' ? '日主' : c.zhuXing] || ''}>
                                                                                 {c.zhuXing === '元男' ? '日主' : c.zhuXing}
                                                                             </td>
                                                                         ))}
@@ -696,7 +698,7 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                     </tr>
                                                                     {/* Hidden Stems */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">藏干</td>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['藏干']}>藏干</td>
                                                                         {columns.map((c, i) => (
                                                                             <td key={i} className="p-3 border border-white/10 align-top h-24">
                                                                                 <div className="flex flex-col gap-1 text-xs items-center justify-center h-full">
@@ -705,7 +707,9 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                                              <span className={getWuXing(h) === '火' ? 'text-red-400' : getWuXing(h) === '木' ? 'text-green-400' : getWuXing(h) === '金' ? 'text-yellow-400' : getWuXing(h) === '水' ? 'text-blue-400' : 'text-yellow-600'}>
                                                                                                  ({h})
                                                                                              </span>
-                                                                                             <span className="text-gray-500 scale-90">{getShiShen(dayMaster, h)}</span>
+                                                                                             <span className="text-gray-500 scale-90 cursor-help border-b border-dotted border-white/10" title={SHI_SHEN_DESCRIPTIONS[getShiShen(dayMaster, h)] || ''}>
+                                                                                                 {getShiShen(dayMaster, h)}
+                                                                                             </span>
                                                                                         </div>
                                                                                     ))}
                                                                                 </div>
@@ -714,16 +718,20 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                     </tr>
                                                                     {/* Di Shi */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">地勢</td>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['地勢']}>地勢</td>
                                                                         {columns.map((c, i) => (
-                                                                            <td key={i} className="p-3 border border-white/10 font-medium">{c.diShi}</td>
+                                                                            <td key={i} className="p-3 border border-white/10 font-medium cursor-help hover:text-mystic-gold transition-colors" title={DI_SHI_DESCRIPTIONS[c.diShi] || ''}>
+                                                                                {c.diShi}
+                                                                            </td>
                                                                         ))}
                                                                     </tr>
                                                                     {/* Na Yin */}
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50">納音</td>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['納音']}>納音</td>
                                                                         {columns.map((c, i) => (
-                                                                            <td key={i} className="p-1 md:p-3 border border-white/10 text-xs text-gray-400">{c.naYin}</td>
+                                                                            <td key={i} className="p-1 md:p-3 border border-white/10 text-xs text-gray-400 cursor-help" title={GENERAL_BAZI_DESCRIPTIONS['納音']}>
+                                                                                {c.naYin}
+                                                                            </td>
                                                                         ))}
                                                                     </tr>
                                                                     {/* Shen Sha */}
@@ -746,7 +754,11 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                                 <td key={i} className="p-2 border border-white/10 text-xs align-top">
                                                                                     <div className="flex flex-col gap-1 items-center">
                                                                                         {stars.map((s, idx) => (
-                                                                                            <span key={idx} className="bg-white/5 px-2 py-0.5 rounded text-gray-300 w-full text-center hover:bg-white/10 transition-colors">
+                                                                                            <span 
+                                                                                                key={idx} 
+                                                                                                title={SHEN_SHA_DESCRIPTIONS[s] || ''}
+                                                                                                className="bg-white/5 px-2 py-0.5 rounded text-gray-300 w-full text-center hover:bg-white/10 transition-all cursor-help border-b border-dotted border-white/20"
+                                                                                            >
                                                                                                 {s}
                                                                                             </span>
                                                                                         ))}
