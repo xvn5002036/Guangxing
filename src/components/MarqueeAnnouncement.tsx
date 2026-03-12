@@ -34,7 +34,7 @@ const MarqueeAnnouncement: React.FC = () => {
                             {activeAnnouncements.map((a, index) => (
                                 <span key={a.id} className="flex items-center gap-4">
                                     {a.link ? (
-                                        <a href={a.link} target="_blank" rel="noopener noreferrer" className="hover:text-mystic-gold hover:underline transition-colors decoration-mystic-gold/50 cursor-pointer">
+                                        <a href={a.link} target="_blank" rel="noopener noreferrer" className="hover:text-mystic-gold no-underline transition-colors cursor-pointer">
                                             {a.content}
                                         </a>
                                     ) : (
