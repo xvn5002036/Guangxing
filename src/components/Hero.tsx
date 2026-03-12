@@ -38,16 +38,7 @@ const Hero: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center">
-          <a
-            href="#talisman"
-            className="group relative px-8 py-3 bg-mystic-gold overflow-hidden transition-all duration-300 shadow-[0_0_20px_rgba(197,160,89,0.3)] hover:shadow-[0_0_30px_rgba(197,160,89,0.6)]"
-          >
-            <div className="absolute inset-0 w-0 bg-white transition-all duration-[250ms] ease-out group-hover:w-full opacity-20"></div>
-            <span className="relative text-black font-bold tracking-widest">
-              祈求平安符
-            </span>
-          </a>
-
+          {/* 祈求平安符 button removed as it is no longer needed */}
         </div>
       </div>
 

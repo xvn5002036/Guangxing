@@ -18,6 +18,13 @@ const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
   const goodActivities = lunar.getDayYi();
   const badActivities = lunar.getDayJi();
 
+  const daySha = lunar.getDaySha();
+  const dayChong = `${lunar.getDayChongDesc()} (沖${lunar.getDayChongShengXiao()})`;
+  const luckyHours = lunar.getTimes()
+    .filter(t => t.getTianShenLuck() === '吉')
+    .map(t => t.getZhi() + '時')
+    .join(' ');
+
   return (
     <section id="almanac" className="relative -mt-20 z-20 container mx-auto px-6 mb-24">
       <div className="bg-mystic-charcoal border-t-4 border-mystic-gold shadow-2xl rounded-sm p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 transform hover:-translate-y-2 transition-transform duration-500">
@@ -28,10 +35,24 @@ const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
             <span className="block text-4xl font-bold text-mystic-gold font-serif">{today.getDate()}</span>
             <span className="block text-xs text-gray-400 uppercase tracking-widest">{today.toLocaleString('default', { month: 'short' })}</span>
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-white mb-1">{dateStr}</h3>
+          <div className="space-y-1">
+            <h3 className="text-xl font-bold text-white leading-tight">{dateStr}</h3>
             <p className="text-mystic-gold font-medium">{lunarDate}</p>
-            <p className="text-gray-500 text-sm mt-1">{suiCi}</p>
+            <p className="text-gray-500 text-xs">{suiCi}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 pt-2 border-t border-white/5">
+              <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                <span className="bg-red-900/30 text-red-400 px-1.5 py-0.5 rounded font-bold text-[9px]">煞方位</span>
+                <span className="text-gray-300 font-medium">{daySha}</span>
+              </div>
+              <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                <span className="bg-orange-900/30 text-orange-400 px-1.5 py-0.5 rounded font-bold text-[9px]">每日沖煞</span>
+                <span className="text-gray-300 font-medium">{dayChong}</span>
+              </div>
+              <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                <span className="bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded font-bold text-[9px]">每日吉時</span>
+                <span className="text-gray-300 font-medium">{luckyHours}</span>
+              </div>
+            </div>
           </div>
         </div>
 
