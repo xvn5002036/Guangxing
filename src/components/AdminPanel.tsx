@@ -7,6 +7,7 @@ import { GalleryItem, Registration, DigitalProduct, ScriptureOrder, Notification
 import { GalleryManager } from './admin/GalleryManager';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import { Solar, Lunar } from 'lunar-javascript';
 
 
 interface AdminPanelProps {
@@ -1360,8 +1361,90 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     ) : activeTab === 'EVENTS' ? (
                                         <>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">活動標題</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">國曆日期 (Date)</label><input type="date" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.date ? editForm.date.replace(/\./g, '-') : ''} onChange={e => setEditForm({ ...editForm, date: e.target.value.replace(/-/g, '.') })} /></div>
-                                            <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">農曆日期 (Lunar Date)</label><input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.lunarDate || ''} onChange={e => setEditForm({ ...editForm, lunarDate: e.target.value })} placeholder="例如: 九月十五" /></div>
+                                            
+                                            {/* Date Selection Mode Toggle */}
+                                            <div className="flex items-center gap-4 mb-2 col-span-1">
+                                                <button 
+                                                    onClick={() => setEditForm({ ...editForm, isRange: false, endDate: null, lunarEndDate: null })}
+                                                    className={`px-3 py-1.5 text-xs font-bold rounded border transition-all ${!editForm.isRange ? 'bg-mystic-gold text-black border-mystic-gold' : 'text-gray-400 border-white/10 hover:bg-white/5'}`}
+                                                >
+                                                    單日活動
+                                                </button>
+                                                <button 
+                                                    onClick={() => setEditForm({ ...editForm, isRange: true, endDate: editForm.endDate || editForm.date })}
+                                                    className={`px-3 py-1.5 text-xs font-bold rounded border transition-all ${editForm.isRange ? 'bg-mystic-gold text-black border-mystic-gold' : 'text-gray-400 border-white/10 hover:bg-white/5'}`}
+                                                >
+                                                    連續多日 (範圍)
+                                                </button>
+                                            </div>
+
+                                            <div className={`grid grid-cols-1 ${editForm.isRange ? 'md:grid-cols-2' : ''} gap-4 md:col-span-2`}>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">{editForm.isRange ? '開始日期' : '日期'}</label>
+                                                    <input 
+                                                        type="date" 
+                                                        className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" 
+                                                        value={editForm.date ? editForm.date.replace(/\./g, '-') : ''} 
+                                                        onChange={e => {
+                                                            const newDate = e.target.value;
+                                                            const solar = Solar.fromDate(new Date(newDate));
+                                                            const lunar = solar.getLunar();
+                                                            const lunarStr = `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+                                                            
+                                                            let updates: any = { 
+                                                                date: newDate.replace(/-/g, '.'),
+                                                                lunarDate: lunarStr
+                                                            };
+                                                            
+                                                            // If it's a range and endDate is empty or before new startDate, sync them
+                                                            if (editForm.isRange && (!editForm.endDate || editForm.endDate < newDate)) {
+                                                                updates.endDate = newDate.replace(/-/g, '.');
+                                                                updates.lunarEndDate = lunarStr;
+                                                            }
+                                                            
+                                                            setEditForm({ ...editForm, ...updates });
+                                                        }} 
+                                                    />
+                                                </div>
+
+                                                {editForm.isRange && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-gray-500 uppercase tracking-widest">結束日期</label>
+                                                        <input 
+                                                            type="date" 
+                                                            className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" 
+                                                            min={editForm.date ? editForm.date.replace(/\./g, '-') : ''}
+                                                            value={editForm.endDate ? editForm.endDate.replace(/\./g, '-') : ''} 
+                                                            onChange={e => {
+                                                                const newDate = e.target.value;
+                                                                const solar = Solar.fromDate(new Date(newDate));
+                                                                const lunar = solar.getLunar();
+                                                                const lunarStr = `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+                                                                
+                                                                setEditForm({ 
+                                                                    ...editForm, 
+                                                                    endDate: newDate.replace(/-/g, '.'),
+                                                                    lunarEndDate: lunarStr
+                                                                });
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className={`grid grid-cols-1 ${editForm.isRange ? 'md:grid-cols-2' : ''} gap-4 md:col-span-2 shadow-inner bg-black/20 p-4 rounded border border-white/5`}>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-gray-500 uppercase tracking-widest">{editForm.isRange ? '農曆開始' : '農曆日期'}</label>
+                                                    <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.lunarDate || ''} onChange={e => setEditForm({ ...editForm, lunarDate: e.target.value })} placeholder="例如: 九月十五" />
+                                                </div>
+                                                {editForm.isRange && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-gray-500 uppercase tracking-widest">農曆結束</label>
+                                                        <input className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.lunarEndDate || ''} onChange={e => setEditForm({ ...editForm, lunarEndDate: e.target.value })} placeholder="例如: 九月十七" />
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">時間 (Time)</label><input type="time" className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.time || ''} onChange={e => setEditForm({ ...editForm, time: e.target.value })} /></div>
                                             <div className="space-y-1"><label className="text-xs text-gray-500 uppercase tracking-widest">類別</label><select className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.type || 'FESTIVAL'} onChange={e => setEditForm({ ...editForm, type: e.target.value })}><option value="FESTIVAL">慶典</option><option value="RITUAL">科儀</option><option value="SERVICE">服務</option></select></div>
                                             <div className="space-y-1 md:col-span-2"><label className="text-xs text-gray-500 uppercase tracking-widest">詳情</label><textarea rows={4} className="w-full bg-black border border-white/10 p-3 text-white focus:border-mystic-gold outline-none" value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>

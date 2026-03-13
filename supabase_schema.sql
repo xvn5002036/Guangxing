@@ -31,6 +31,16 @@ $$ language 'plpgsql';
 -- 2. TABLE DEFINITIONS (User Provided Schema)
 -- ==========================================
 
+CREATE TABLE public.announcements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  content text NOT NULL,
+  is_active boolean DEFAULT true,
+  priority integer DEFAULT 0,
+  link text,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT announcements_pkey PRIMARY KEY (id)
+);
+
 CREATE TABLE public.bookmarks (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -64,7 +74,9 @@ CREATE TABLE public.digital_products (
 CREATE TABLE public.events (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   date date NOT NULL,
+  end_date date,
   lunar_date text,
+  lunar_end_date text,
   title text NOT NULL,
   description text,
   time text,
@@ -297,6 +309,7 @@ alter table public.org_members enable row level security;
 alter table public.faqs enable row level security;
 alter table public.site_settings enable row level security;
 alter table public.digital_products enable row level security;
+alter table public.announcements enable row level security;
 alter table public.orders enable row level security;
 alter table public.purchases enable row level security;
 alter table public.bookmarks enable row level security;
@@ -335,6 +348,9 @@ create policy "Admins can manage settings" on public.site_settings for all using
 
 create policy "Public can view digital products" on public.digital_products for select using (true);
 create policy "Admins can manage digital products" on public.digital_products for all using (public.is_admin());
+
+create policy "Public can view announcements" on public.announcements for select using (true);
+create policy "Admins can manage announcements" on public.announcements for all using (public.is_admin());
 
 -- 4.3 Registrations
 create policy "Users can view own registrations" on public.registrations for select using (auth.uid() = user_id or public.is_admin());
@@ -380,6 +396,7 @@ alter publication supabase_realtime add table registrations;
 alter publication supabase_realtime add table site_settings;
 alter publication supabase_realtime add table faqs;
 alter publication supabase_realtime add table digital_products;
+alter publication supabase_realtime add table announcements;
 alter publication supabase_realtime add table orders;
 alter publication supabase_realtime add table purchases;
 alter publication supabase_realtime add table bookmarks;

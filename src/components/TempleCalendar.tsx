@@ -42,10 +42,17 @@ const TempleCalendar: React.FC = () => {
 
     const getEventsForDay = (day: number) => {
         const dateKey = formatDateKey(year, month, day);
-        return events.filter(e => e.date === dateKey);
+        return events.filter(e => {
+            if (!e.endDate) return e.date === dateKey;
+            // Check if current dateKey is within date and endDate range
+            return dateKey >= e.date && dateKey <= e.endDate;
+        });
     };
 
-    const selectedEvents = selectedDate ? events.filter(e => e.date === selectedDate) : [];
+    const selectedEvents = selectedDate ? events.filter(e => {
+        if (!e.endDate) return e.date === selectedDate;
+        return selectedDate >= e.date && selectedDate <= e.endDate;
+    }) : [];
 
     return (
         <section id="calendar" className="py-24 bg-mystic-charcoal relative border-t border-white/5">
@@ -157,7 +164,12 @@ const TempleCalendar: React.FC = () => {
                                                     }`}>
                                                     {event.type === 'FESTIVAL' ? '慶典' : '科儀'}
                                                 </span>
-                                                <span className="text-gray-400 text-xs font-serif">{event.lunarDate}</span>
+                                                <span className="text-gray-400 text-xs font-serif">
+                                                    {event.endDate ? `${event.lunarDate} ~ ${event.lunarEndDate}` : event.lunarDate}
+                                                </span>
+                                            </div>
+                                            <div className="text-mystic-gold text-[10px] mb-1 font-mono">
+                                                {event.endDate ? `${event.date.replace(/\./g, '/')} ~ ${event.endDate.replace(/\./g, '/')}` : ''}
                                             </div>
                                             <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
                                             <p className="text-gray-400 text-sm leading-relaxed mb-4">{event.description}</p>

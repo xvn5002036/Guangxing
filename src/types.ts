@@ -64,7 +64,9 @@ export interface NewsItem {
 export interface TempleEvent {
   id: string;
   date: string;
+  endDate?: string; // Optional end date for ranges
   lunarDate: string;
+  lunarEndDate?: string; // Optional lunar end date for ranges
   title: string;
   description: string;
   time: string;
