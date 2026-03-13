@@ -11,6 +11,7 @@ import { getChengGuWeight } from '../utils/chengGu';
 import { calculateMingGe } from '../utils/baziPatterns';
 import { SHEN_SHA_DESCRIPTIONS } from '../utils/shenShaDescriptions';
 import { DI_SHI_DESCRIPTIONS, SHI_SHEN_DESCRIPTIONS, GENERAL_BAZI_DESCRIPTIONS } from '../utils/baziDescriptions';
+import { toTC, toTCArray } from '../utils/chineseConversion';
 
 interface MemberCenterProps {
     onBack: () => void;
@@ -425,23 +426,23 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                 [baZi.getYearGan(), baZi.getYearZhi(), baZi.getMonthGan(), baZi.getMonthZhi(), baZi.getDayGan(), baZi.getDayZhi(), baZi.getTimeGan(), baZi.getTimeZhi()].forEach(c => counts[getWuXing(c)]++);
 
                                                 const columns = [
-                                                    { title:'年柱', gan:baZi.getYearGan(), zhi:baZi.getYearZhi(), zhuXing:getShiShen(dayMaster, baZi.getYearGan()), hidden:baZi.getYearHideGan() as string[], diShi:baZi.getYearDiShi(), naYin:baZi.getYearNaYin() },
-                                                    { title:'月柱', gan:baZi.getMonthGan(), zhi:baZi.getMonthZhi(), zhuXing:getShiShen(dayMaster, baZi.getMonthGan()), hidden:baZi.getMonthHideGan() as string[], diShi:baZi.getMonthDiShi(), naYin:baZi.getMonthNaYin() },
-                                                    { title:'日柱', gan:baZi.getDayGan(), zhi:baZi.getDayZhi(), zhuXing:'元男', hidden:baZi.getDayHideGan() as string[], diShi:baZi.getDayDiShi(), naYin:baZi.getDayNaYin() },
-                                                    { title:'時柱', gan:baZi.getTimeGan(), zhi:baZi.getTimeZhi(), zhuXing:getShiShen(dayMaster, baZi.getTimeGan()), hidden:baZi.getTimeHideGan() as string[], diShi:baZi.getTimeDiShi(), naYin:baZi.getTimeNaYin() }
+                                                    { title:'年柱', gan:baZi.getYearGan(), zhi:baZi.getYearZhi(), zhuXing:toTC(getShiShen(dayMaster, baZi.getYearGan())), hidden:toTCArray(baZi.getYearHideGan() as string[]), diShi:toTC(baZi.getYearDiShi()), naYin:toTC(baZi.getYearNaYin()) },
+                                                    { title:'月柱', gan:baZi.getMonthGan(), zhi:baZi.getMonthZhi(), zhuXing:toTC(getShiShen(dayMaster, baZi.getMonthGan())), hidden:toTCArray(baZi.getMonthHideGan() as string[]), diShi:toTC(baZi.getMonthDiShi()), naYin:toTC(baZi.getMonthNaYin()) },
+                                                    { title:'日柱', gan:baZi.getDayGan(), zhi:baZi.getDayZhi(), zhuXing:'元男', hidden:toTCArray(baZi.getDayHideGan() as string[]), diShi:toTC(baZi.getDayDiShi()), naYin:toTC(baZi.getDayNaYin()) },
+                                                    { title:'時柱', gan:baZi.getTimeGan(), zhi:baZi.getTimeZhi(), zhuXing:toTC(getShiShen(dayMaster, baZi.getTimeGan())), hidden:toTCArray(baZi.getTimeHideGan() as string[]), diShi:toTC(baZi.getTimeDiShi()), naYin:toTC(baZi.getTimeNaYin()) }
                                                 ];
                                                 
                                                 const fullStems = [baZi.getYearGan(), baZi.getMonthGan(), baZi.getDayGan(), baZi.getTimeGan()];
                                                 const fullBranches = [baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), baZi.getTimeZhi()];
                                                 const gender = userProfile.gender === 'F' ? 'F' : 'M';
-                                                const mingGe = calculateMingGe(dayMaster, baZi.getMonthZhi(), baZi.getMonthGan(), fullStems);
+                                                const mingGe = toTC(calculateMingGe(dayMaster, baZi.getMonthZhi(), baZi.getMonthGan(), fullStems));
 
                                                 return (
                                                     <div className="space-y-8 animate-fade-in-up">
                                                         <div className="bg-zinc-800/50 border border-yellow-500/30 rounded p-4 text-sm text-gray-300">
                                                             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="text-yellow-500 font-bold">農曆:</span> <span>{lunar.toString()}</span>
+                                                                    <span className="text-yellow-500 font-bold">農曆:</span> <span>{toTC(lunar.toString())}</span>
                                                                     <span className={`px-2 py-0.5 rounded text-xs font-bold ${gender === 'M' ? 'bg-blue-900/40 text-blue-300' : 'bg-pink-900/40 text-pink-300'}`}>{gender === 'M' ? '乾造' : '坤造'}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2"><span className="text-blue-400 font-bold">國曆:</span> <span>{solar.toString()}</span></div>
@@ -471,7 +472,7 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                         {columns.map((c, i) => (
                                                                             <td key={i} className="p-3 border border-white/10 align-top h-24"><div className="flex flex-col gap-1 text-[10px] items-center justify-center h-full">
                                                                                 {c.hidden.map((h, idx) => {
-                                                                                    const ss = getShiShen(dayMaster, h);
+                                                                                    const ss = toTC(getShiShen(dayMaster, h));
                                                                                     const desc = SHI_SHEN_DESCRIPTIONS[ss] || '';
                                                                                     return <div key={idx} className="flex items-center gap-1"><span className={getWuXing(h)==='火'?'text-red-400':getWuXing(h)==='木'?'text-green-400':getWuXing(h)==='金'?'text-yellow-400':getWuXing(h)==='水'?'text-blue-400':'text-yellow-600'}>({h})</span><span className="text-gray-500 tooltip-trigger cursor-pointer hover:text-white" onClick={(e) => handleToggleTooltip(ss, desc, e)}>{ss}</span></div>;
                                                                                 })}
@@ -487,9 +488,9 @@ const MemberCenter: React.FC<MemberCenterProps> = ({ onBack }) => {
                                                                         {columns.map((c, i) => <td key={i} className="p-1 border border-white/10 text-[10px] text-gray-400 tooltip-trigger cursor-pointer" onClick={(e) => handleToggleTooltip('納音', GENERAL_BAZI_DESCRIPTIONS['納音'], e)}>{c.naYin}</td>)}
                                                                     </tr>
                                                                     <tr>
-                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 h-32 align-middle"><div className="flex flex-col gap-2"><span>神煞</span><div className="text-[9px] text-gray-500 text-left pt-2 border-t border-white/5 space-y-1"><div>胎元: {baZi.getTaiYuan()}</div><div>命宮: {baZi.getMingGong()}</div><div>空亡: {baZi.getDayXunKong()}</div></div></div></td>
+                                                                        <td className="p-3 border border-white/10 font-bold bg-zinc-900/50 h-32 align-middle"><div className="flex flex-col gap-2"><span>神煞</span><div className="text-[9px] text-gray-500 text-left pt-2 border-t border-white/5 space-y-1"><div>胎元: {toTC(baZi.getTaiYuan())}</div><div>命宮: {toTC(baZi.getMingGong())}</div><div>空亡: {toTC(baZi.getDayXunKong())}</div></div></div></td>
                                                                         {columns.map((c, i) => {
-                                                                            const stars = getShenShaForPillar(c.zhi, c.gan, dayMaster, baZi.getYearGan(), baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), fullStems, fullBranches, gender, baZi.getYearNaYin(), baZi.getDayNaYin());
+                                                                            const stars = toTCArray(getShenShaForPillar(c.zhi, c.gan, dayMaster, baZi.getYearGan(), baZi.getYearZhi(), baZi.getMonthZhi(), baZi.getDayZhi(), fullStems, fullBranches, gender, baZi.getYearNaYin(), baZi.getDayNaYin()));
                                                                             return <td key={i} className="p-2 border border-white/10 text-[11px] align-top"><div className="flex flex-col gap-1 items-center">{stars.map((s, idx) => <span key={idx} className="bg-white/5 px-1 py-0.5 rounded text-gray-300 w-full tooltip-trigger cursor-pointer hover:bg-white/10 transition-all" onClick={(e) => handleToggleTooltip(s, SHEN_SHA_DESCRIPTIONS[s]||'', e)}>{s}</span>)}{stars.length===0 && '-'}</div></td>;
                                                                         })}
                                                                     </tr>

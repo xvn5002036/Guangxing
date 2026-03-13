@@ -4,7 +4,7 @@
  */
 
 export const DI_SHI_DESCRIPTIONS: Record<string, string> = {
-    // 12 Life Stages (Traditional/Stable Keys)
+    // 12 Life Stages (Traditional Chinese)
     '長生': '如同嬰兒出生，充滿生命力與希望，代表新的開始、發展與成長。',
     '沐浴': '如嬰兒出生後沐浴，代表事物初步發展但尚不成熟、不穩定，易有變動或喜新厭舊。',
     '冠帶': '如青少年成年行冠禮，象徵事物進入成長壯大階段，運勢轉強，具備基本實力。',
@@ -16,13 +16,7 @@ export const DI_SHI_DESCRIPTIONS: Record<string, string> = {
     '墓': '又稱庫。指事物收藏入庫，代表舊事物的結束與積累，等待下一個循環。',
     '絕': '事物的徹底毀滅或消失，代表舊能量完全耗盡，處於受胎前的虛無狀態。',
     '胎': '新的生命或事物開始在母腹中受孕、萌芽，代表希望的種子正在形成。',
-    '養': '如同胎兒在母腹中吸收營養成長，代表事物正在醞釀與孕育，蓄勢待發。',
-    // Simplified specific versions (where keys differ)
-    '长生': '如同嬰兒出生，充滿生命力與希望，代表新的開始、發展與成長。',
-    '长': '簡稱長生。',
-    '冠带': '如青少年成年行冠禮，象徵事物進入成長壯大階段，運勢轉強，具備基本實力。',
-    '临官': '又稱建祿。事業趨於成熟穩定。',
-    '绝': '事物的徹底毀滅或消失。'
+    '養': '如同胎兒在母腹中吸收營養成長，代表事物正在醞釀與孕育，蓄勢待發。'
 };
 
 export const SHI_SHEN_DESCRIPTIONS: Record<string, string> = {

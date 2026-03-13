@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { Solar, Lunar } from 'lunar-javascript';
+import { toTC, toTCArray } from '../utils/chineseConversion';
 
 interface AlmanacProps {
   onOpenAdmin?: () => void;
@@ -12,18 +13,18 @@ const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
   const lunar = solar.getLunar();
   
   const dateStr = today.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-  const lunarDate = `農曆 ${lunar.getMonthInChinese()}月 ${lunar.getDayInChinese()}`;
-  const suiCi = `歲次 ${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日`;
+  const lunarDate = toTC(`農曆 ${lunar.getMonthInChinese()}月 ${lunar.getDayInChinese()}`);
+  const suiCi = toTC(`歲次 ${lunar.getYearInGanZhi()}年 ${lunar.getMonthInGanZhi()}月 ${lunar.getDayInGanZhi()}日`);
 
-  const goodActivities = lunar.getDayYi();
-  const badActivities = lunar.getDayJi();
+  const goodActivities = toTCArray(lunar.getDayYi());
+  const badActivities = toTCArray(lunar.getDayJi());
 
-  const daySha = lunar.getDaySha();
-  const dayChong = `${lunar.getDayChongDesc()} (沖${lunar.getDayChongShengXiao()})`;
-  const luckyHours = lunar.getTimes()
+  const daySha = toTC(lunar.getDaySha());
+  const dayChong = toTC(`${lunar.getDayChongDesc()} (沖${lunar.getDayChongShengXiao()})`);
+  const luckyHours = toTC(lunar.getTimes()
     .filter(t => t.getTianShenLuck() === '吉')
     .map(t => t.getZhi() + '時')
-    .join(' ');
+    .join(' '));
 
   return (
     <section id="almanac" className="relative -mt-20 z-20 container mx-auto px-6 mb-24">
@@ -39,17 +40,19 @@ const Almanac: React.FC<AlmanacProps> = ({ onOpenAdmin }) => {
             <h3 className="text-xl font-bold text-white leading-tight">{dateStr}</h3>
             <p className="text-mystic-gold font-medium">{lunarDate}</p>
             <p className="text-gray-500 text-xs">{suiCi}</p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 pt-2 border-t border-white/5">
-              <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                <span className="bg-red-900/30 text-red-400 px-1.5 py-0.5 rounded font-bold text-[9px]">煞方位</span>
-                <span className="text-gray-300 font-medium">{daySha}</span>
+            <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/5">
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                  <span className="bg-red-900/40 text-red-300 px-2 py-0.5 rounded font-bold text-[9px] border border-red-500/20">煞方位</span>
+                  <span className="text-gray-300 font-medium">{daySha}</span>
+                </div>
+                <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                  <span className="bg-orange-900/40 text-orange-300 px-2 py-0.5 rounded font-bold text-[9px] border border-orange-500/20">每日沖煞</span>
+                  <span className="text-gray-300 font-medium">{dayChong}</span>
+                </div>
               </div>
               <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                <span className="bg-orange-900/30 text-orange-400 px-1.5 py-0.5 rounded font-bold text-[9px]">每日沖煞</span>
-                <span className="text-gray-300 font-medium">{dayChong}</span>
-              </div>
-              <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                <span className="bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded font-bold text-[9px]">每日吉時</span>
+                <span className="bg-green-900/40 text-green-300 px-2 py-0.5 rounded font-bold text-[9px] border border-green-500/20">每日吉時</span>
                 <span className="text-gray-300 font-medium">{luckyHours}</span>
               </div>
             </div>
