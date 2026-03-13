@@ -356,10 +356,14 @@ export const GalleryManager: React.FC = () => {
         ? gallery.filter(g => g.albumId === selectedAlbumId)
         : galleryAlbums
     ).filter(item => {
-        if (!searchTerm) return true;
         const lower = searchTerm.toLowerCase();
-        return item.title.toLowerCase().includes(lower) ||
-            (item.description && item.description.toLowerCase().includes(lower));
+        const titleMatch = item.title?.toLowerCase().includes(lower);
+        
+        // Type narrowing: only GalleryAlbum has description
+        const isAlbum = !('url' in item);
+        const descriptionMatch = isAlbum && (item as any).description?.toLowerCase().includes(lower);
+        
+        return titleMatch || descriptionMatch;
     });
 
     // Pagination
