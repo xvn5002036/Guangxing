@@ -2,6 +2,32 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
 import { OrgMember } from '../types';
+import Container from './layout/Container';
+import SectionHeader from './layout/SectionHeader';
+
+const getFallbackDataUrl = (title: string) => {
+  const safeTitle = title.replace(/[<>&"]/g, '');
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#0b0b0b"/>
+          <stop offset="1" stop-color="#1a1a1a"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="30%" cy="20%" r="70%">
+          <stop offset="0" stop-color="rgba(197,160,89,0.28)"/>
+          <stop offset="1" stop-color="rgba(197,160,89,0)"/>
+        </radialGradient>
+      </defs>
+      <rect width="300" height="400" fill="url(#bg)"/>
+      <rect width="300" height="400" fill="url(#glow)"/>
+      <rect x="16" y="16" width="268" height="368" rx="18" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.10)"/>
+      <text x="28" y="70" fill="rgba(255,255,255,0.9)" font-family="Inter, 'Noto Serif TC', system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" letter-spacing="2">${safeTitle}</text>
+      <text x="28" y="96" fill="rgba(255,255,255,0.5)" font-family="Inter, 'Noto Serif TC', system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" letter-spacing="3">NO IMAGE</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
 
 const OrgCard: React.FC<{ member: OrgMember; isLeader?: boolean }> = ({ member, isLeader = false }) => (
     <div className={`relative group flex flex-col items-center transition-transform hover:-translate-y-2 duration-300 ${isLeader ? 'z-10' : ''}`}>
@@ -9,7 +35,7 @@ const OrgCard: React.FC<{ member: OrgMember; isLeader?: boolean }> = ({ member, 
         <div className={`relative overflow-hidden rounded-sm border-2 ${isLeader ? 'w-48 h-64 border-mystic-gold shadow-[0_0_30px_rgba(197,160,89,0.3)]' : 'w-36 h-48 border-gray-700 hover:border-mystic-gold/50 shadow-lg'} bg-mystic-charcoal transition-all`}>
             {/* Image */}
             <img 
-                src={member.image || 'https://via.placeholder.com/300x400?text=No+Image'} 
+                src={member.image || getFallbackDataUrl(`${member.title} ${member.name}`)} 
                 alt={member.name}
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
             />
@@ -48,11 +74,13 @@ const Organization: React.FC = () => {
     <section id="organization" className="py-24 bg-black relative border-t border-white/5 overflow-hidden">
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-mystic-gold/50 to-transparent"></div>
       
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-            <span className="text-mystic-gold text-xs tracking-[0.3em] uppercase block mb-2">Structure</span>
-            <h2 className="text-[clamp(1.875rem,5vw,3rem)] font-bold text-white font-serif">組織架構</h2>
-            <div className="w-12 h-1 bg-mystic-gold mx-auto mt-4 rounded-full"></div>
+      <Container>
+        <div className="mb-16">
+          <SectionHeader
+            eyebrow="Structure"
+            title="組織架構"
+            description="透明、清晰的分工與傳承，讓宮務運作更穩健。"
+          />
         </div>
 
         <div className="flex flex-col items-center max-w-6xl mx-auto">
@@ -116,7 +144,7 @@ const Organization: React.FC = () => {
             )}
 
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

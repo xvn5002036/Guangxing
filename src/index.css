@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Keep a few global utilities that were previously in index.html */
+.vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+.talisman-bg {
+  background-image: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.06), transparent 35%),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.04), transparent 40%),
+    radial-gradient(circle at 45% 85%, rgba(255, 255, 255, 0.03), transparent 35%);
+}
+
+.wood-grain {
+  filter: url(#wood-filter);
+}
+

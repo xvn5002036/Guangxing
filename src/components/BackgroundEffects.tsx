@@ -59,7 +59,7 @@ const BackgroundEffects: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-50 mix-blend-screen"
+      className="fixed inset-0 pointer-events-none z-0 mix-blend-screen opacity-40"
     />
   );
 };

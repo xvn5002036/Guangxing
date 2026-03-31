@@ -99,35 +99,52 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
 
     // Default states
     return isScrolled
-      ? `${base} bg-mystic-dark/95 backdrop-blur-md border-b border-mystic-gold/20 py-3 shadow-lg`
-      : `${base} bg-transparent py-6 border-transparent shadow-none`;
+      ? `${base} bg-mystic-dark/70 backdrop-blur-xl border-b border-white/10 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]`
+      : `${base} bg-transparent py-5 border-transparent shadow-none`;
   };
 
   return (
     <>
       <header className={getHeaderClasses()}>
-        <div className="container mx-auto px-6">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="flex justify-between items-center">
             {/* Logo */}
             <a href="#" className="flex items-center gap-3 group">
-              <div className={`w-10 h-10 border rounded-full flex items-center justify-center transition-all duration-500 ${isScrolled ? 'bg-black border-mystic-gold' : 'bg-transparent border-mystic-gold/50'}`}>
+              <div
+                className={`w-10 h-10 border rounded-full flex items-center justify-center transition-all duration-500 ${
+                  isScrolled ? 'bg-black/60 border-white/10' : 'bg-black/20 border-white/10'
+                }`}
+              >
                 <span className="text-mystic-gold font-calligraphy text-2xl group-hover:text-white mt-1">池</span>
               </div>
               <div className="flex flex-col">
-                <span className={`text-xl font-bold tracking-[0.2em] transition-colors duration-300 ${isScrolled ? 'text-gray-100' : 'text-white drop-shadow-md'}`}>{siteSettings.templeName}</span>
+                <span
+                  className={`text-[15px] sm:text-base font-semibold tracking-[0.18em] transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-100' : 'text-white drop-shadow-md'
+                  }`}
+                >
+                  {siteSettings.templeName}
+                </span>
+                <span className="hidden sm:block text-xs tracking-[0.35em] text-white/50">
+                  TRADITION · FAITH · CULTURE
+                </span>
               </div>
             </a>
 
-            {/* Desktop Nav - HIDDEN ALWAYS now to use Hamburger Menu everywhere */}
-            <nav className="hidden items-center space-x-6">
+            {/* Desktop Nav */}
+            <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className={`text-xs transition-all duration-300 tracking-widest relative group font-bold ${isScrolled ? 'text-gray-300 hover:text-mystic-gold' : 'text-white/90 hover:text-white drop-shadow-sm'}`}
+                  onClick={(e) => handleNavClick(e, item.href)}
+                  className={`px-3 py-2 rounded-full text-xs tracking-[0.25em] transition-all duration-200 ${
+                    isScrolled
+                      ? 'text-gray-200 hover:text-white hover:bg-white/5'
+                      : 'text-white/80 hover:text-white hover:bg-white/5 drop-shadow-sm'
+                  }`}
                 >
                   {item.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-mystic-gold group-hover:w-full transition-all duration-300"></span>
                 </a>
               ))}
             </nav>
@@ -142,10 +159,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                     setIsAuthOpen(true);
                   }
                 }}
-                className={`relative z-[70] flex items-center gap-2 text-xs tracking-widest font-bold py-2 px-4 border rounded-full transition-all duration-300 
-                ${isScrolled || isMenuOpen
-                    ? 'border-mystic-gold text-mystic-gold hover:bg-mystic-gold hover:text-black'
-                    : 'border-white/50 text-white hover:bg-white/10 hover:border-white'}`}
+                className={`relative z-[70] flex items-center gap-2 text-xs tracking-[0.25em] font-semibold py-2.5 px-4 border rounded-full transition-all duration-200 ${
+                  isScrolled || isMenuOpen
+                    ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                    : 'border-white/10 bg-black/20 text-white hover:bg-white/10'
+                }`}
               >
                 {user ? (
                   <>
@@ -164,19 +182,23 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
               <button
                 // @ts-ignore
                 onClick={onOpenAdmin}
-                className={`hidden md:flex items-center gap-2 text-xs tracking-widest font-bold py-2 px-4 border rounded-full transition-all duration-300 
-                ${isScrolled || isMenuOpen
-                    ? 'border-mystic-gold text-mystic-gold hover:bg-mystic-gold hover:text-black'
-                    : 'border-white/50 text-white hover:bg-white/10 hover:border-white'}`}
+                className={`hidden md:flex items-center gap-2 text-xs tracking-[0.25em] font-semibold py-2.5 px-4 border rounded-full transition-all duration-200 ${
+                  isScrolled || isMenuOpen
+                    ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                    : 'border-white/10 bg-black/20 text-white hover:bg-white/10'
+                }`}
                 title="管理員登入"
               >
                 <Lock size={14} />
               </button>
 
-              {/* Menu Button - Visible on ALL screens. Z-70 keeps it above the overlay */}
+              {/* Menu Button - Visible on mobile/tablet. Z-70 keeps it above overlay */}
               <button
-                className={`transition-colors relative z-[70] ${isScrolled || isMenuOpen ? 'text-mystic-gold hover:text-white' : 'text-white hover:text-mystic-gold drop-shadow-md'}`}
+                className={`lg:hidden transition-colors relative z-[70] rounded-full border border-white/10 bg-black/20 p-2.5 ${
+                  isScrolled || isMenuOpen ? 'text-white hover:bg-white/10' : 'text-white hover:bg-white/10 drop-shadow-md'
+                }`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
               >
                 {isMenuOpen ? <X /> : <Menu />}
               </button>
@@ -186,13 +208,14 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
 
         {/* Full Screen Menu - Visible on ALL screens when open */}
         {isMenuOpen && (
-          <div className="fixed inset-0 w-screen h-screen bg-mystic-dark/98 z-[60] flex flex-col items-center backdrop-blur-xl animate-fade-in overflow-y-auto pb-16 pt-24">
-            <div className="flex flex-col w-[min(90%,450px)] px-6 gap-[1vh] my-auto">
+          <div className="fixed inset-0 w-screen h-screen bg-mystic-dark/80 z-[60] flex flex-col items-center backdrop-blur-2xl animate-fade-in overflow-y-auto pb-16 pt-24">
+            <div className="w-full max-w-md px-6">
+              <div className="rounded-2xl border border-white/10 bg-black/30 shadow-[0_20px_60px_rgba(0,0,0,0.55)] overflow-hidden">
               {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-[clamp(1rem,4.5vw,1.5rem)] md:text-[clamp(1.1rem,2.5vh,1.8rem)] text-gray-200 hover:text-mystic-gold py-2 md:py-3 tracking-[0.3em] transition-colors border-b border-white/5 w-full text-center cursor-pointer font-medium"
+                  className="block text-[clamp(1rem,4.5vw,1.35rem)] text-gray-100 hover:bg-white/5 py-4 tracking-[0.25em] transition-colors border-b border-white/10 w-full text-center cursor-pointer font-medium"
                   onClick={(e) => handleNavClick(e, item.href)}
                 >
                   {item.label}
@@ -209,7 +232,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                     setIsAuthOpen(true);
                   }
                 }}
-                className="mt-6 text-center text-mystic-gold border border-mystic-gold py-3 rounded tracking-widest hover:bg-mystic-gold hover:text-black transition-colors"
+                className="m-4 text-center text-black bg-mystic-gold py-3.5 rounded-xl tracking-[0.25em] font-semibold hover:bg-mystic-gold/90 transition-colors"
               >
                 {user ? '會員中心' : '會員登入 / 註冊'}
               </button>
@@ -220,13 +243,14 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                   setIsMenuOpen(false);
                   if (onOpenAdmin) onOpenAdmin();
                 }}
-                className="mt-4 text-center text-gray-500 text-sm tracking-widest hover:text-white transition-colors pb-4"
+                className="mb-2 text-center text-white/60 text-sm tracking-[0.25em] hover:text-white transition-colors pb-4 w-full"
               >
                 <div className="flex items-center justify-center gap-2">
                   <Lock size={14} />
                   <span>管理員後台</span>
                 </div>
               </button>
+              </div>
             </div>
           </div>
         )}

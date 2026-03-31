@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { PlayCircle, X, ChevronLeft, ChevronRight, Youtube } from 'lucide-react';
 import { GalleryItem } from '../types';
+import Container from './layout/Container';
+import SectionHeader from './layout/SectionHeader';
 
 const Gallery: React.FC = () => {
     const { gallery, galleryAlbums } = useData();
@@ -51,14 +53,17 @@ const Gallery: React.FC = () => {
 
     return (
         <section id="gallery" className="py-24 bg-mystic-charcoal">
-            <div className="container mx-auto px-6">
-                <div className="text-center mb-16">
-                    <span className="text-mystic-gold text-xs tracking-[0.3em] uppercase block mb-2">Gallery</span>
-                    <h2 className="text-[clamp(1.875rem,5vw,2.5rem)] font-bold text-white">活動花絮</h2>
+            <Container>
+                <div className="mb-16">
+                    <SectionHeader
+                        eyebrow="Gallery"
+                        title="活動花絮"
+                        description="紀錄法會、節慶與重要時刻，回顧每次相聚的感動。"
+                    />
                     {selectedAlbumId && (
                         <button
                             onClick={() => setSelectedAlbumId(null)}
-                            className="mt-4 text-gray-400 hover:text-white flex items-center justify-center gap-2 mx-auto transition-colors"
+                            className="mt-6 text-white/70 hover:text-white flex items-center justify-center gap-2 mx-auto transition-colors"
                         >
                             <ChevronLeft size={16} /> 返回相簿列表
                         </button>
@@ -75,7 +80,7 @@ const Gallery: React.FC = () => {
                                     onClick={() => setSelectedAlbumId(album.id)}
                                     className="group cursor-pointer"
                                 >
-                                    <div className="aspect-[4/3] overflow-hidden rounded-sm border border-white/5 bg-black relative mb-4">
+                                    <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-white/10 bg-black/30 relative mb-4 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
                                         <img
                                             src={album.coverImageUrl || 'https://images.unsplash.com/photo-1592388796690-3482d8d8091e?q=80&w=1000&auto=format&fit=crop'}
                                             alt={album.title}
@@ -83,15 +88,15 @@ const Gallery: React.FC = () => {
                                         />
                                         <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-300"></div>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white group-hover:text-mystic-gold transition-colors text-center">{album.title}</h3>
-                                    <p className="text-gray-500 text-sm text-center mt-1 line-clamp-2">{album.description}</p>
-                                    <div className="text-xs text-gray-600 text-center mt-2 uppercase tracking-widest group-hover:text-gray-400 transition-colors">
+                                    <h3 className="text-lg font-semibold text-white/90 group-hover:text-mystic-gold transition-colors text-center tracking-[0.12em]">{album.title}</h3>
+                                    <p className="text-white/55 text-sm text-center mt-2 line-clamp-2 leading-relaxed">{album.description}</p>
+                                    <div className="text-xs text-white/45 text-center mt-3 tracking-[0.35em] group-hover:text-white/70 transition-colors">
                                         查看相簿
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="col-span-full text-center text-gray-500 py-12 border border-white/10 border-dashed rounded">
+                            <div className="col-span-full text-center text-white/50 py-12 border border-white/10 border-dashed rounded-3xl bg-black/20">
                                 暫無相簿資料
                             </div>
                         )}
@@ -113,7 +118,7 @@ const Gallery: React.FC = () => {
                                     <div
                                         key={item.id}
                                         onClick={() => setSelectedItem(item)}
-                                        className="group relative aspect-[4/3] overflow-hidden rounded-sm cursor-pointer border border-white/5 bg-black"
+                                        className="group relative aspect-[4/3] overflow-hidden rounded-2xl cursor-pointer border border-white/10 bg-black/30 hover:bg-white/[0.03] transition-colors"
                                     >
                                         {item.type === 'VIDEO' ? (
                                             <video
@@ -156,13 +161,13 @@ const Gallery: React.FC = () => {
                                 );
                             })
                         ) : (
-                            <div className="col-span-full text-center text-gray-500 py-12 border border-white/10 border-dashed rounded">
+                            <div className="col-span-full text-center text-white/50 py-12 border border-white/10 border-dashed rounded-3xl bg-black/20">
                                 本相簿暫無照片
                             </div>
                         )}
                     </div>
                 )}
-            </div>
+            </Container>
 
             {/* Lightbox Modal */}
             {selectedItem && (
