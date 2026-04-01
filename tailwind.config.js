@@ -9,10 +9,14 @@ export default {
       colors: {
         mystic: {
           dark: '#080808',
-          charcoal: '#1a1a1a',
+          ink: '#0D1117',
+          charcoal: '#141414',
+          surface: '#1C1C22',
           gold: '#C5A059',
+          shine: '#E8C97A',
           amber: '#FFD700',
           red: '#8B0000',
+          crimson: '#7A1B1B',
           paper: '#F2E8C9',
         },
       },
@@ -27,9 +31,12 @@ export default {
         'spin-slow': 'spin 12s linear infinite',
         smoke: 'smoke 3s ease-in-out infinite alternate',
         toss: 'toss 0.8s ease-in-out infinite',
-        'fade-in': 'fadeIn 0.5s ease-out forwards',
-        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
-        marquee: 'marquee 25s linear infinite',
+        'fade-in': 'fadeIn 0.6s ease-out forwards',
+        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+        'slide-in-left': 'slideInLeft 0.7s ease-out forwards',
+        marquee: 'marquee 30s linear infinite',
+        'ken-burns': 'kenBurns 18s ease-in-out infinite alternate',
+        shimmer: 'shimmer 2.5s linear infinite',
       },
       keyframes: {
         float: {
@@ -52,12 +59,24 @@ export default {
           '100%': { opacity: '1' },
         },
         fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '0%': { opacity: '0', transform: 'translateY(24px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInLeft: {
+          '0%': { opacity: '0', transform: 'translateX(-24px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
         },
         marquee: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-100%)' },
+        },
+        kenBurns: {
+          '0%': { transform: 'scale(1.0) translate(0%, 0%)' },
+          '100%': { transform: 'scale(1.08) translate(-2%, -1%)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
         },
       },
     },

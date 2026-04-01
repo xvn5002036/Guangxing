@@ -7,7 +7,7 @@ const TempleHistory: React.FC = () => {
     const { siteSettings } = useData();
 
     return (
-        <section id="history" className="py-24 bg-black relative">
+        <section id="history" className="py-24 relative overflow-hidden" style={{ background: '#0D1117' }}>
             <Container>
 
                 {/* Section Header */}

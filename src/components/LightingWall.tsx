@@ -56,7 +56,7 @@ const LightingWall: React.FC = () => {
     const isDeityGlowing = currentItems.some(item => item !== null);
 
     return (
-        <section id="lighting-wall" className="py-24 bg-black relative overflow-hidden border-t border-white/10">
+        <section id="lighting-wall" className="py-24 relative overflow-hidden border-t border-white/5" style={{ background: '#0D1117' }}>
             {/* Background Texture */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(197,160,89,0.10),transparent_55%),radial-gradient(circle_at_70%_80%,rgba(255,215,0,0.08),transparent_60%)] opacity-100"></div>
 

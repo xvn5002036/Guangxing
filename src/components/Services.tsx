@@ -15,7 +15,8 @@ const Services: React.FC = () => {
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
   return (
-    <section id="services" className="py-24 bg-mystic-charcoal">
+    <section id="services" className="py-24 relative overflow-hidden" style={{ background: '#080808' }}>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(197,160,89,0.05),transparent_60%)] pointer-events-none" />
       <Container>
         <div className="mb-16">
           <SectionHeader
@@ -33,23 +34,24 @@ const Services: React.FC = () => {
                         key={service.id} 
                         onClick={() => setSelectedService(service)}
                         className="text-left group relative p-7 rounded-2xl bg-black/30 border border-white/10 hover:border-mystic-gold/40 hover:bg-white/[0.03] transition-all duration-300 overflow-hidden flex flex-col h-full"
+                        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
                     >
                         {/* Hover Gradient */}
                         <div className="absolute inset-0 bg-gradient-to-br from-mystic-gold/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         <div className="relative z-10 flex-grow">
-                            <div className="w-12 h-12 rounded-2xl bg-black/30 border border-white/10 flex items-center justify-center mb-6 group-hover:border-mystic-gold/50 group-hover:text-mystic-gold text-white/60 transition-colors">
-                                <Icon size={20} />
+                            <div className="w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center mb-6 group-hover:border-mystic-gold/50 group-hover:text-mystic-gold text-white/50 transition-all duration-300">
+                                <Icon size={22} />
                             </div>
                             <h3 className="text-lg font-semibold text-white mb-2 tracking-[0.12em]">{service.title}</h3>
                             <div className="text-mystic-gold font-serif mb-4 text-sm tracking-[0.08em]">
                                 {service.type === 'DONATION' ? '隨喜功德' : `緣金 NT$ ${service.price}`}
                             </div>
-                            <p className="text-white/60 text-sm leading-relaxed group-hover:text-white/75 transition-colors">
+                            <p className="text-white/55 text-sm leading-relaxed group-hover:text-white/80 transition-colors">
                                 {service.description}
                             </p>
                         </div>
-                        <div className="relative z-10 mt-6 pt-4 border-t border-white/10 w-full text-center text-xs text-white/50 group-hover:text-white/80 tracking-[0.35em]">
+                        <div className="relative z-10 mt-6 pt-4 border-t border-white/10 w-full text-center text-xs text-white/40 group-hover:text-mystic-shine tracking-[0.35em] transition-colors">
                             立即辦理
                         </div>
                     </button>

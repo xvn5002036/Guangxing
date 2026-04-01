@@ -77,18 +77,29 @@ const App: React.FC = () => {
             <MarqueeAnnouncement />
             <main className="flex-grow">
               <Hero />
-              <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
-              <TempleHistory />
-              <Organization />
-              <DeityInfo />
-              <VirtualTour />
-              <LightingWall />
+              {/* 1. 即時資訊 — 讓信眾第一眼看到最新消息與活動 */}
               <News />
               <TempleCalendar />
+              {/* 2. 核心功能 — 服務與點燈 */}
               <Services />
-              <section className="py-24 bg-gradient-to-r from-mystic-dark to-mystic-charcoal border-t border-white/5">
+              <LightingWall />
+              {/* 3. 實用工具 */}
+              <Almanac onOpenAdmin={() => setIsAdminOpen(true)} />
+              {/* 4. 認識廟宇 */}
+              <DeityInfo />
+              <TempleHistory />
+              <Organization />
+              {/* 5. 體驗與記憶 */}
+              <VirtualTour />
+              <Gallery />
+              {/* 6. 行動呼籲 (CTA) */}
+              <section className="py-24 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #080808 0%, #0D1117 50%, #080808 100%)' }}>
+                {/* 背景裝飾 */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(197,160,89,0.06),transparent_70%)]" />
+                <div className="absolute top-0 left-0 right-0 divider-gold" />
+                <div className="absolute bottom-0 left-0 right-0 divider-gold" />
                 <Container>
-                  <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-black/25 backdrop-blur p-8 sm:p-12 text-center shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+                  <div className="mx-auto max-w-3xl text-center relative z-10">
                     <SectionHeader
                       eyebrow="Support"
                       title="支持宮廟發展"
@@ -97,17 +108,17 @@ const App: React.FC = () => {
                     />
                     <button
                       onClick={() => setIsDonationOpen(true)}
-                      className="inline-flex items-center justify-center rounded-xl bg-mystic-gold text-black font-semibold px-8 py-3.5 hover:bg-mystic-gold/90 transition-colors shadow-[0_20px_50px_rgba(197,160,89,0.25)] tracking-[0.18em]"
+                      className="inline-flex items-center justify-center rounded-xl bg-mystic-gold text-black font-semibold px-10 py-4 hover:bg-mystic-shine transition-all duration-300 shadow-[0_20px_60px_rgba(197,160,89,0.30)] tracking-[0.22em] shadow-gold-hover"
                     >
                       立即捐款
                     </button>
-                    <div className="mt-4 text-xs text-white/50 tracking-[0.2em]">
+                    <div className="mt-5 text-xs text-white/40 tracking-[0.22em]">
                       安全付款（示範功能）
                     </div>
                   </div>
                 </Container>
               </section>
-              <Gallery />
+              {/* 7. 問題解答與聯絡 */}
               <FAQ />
               <Contact />
             </main>

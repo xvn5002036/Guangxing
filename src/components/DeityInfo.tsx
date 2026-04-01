@@ -7,7 +7,7 @@ const DeityInfo: React.FC = () => {
   const { siteSettings } = useData();
 
   return (
-    <section id="about" className="py-24 bg-mystic-charcoal relative">
+    <section id="about" className="py-24 relative overflow-hidden" style={{ background: '#080808' }}>
       <Container>
         <div className="mb-14">
           <SectionHeader

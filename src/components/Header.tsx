@@ -6,13 +6,11 @@ import { NavItem } from '../types';
 import { useData } from '../context/DataContext';
 
 const navItems: NavItem[] = [
-  { label: '宮廟沿革', href: '#history' },
-  { label: '組織架構', href: '#organization' },
-  { label: '線上燈牆', href: '#lighting-wall' },
+  { label: '最新公告', href: '#news' },
   { label: '行事曆', href: '#calendar' },
-  // { label: '靈籤擲筊', href: '#oracle' }, // Removed by request
-  // { label: '線上上香', href: '#ritual' }, // Removed by request
   { label: '濟世服務', href: '#services' },
+  { label: '線上燈牆', href: '#lighting-wall' },
+  { label: '宮廟沿革', href: '#history' },
   { label: '活動花絮', href: '#gallery' },
   { label: '數位商城', href: '#shop' },
   { label: '交通指引', href: '#contact-info' },
@@ -138,13 +136,14 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                   key={item.label}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item.href)}
-                  className={`px-3 py-2 rounded-full text-xs tracking-[0.25em] transition-all duration-200 ${
+                  className={`relative px-3 py-2 text-xs tracking-[0.25em] transition-all duration-200 group ${
                     isScrolled
-                      ? 'text-gray-200 hover:text-white hover:bg-white/5'
-                      : 'text-white/80 hover:text-white hover:bg-white/5 drop-shadow-sm'
+                      ? 'text-gray-200 hover:text-mystic-shine'
+                      : 'text-white/80 hover:text-mystic-shine drop-shadow-sm'
                   }`}
                 >
                   {item.label}
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px w-0 bg-mystic-gold transition-all duration-300 group-hover:w-2/3" />
                 </a>
               ))}
             </nav>
@@ -222,20 +221,40 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                 </a>
               ))}
 
-              {/* Mobile Auth Button Clone in Menu */}
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  if (user) {
-                    onNavigateToMember();
-                  } else {
-                    setIsAuthOpen(true);
-                  }
-                }}
-                className="m-4 text-center text-black bg-mystic-gold py-3.5 rounded-xl tracking-[0.25em] font-semibold hover:bg-mystic-gold/90 transition-colors"
-              >
-                {user ? '會員中心' : '會員登入 / 註冊'}
-              </button>
+              {/* Mobile Auth Button — 精美置中 */}
+              <div className="px-5 pt-5 pb-3">
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    if (user) {
+                      onNavigateToMember();
+                    } else {
+                      setIsAuthOpen(true);
+                    }
+                  }}
+                  className="relative w-full overflow-hidden group rounded-2xl py-4 font-semibold tracking-[0.28em] text-sm transition-all duration-300 text-black"
+                  style={{
+                    background: 'linear-gradient(135deg, #E8C97A 0%, #C5A059 50%, #A88040 100%)',
+                    boxShadow: '0 8px 32px rgba(197,160,89,0.40), 0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  {/* Shimmer overlay on hover */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {user ? (
+                      <>
+                        <User size={15} />
+                        會員中心
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={15} />
+                        會員登入 / 註冊
+                      </>
+                    )}
+                  </span>
+                </button>
+              </div>
 
               {/* Mobile Admin Button */}
               <button
@@ -243,10 +262,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigateToMember, onNavigateToShop, o
                   setIsMenuOpen(false);
                   if (onOpenAdmin) onOpenAdmin();
                 }}
-                className="mb-2 text-center text-white/60 text-sm tracking-[0.25em] hover:text-white transition-colors pb-4 w-full"
+                className="w-full pb-5 text-center text-white/40 text-xs tracking-[0.3em] hover:text-white/70 transition-colors"
               >
                 <div className="flex items-center justify-center gap-2">
-                  <Lock size={14} />
+                  <Lock size={12} />
                   <span>管理員後台</span>
                 </div>
               </button>

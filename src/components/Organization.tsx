@@ -71,7 +71,7 @@ const Organization: React.FC = () => {
   const staff = orgMembers.filter(m => m.category === 'STAFF');
 
   return (
-    <section id="organization" className="py-24 bg-black relative border-t border-white/5 overflow-hidden">
+    <section id="organization" className="py-24 relative overflow-hidden border-t border-white/5" style={{ background: '#080808' }}>
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-mystic-gold/50 to-transparent"></div>
       
       <Container>

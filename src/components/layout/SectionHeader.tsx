@@ -20,24 +20,31 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   return (
     <div className={`flex flex-col ${alignClass} ${className}`.trim()}>
       {eyebrow ? (
-        <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs tracking-[0.35em] text-white/70 backdrop-blur">
-          <span className="text-mystic-gold font-semibold tracking-[0.25em]">{eyebrow}</span>
-          <span className="h-3 w-px bg-white/10" />
-          <span>GUIDE</span>
+        <div className="inline-flex items-center gap-3">
+          <span className="h-px w-8 bg-gradient-to-r from-transparent to-mystic-gold/60" />
+          <span className="text-[10px] tracking-[0.45em] text-mystic-gold font-semibold uppercase">
+            {eyebrow}
+          </span>
+          <span className="h-px w-8 bg-gradient-to-l from-transparent to-mystic-gold/60" />
         </div>
       ) : null}
 
-      <h2 className="mt-6 text-[clamp(1.75rem,4vw,2.5rem)] font-semibold text-white tracking-[0.15em]">
+      <h2 className="mt-5 text-[clamp(1.85rem,4.5vw,2.75rem)] font-semibold tracking-[0.14em] leading-tight text-gold-gradient">
         {title}
       </h2>
 
       {description ? (
-        <p className="mt-4 max-w-2xl text-white/70 leading-relaxed">
+        <p className="mt-4 max-w-2xl text-white/65 leading-relaxed text-[0.95rem]">
           {description}
         </p>
       ) : null}
 
-      <div className={`mt-8 h-px w-24 bg-gradient-to-r from-transparent via-mystic-gold/70 to-transparent ${align === 'left' ? 'self-start' : ''}`} />
+      {/* Decorative divider */}
+      <div className={`mt-7 flex items-center gap-2 ${align === 'center' ? 'self-center' : 'self-start'}`}>
+        <div className="h-px w-12 bg-gradient-to-r from-transparent via-mystic-gold/50 to-mystic-gold/20" />
+        <div className="w-1.5 h-1.5 rounded-full bg-mystic-gold/70 ring-2 ring-mystic-gold/20" />
+        <div className="h-px w-12 bg-gradient-to-l from-transparent via-mystic-gold/50 to-mystic-gold/20" />
+      </div>
     </div>
   );
 };

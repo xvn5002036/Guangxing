@@ -52,7 +52,7 @@ const Gallery: React.FC = () => {
     };
 
     return (
-        <section id="gallery" className="py-24 bg-mystic-charcoal">
+        <section id="gallery" className="py-24 relative overflow-hidden" style={{ background: '#0D1117' }}>
             <Container>
                 <div className="mb-16">
                     <SectionHeader

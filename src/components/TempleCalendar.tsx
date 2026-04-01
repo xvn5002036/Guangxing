@@ -57,7 +57,7 @@ const TempleCalendar: React.FC = () => {
     }) : [];
 
     return (
-        <section id="calendar" className="py-24 bg-mystic-charcoal relative border-t border-white/5">
+        <section id="calendar" className="py-24 relative overflow-hidden" style={{ background: '#080808' }}>
             <Container>
                 <div className="mb-12">
                     <SectionHeader
